@@ -68,4 +68,45 @@ describe("GET /api/quiz/[token] integration", () => {
     expect(body.questions[0]).not.toHaveProperty("explanation");
     expect(body.questions[0]).not.toHaveProperty("sourceUrl");
   });
+
+  it("returns TOKEN_EXPIRED for an expired unsubmitted token", async () => {
+    const appDb = await createMigratedAppDbFixture({ seedUser: false });
+    const questionDb = await createQuestionBankFixture({
+      topic: "\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9",
+    });
+    await createQuizSessionFromScopeMessage({
+      appDb: appDb.db,
+      matchedScope: {
+        matchedCategories: [],
+        matchedTopics: ["\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9"],
+        method: "alias",
+        status: "matched",
+        suggestions: [],
+      },
+      nowIso: "2000-01-01T00:00:00.000Z",
+      questionDb,
+      rawScopeInput: "\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9",
+      telegramUser: { id: 12345, username: "taro_db" },
+      tokenFactory: () => "token-expired",
+    });
+
+    process.env.APP_DB_PATH = appDb.path;
+    process.env.QUESTION_DB_PATH = questionDb.name;
+
+    const response = await GET(
+      new Request("https://example.test/api/quiz/token-expired"),
+      {
+        params: { token: "token-expired" },
+      }
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(410);
+    expect(body).toEqual({
+      error: {
+        code: "TOKEN_EXPIRED",
+        message: "Token expired.",
+      },
+    });
+  });
 });
