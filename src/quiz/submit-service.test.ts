@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { openAppDb, type AppDbClient } from "@/db/app/client";
 import { createQuizSession } from "@/db/app/repositories/quiz-sessions";
-import { users } from "@/db/app/schema";
+import { answerRecords, users } from "@/db/app/schema";
 import { validateSubmitQuizRequest } from "./submit-service";
 import { submitQuizByToken } from "./submit-service";
 
@@ -264,6 +264,40 @@ describe("submitQuizByToken", () => {
         correctAnswer: "ア",
         isCorrect: false,
       });
+    } finally {
+      appDb.close();
+      questionDb.close();
+    }
+  });
+
+  it("returns the first submitted result without writing history again", async () => {
+    const appDb = await createMigratedAppDb();
+    const questionDb = await createQuestionBankFixture();
+
+    try {
+      const firstResponse = await submitQuizByToken({
+        appDb: appDb.db,
+        questionDb,
+        token: "token-1",
+        request: { answers: makeAnswers() },
+        submittedAt: "2026-05-31T01:30:00.000Z",
+      });
+      const answerCountAfterFirst = await appDb.db.select().from(answerRecords);
+
+      const repeatedResponse = await submitQuizByToken({
+        appDb: appDb.db,
+        questionDb,
+        token: "token-1",
+        request: { answers: [] },
+        submittedAt: "2026-05-31T01:31:00.000Z",
+      });
+      const answerCountAfterRepeat = await appDb.db
+        .select()
+        .from(answerRecords);
+
+      expect(repeatedResponse).toEqual(firstResponse);
+      expect(answerCountAfterFirst).toHaveLength(20);
+      expect(answerCountAfterRepeat).toHaveLength(20);
     } finally {
       appDb.close();
       questionDb.close();

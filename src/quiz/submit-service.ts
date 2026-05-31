@@ -45,6 +45,17 @@ export async function submitQuizByToken({
   request,
   submittedAt,
 }: SubmitQuizByTokenInput): Promise<SubmittedQuizResponseDto> {
+  const existingResponse = await loadQuizByToken({
+    appDb,
+    questionDb,
+    token,
+    nowIso: submittedAt,
+  });
+
+  if (existingResponse.status === "submitted") {
+    return existingResponse;
+  }
+
   const validated = await validateSubmitQuizRequest({
     appDb,
     questionDb,
