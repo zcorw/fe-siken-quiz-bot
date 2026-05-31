@@ -20,7 +20,7 @@
 - [x] P0-DB-08 实现首次提交事务：校验状态、写 `answer_records`、更新 session summary、更新 question/topic stats。
 - [x] P0-DB-09 实现重复提交幂等读取：已提交时不写历史，返回首次结果。
 - [x] P1-DB-10 实现过期未提交 session 查询和 30 天后清理任务。
-- [ ] P1-DB-11 实现 active wrong pool 统计更新：答错进入，连续答对 2 次移除。
+- [x] P1-DB-11 实现 active wrong pool 统计更新：答错进入，连续答对 2 次移除。
 - [ ] P1-DB-12 实现 weak topic 查询：正确率 `< 60%` 且答题数 `>= 3`。
 
 ## 推荐使用的成熟工具 / 库
