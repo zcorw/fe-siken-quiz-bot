@@ -12,7 +12,7 @@
 
 ## 具体任务列表
 
-- [ ] P0-OV-01 阅读 `docs/todolist/01_FOUNDATION.md` 到 `10_RELEASE_CHECKLIST.md`，确认执行顺序。
+- [x] P0-OV-01 阅读 `docs/todolist/01_FOUNDATION.md` 到 `10_RELEASE_CHECKLIST.md`，确认执行顺序。
 - [ ] P0-OV-02 每次开始开发前检查当前 git 状态，避免覆盖用户已有改动。
 - [ ] P0-OV-03 每个任务执行完成后运行对应验证命令，并记录结果。
 - [ ] P0-OV-04 每个阶段完成后更新对应 TodoList checkbox。
