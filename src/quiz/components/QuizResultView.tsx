@@ -9,6 +9,8 @@ type QuizResultViewProps = {
 };
 
 export function QuizResultView({ quiz }: QuizResultViewProps) {
+  const [showAllMobileExplanations, setShowAllMobileExplanations] =
+    useState(false);
   const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(
     quiz.questions[0]?.index ?? 1
   );
@@ -18,6 +20,16 @@ export function QuizResultView({ quiz }: QuizResultViewProps) {
     ) ??
     quiz.questions[0] ??
     null;
+  const incorrectQuestions = quiz.questions.filter(
+    (question) => !question.isCorrect
+  );
+  const mobileQuestions =
+    showAllMobileExplanations || incorrectQuestions.length === 0
+      ? quiz.questions
+      : incorrectQuestions;
+  const canShowAllMobileExplanations =
+    !showAllMobileExplanations &&
+    mobileQuestions.length < quiz.questions.length;
 
   return (
     <section
@@ -59,7 +71,7 @@ export function QuizResultView({ quiz }: QuizResultViewProps) {
           </p>
         </section>
         <section className="space-y-3">
-          {quiz.questions.map((question) => (
+          {mobileQuestions.map((question) => (
             <article
               className="rounded-lg border border-slate-200 bg-white p-5"
               key={question.index}
@@ -67,6 +79,15 @@ export function QuizResultView({ quiz }: QuizResultViewProps) {
               <ExplanationDetail question={question} />
             </article>
           ))}
+          {canShowAllMobileExplanations ? (
+            <button
+              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900"
+              onClick={() => setShowAllMobileExplanations(true)}
+              type="button"
+            >
+              {"\u3059\u3079\u3066\u306e\u89e3\u8aac\u3092\u8868\u793a"}
+            </button>
+          ) : null}
         </section>
       </div>
       <div

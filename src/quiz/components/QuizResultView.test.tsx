@@ -107,6 +107,9 @@ describe("QuizResultView", () => {
     );
     const question2 = within(mobile).getByTestId("explanation-detail-2");
     expect(
+      within(mobile).queryByTestId("explanation-detail-1")
+    ).not.toBeInTheDocument();
+    expect(
       within(question2).getByRole("button", {
         name: "\u30a2 \u9078\u629e\u80a2A",
       })
@@ -121,6 +124,17 @@ describe("QuizResultView", () => {
         name: "\u30a6 \u9078\u629e\u80a2C",
       })
     ).toBeDisabled();
+    fireEvent.click(
+      within(mobile).getByRole("button", {
+        name: "\u3059\u3079\u3066\u306e\u89e3\u8aac\u3092\u8868\u793a",
+      })
+    );
+    expect(
+      within(mobile).getByTestId("explanation-detail-1")
+    ).toBeInTheDocument();
+    expect(
+      within(mobile).getByTestId("explanation-detail-2")
+    ).toBeInTheDocument();
     expect(
       within(mobile).queryByRole("button", { name: "提出する" })
     ).not.toBeInTheDocument();
