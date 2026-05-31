@@ -24,7 +24,7 @@
 - [x] P0-FE-11 提交中禁用重复操作。
 - [x] P1-FE-12 实现 token 错误页：不存在、过期、加载失败，提示返回 Telegram。
 - [x] P1-FE-13 为移动端 390px 和桌面 1440px 写 Playwright 截图测试。
-- [ ] P1-FE-14 对照当前 Figma 高保真稿做截图验收，重点检查移动端 bottom sheet、PC 常驻侧栏、结果页布局。
+- [ ] P1-FE-14 对照当前 Figma 高保真稿做截图验收，重点检查移动端 bottom sheet、PC 常驻侧栏、结果页布局。（Blocked：当前仓库没有 Figma 文件链接或高保真导出，且结果页布局在 `06_RESULT_AND_HISTORY.md` 后续任务中实现；待结果页完成并提供 Figma 可读输入后执行）
 - [ ] P1-FE-15 图片加载失败时显示 alt / 文件名占位，并保留题目文本。
 
 ## 推荐使用的成熟工具 / 库
