@@ -19,7 +19,7 @@
 ## 具体任务列表
 
 - [x] P0-RC-01 `pnpm typecheck` 通过。
-- [ ] P0-RC-02 `pnpm lint` 通过。
+- [x] P0-RC-02 `pnpm lint` 通过。
 - [ ] P0-RC-03 `pnpm test` 通过。
 - [ ] P0-RC-04 `pnpm test:e2e` 通过。
 - [ ] P0-RC-05 migration 可在空 `app.sqlite` 上执行。
