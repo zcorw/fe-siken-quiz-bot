@@ -17,7 +17,7 @@
 - [x] P0-FD-05 创建 `config/app.yaml` 示例文件，覆盖 quiz、topics、ai、telegram、deployment 基础字段。
 - [x] P0-FD-06 使用成熟 YAML parser 读取配置，使用 Zod 校验配置结构。
 - [x] P0-FD-07 创建 `.env.example`，包含数据库路径、OpenAI key、Telegram token、webhook secrets、public base URL、edge port。
-- [ ] P0-FD-08 添加 `pnpm` scripts：`dev`、`test`、`test:e2e`、`lint`、`typecheck`、`db:generate`、`db:migrate`。
+- [x] P0-FD-08 添加 `pnpm` scripts：`dev`、`test`、`test:e2e`、`lint`、`typecheck`、`db:generate`、`db:migrate`。
 - [ ] P1-FD-09 建立统一错误类型和 API response helper。
 - [ ] P1-FD-10 建立基础日志封装，先使用 `pino`，不接入复杂监控。
 
