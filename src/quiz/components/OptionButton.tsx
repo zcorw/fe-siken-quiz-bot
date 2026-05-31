@@ -7,6 +7,7 @@ type OptionButtonProps = {
   text: string;
   selected: boolean;
   onSelect: (label: string) => void;
+  disabled?: boolean;
   resultState?: OptionButtonResultState;
 };
 
@@ -21,6 +22,7 @@ export function OptionButton({
   label,
   text,
   selected,
+  disabled = false,
   onSelect,
   resultState,
 }: OptionButtonProps) {
@@ -32,7 +34,7 @@ export function OptionButton({
       aria-pressed={selected}
       className={`flex w-full items-start gap-3 rounded-lg border p-4 text-left transition-colors ${stateClasses[state]}`}
       data-state={state}
-      disabled={Boolean(resultState)}
+      disabled={disabled || Boolean(resultState)}
       onClick={() => onSelect(label)}
       type="button"
     >

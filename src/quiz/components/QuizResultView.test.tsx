@@ -39,6 +39,7 @@ const submittedQuiz: SubmittedQuizResponseDto = {
       choices: [
         { label: "ア", text: "選択肢A" },
         { label: "イ", text: "選択肢B" },
+        { label: "ウ", text: "選択肢C" },
       ],
       hasImages: false,
       selectedAnswer: "ア",
@@ -115,6 +116,11 @@ describe("QuizResultView", () => {
         name: "\u30a4 \u9078\u629e\u80a2B",
       })
     ).toHaveAttribute("data-state", "correct");
+    expect(
+      within(question2).getByRole("button", {
+        name: "\u30a6 \u9078\u629e\u80a2C",
+      })
+    ).toBeDisabled();
     expect(
       within(mobile).queryByRole("button", { name: "提出する" })
     ).not.toBeInTheDocument();

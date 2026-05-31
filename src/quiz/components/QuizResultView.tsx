@@ -141,6 +141,7 @@ function ExplanationDetail({ question }: { question: SubmittedQuestion }) {
             <OptionButton
               key={choice.label}
               label={choice.label}
+              disabled
               onSelect={() => undefined}
               resultState={resultState}
               selected={choice.label === question.selectedAnswer}
