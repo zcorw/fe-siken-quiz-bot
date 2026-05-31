@@ -20,6 +20,11 @@ export interface QuestionCandidateFilters {
   url?: string;
 }
 
+export interface QuestionBankKeywords {
+  categories: string[];
+  topics: string[];
+}
+
 export interface QuestionChoice {
   label: string;
   text: string;
@@ -127,6 +132,15 @@ export function findQuestionCandidates(
   }));
 }
 
+export function listQuestionBankKeywords(
+  db: Database.Database
+): QuestionBankKeywords {
+  return {
+    categories: listDistinctQuestionColumn(db, "category"),
+    topics: listDistinctQuestionColumn(db, "topic"),
+  };
+}
+
 export function getQuestionDetail(
   db: Database.Database,
   questionUrl: string
@@ -164,6 +178,26 @@ export function getQuestionDetail(
     images: parseImagesJson(row.images_json, row.question_url),
     fetchedAt: row.fetched_at,
   };
+}
+
+function listDistinctQuestionColumn(
+  db: Database.Database,
+  columnName: "category" | "topic"
+): string[] {
+  const rows = db
+    .prepare(
+      `
+        SELECT DISTINCT ${columnName} AS value
+        FROM questions
+        WHERE exam_part = ?
+          AND ${columnName} IS NOT NULL
+          AND trim(${columnName}) <> ''
+        ORDER BY ${columnName} ASC
+      `
+    )
+    .all(EXAM_PART_SUBJECT_A) as { value: string }[];
+
+  return rows.map((row) => row.value);
 }
 
 function parseChoicesJson(

@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { AppConfig } from "@/config/schema";
-import { matchTopicAlias, normalizeScopeText } from "./scope-match";
+import {
+  matchQuestionBankKeywords,
+  matchTopicAlias,
+  normalizeScopeText,
+} from "./scope-match";
 
 const topicsConfig: AppConfig["topics"] = {
   standard_topics: ["データベース", "ネットワーク", "情報セキュリティ"],
@@ -37,5 +41,40 @@ describe("matchTopicAlias", () => {
 
   it("returns an empty list when no alias matches", () => {
     expect(matchTopicAlias("プロジェクト", topicsConfig)).toEqual([]);
+  });
+});
+
+describe("matchQuestionBankKeywords", () => {
+  const questionBankKeywords = {
+    categories: ["テクノロジ系", "マネジメント系"],
+    topics: ["ネットワーク", "データベース", "プロジェクトマネジメント"],
+  };
+
+  it("matches normalized question category keywords", () => {
+    expect(
+      matchQuestionBankKeywords(" テクノロジ 系 ", questionBankKeywords)
+    ).toEqual({
+      matchedCategories: ["テクノロジ系"],
+      matchedTopics: [],
+    });
+  });
+
+  it("matches question topic keywords contained in natural text", () => {
+    expect(
+      matchQuestionBankKeywords(
+        "ネットワークを練習したい",
+        questionBankKeywords
+      )
+    ).toEqual({
+      matchedCategories: [],
+      matchedTopics: ["ネットワーク"],
+    });
+  });
+
+  it("returns empty category and topic lists when no keyword matches", () => {
+    expect(matchQuestionBankKeywords("法務", questionBankKeywords)).toEqual({
+      matchedCategories: [],
+      matchedTopics: [],
+    });
   });
 });

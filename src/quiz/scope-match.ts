@@ -27,3 +27,35 @@ export function matchTopicAlias(
 
   return Array.from(matches);
 }
+
+export interface QuestionBankKeywordIndex {
+  categories: string[];
+  topics: string[];
+}
+
+export interface QuestionBankKeywordMatch {
+  matchedCategories: string[];
+  matchedTopics: string[];
+}
+
+export function matchQuestionBankKeywords(
+  input: string,
+  keywords: QuestionBankKeywordIndex
+): QuestionBankKeywordMatch {
+  const normalizedInput = normalizeScopeText(input);
+
+  return {
+    matchedCategories: matchKeywords(normalizedInput, keywords.categories),
+    matchedTopics: matchKeywords(normalizedInput, keywords.topics),
+  };
+}
+
+function matchKeywords(normalizedInput: string, keywords: string[]): string[] {
+  return keywords.filter((keyword) => {
+    const normalizedKeyword = normalizeScopeText(keyword);
+    return (
+      normalizedInput === normalizedKeyword ||
+      normalizedInput.includes(normalizedKeyword)
+    );
+  });
+}

@@ -6,7 +6,11 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { findQuestionCandidates, getQuestionDetail } from "./queries";
+import {
+  findQuestionCandidates,
+  getQuestionDetail,
+  listQuestionBankKeywords,
+} from "./queries";
 
 const tempDirs: string[] = [];
 
@@ -161,6 +165,19 @@ describe("question candidate queries", () => {
           topic: "セキュリティ",
         })
       ).toEqual([]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it("lists distinct 科目A category and topic keywords", async () => {
+    const db = await createQuestionBankFixture();
+
+    try {
+      expect(listQuestionBankKeywords(db)).toEqual({
+        categories: ["テクノロジ系", "マネジメント系"],
+        topics: ["セキュリティ", "ネットワーク", "マネジメント"],
+      });
     } finally {
       db.close();
     }
