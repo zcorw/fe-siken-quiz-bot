@@ -146,6 +146,29 @@ function validateSubmitAnswers(answers: SubmitQuizSessionAnswerInput[]): void {
   }
 }
 
+function getSubmittedSessionSummary(session: {
+  id: string;
+  totalQuestions: number | null;
+  correctCount: number | null;
+  incorrectCount: number | null;
+}): SubmitQuizSessionSummary {
+  if (
+    session.totalQuestions === null ||
+    session.correctCount === null ||
+    session.incorrectCount === null
+  ) {
+    throw new Error(
+      `Quiz session ${session.id} is submitted but missing summary counts.`
+    );
+  }
+
+  return {
+    totalQuestions: session.totalQuestions,
+    correctCount: session.correctCount,
+    incorrectCount: session.incorrectCount,
+  };
+}
+
 export async function submitQuizSession(
   appDb: AppDrizzleDb,
   input: SubmitQuizSessionInput
@@ -163,9 +186,13 @@ export async function submitQuizSession(
       throw new Error(`Quiz session ${input.quizSessionId} was not found.`);
     }
 
+    if (session.status === "submitted") {
+      return getSubmittedSessionSummary(session);
+    }
+
     if (session.status !== "created") {
       throw new Error(
-        `Quiz session ${input.quizSessionId} has already been submitted.`
+        `Quiz session ${input.quizSessionId} has unsupported status ${session.status}.`
       );
     }
 

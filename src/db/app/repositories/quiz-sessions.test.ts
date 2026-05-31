@@ -415,7 +415,76 @@ describe("submitQuizSession", () => {
     }
   });
 
-  it("rejects an already submitted session without duplicating answer records", async () => {
+  it("returns the first result for an already submitted session without writing history or stats", async () => {
+    const appDb = await createMigratedAppDb();
+
+    try {
+      await createQuizSession(appDb.db, makeSessionInput());
+      const firstSummary = await submitQuizSession(appDb.db, {
+        quizSessionId: "session-1",
+        submittedAt: "2026-05-31T01:30:00.000Z",
+        answers: makeAnswers(),
+      });
+      const answerRecordsBeforeRepeat = await appDb.db
+        .select()
+        .from(answerRecords)
+        .orderBy(answerRecords.quizSessionQuestionId);
+      const questionStatsBeforeRepeat = await appDb.db
+        .select()
+        .from(userQuestionStats)
+        .orderBy(userQuestionStats.questionUrl);
+      const topicStatsBeforeRepeat = await appDb.db
+        .select()
+        .from(userTopicStats)
+        .orderBy(userTopicStats.topicType, userTopicStats.topicKey);
+
+      const repeatedSummary = await submitQuizSession(appDb.db, {
+        quizSessionId: "session-1",
+        submittedAt: "2026-05-31T01:31:00.000Z",
+        answers: makeAnswers({ selectedAnswer: "A" }),
+      });
+
+      expect(firstSummary).toEqual({
+        totalQuestions: 20,
+        correctCount: 14,
+        incorrectCount: 6,
+      });
+      expect(repeatedSummary).toEqual(firstSummary);
+      expect(
+        await appDb.db
+          .select()
+          .from(answerRecords)
+          .orderBy(answerRecords.quizSessionQuestionId)
+      ).toEqual(answerRecordsBeforeRepeat);
+      expect(
+        await appDb.db
+          .select()
+          .from(userQuestionStats)
+          .orderBy(userQuestionStats.questionUrl)
+      ).toEqual(questionStatsBeforeRepeat);
+      expect(
+        await appDb.db
+          .select()
+          .from(userTopicStats)
+          .orderBy(userTopicStats.topicType, userTopicStats.topicKey)
+      ).toEqual(topicStatsBeforeRepeat);
+
+      const [session] = await appDb.db
+        .select()
+        .from(quizSessions)
+        .where(eq(quizSessions.id, "session-1"));
+      expect(session).toMatchObject({
+        status: "submitted",
+        correctCount: 14,
+        incorrectCount: 6,
+        submittedAt: "2026-05-31T01:30:00.000Z",
+      });
+    } finally {
+      appDb.close();
+    }
+  });
+
+  it("throws a data integrity error when an already submitted session is missing summary counts", async () => {
     const appDb = await createMigratedAppDb();
 
     try {
@@ -426,13 +495,20 @@ describe("submitQuizSession", () => {
         answers: makeAnswers(),
       });
 
+      await appDb.db
+        .update(quizSessions)
+        .set({ correctCount: null })
+        .where(eq(quizSessions.id, "session-1"));
+
       await expect(
         submitQuizSession(appDb.db, {
           quizSessionId: "session-1",
           submittedAt: "2026-05-31T01:31:00.000Z",
           answers: makeAnswers({ selectedAnswer: "A" }),
         })
-      ).rejects.toThrow("Quiz session session-1 has already been submitted.");
+      ).rejects.toThrow(
+        "Quiz session session-1 is submitted but missing summary counts."
+      );
 
       expect(await countAnswerRecords(appDb)).toBe(20);
     } finally {
