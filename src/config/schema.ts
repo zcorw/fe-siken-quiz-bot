@@ -3,6 +3,52 @@ import { z } from "zod";
 const positiveIntegerSchema = z.number().int().positive();
 const nonEmptyStringSchema = z.string().min(1);
 
+const topicsConfigSchema = z
+  .strictObject({
+    standard_topics: z.array(nonEmptyStringSchema).min(1),
+    high_weight_topics: z.array(nonEmptyStringSchema).min(1),
+    aliases: z.record(nonEmptyStringSchema, z.array(nonEmptyStringSchema)),
+    standard_topic_mappings: z.record(
+      nonEmptyStringSchema,
+      nonEmptyStringSchema
+    ),
+  })
+  .superRefine((topics, ctx) => {
+    const standardTopics = new Set(topics.standard_topics);
+
+    for (const [index, topic] of topics.high_weight_topics.entries()) {
+      if (!standardTopics.has(topic)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "high_weight_topics must be standard topics",
+          path: ["high_weight_topics", index],
+        });
+      }
+    }
+
+    for (const topic of Object.keys(topics.aliases)) {
+      if (!standardTopics.has(topic)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "aliases keys must be standard topics",
+          path: ["aliases", topic],
+        });
+      }
+    }
+
+    for (const [sourceTopic, standardTopic] of Object.entries(
+      topics.standard_topic_mappings
+    )) {
+      if (!standardTopics.has(standardTopic)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "standard_topic_mappings values must be standard topics",
+          path: ["standard_topic_mappings", sourceTopic],
+        });
+      }
+    }
+  });
+
 export const appConfigSchema = z
   .object({
     quiz: z.strictObject({
@@ -25,14 +71,7 @@ export const appConfigSchema = z
         submit_per_token_per_minute: positiveIntegerSchema,
       }),
     }),
-    topics: z.strictObject({
-      high_weight_topics: z.array(nonEmptyStringSchema),
-      aliases: z.record(nonEmptyStringSchema, z.array(nonEmptyStringSchema)),
-      standard_topic_mappings: z.record(
-        nonEmptyStringSchema,
-        nonEmptyStringSchema
-      ),
-    }),
+    topics: topicsConfigSchema,
     ai: z.strictObject({
       provider: nonEmptyStringSchema,
       model: nonEmptyStringSchema,
