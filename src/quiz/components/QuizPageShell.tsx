@@ -1,10 +1,9 @@
 import type { QuizPageState } from "../client/page-state";
 import { QuizActiveView } from "./QuizActiveView";
+import { QuizResultView } from "./QuizResultView";
 
 const text = {
-  title: "\u79d1\u76eeA \u6f14\u7fd2",
   loading: "\u8aad\u307f\u8fbc\u307f\u4e2d",
-  result: "\u7d50\u679c",
   telegram:
     "Telegram\u3067\u65b0\u3057\u3044\u6f14\u7fd2\u3092\u4f5c\u6210\u3057\u3066\u304f\u3060\u3055\u3044",
 };
@@ -49,14 +48,7 @@ export function QuizPageShell({ state }: QuizPageShellProps) {
   if (state.status === "submitted") {
     return (
       <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
-        <section className="mx-auto max-w-5xl">
-          <h1 className="text-2xl font-semibold">{text.result}</h1>
-          <p className="mt-4 text-lg font-semibold">
-            {"\u6b63\u7b54\u7387 "}
-            {Math.round(state.quiz.summary.accuracy * 100)}
-            {"%"}
-          </p>
-        </section>
+        <QuizResultView quiz={state.quiz} />
       </main>
     );
   }
