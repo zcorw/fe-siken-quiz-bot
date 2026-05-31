@@ -32,6 +32,9 @@ export function MobileQuestionSheet({
           <Dialog.Title className="text-xl font-semibold text-slate-900">
             {"\u554f\u984c\u4e00\u89a7"}
           </Dialog.Title>
+          <Dialog.Description className="sr-only">
+            {"\u554f\u984c\u756a\u53f7\u3092\u9078\u629e\u3057\u307e\u3059"}
+          </Dialog.Description>
           <div className="mt-6">
             <QuestionNumberGrid
               answeredQuestionIndexes={answeredQuestionIndexes}

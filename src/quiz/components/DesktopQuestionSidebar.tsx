@@ -17,7 +17,7 @@ export function DesktopQuestionSidebar({
 }: DesktopQuestionSidebarProps) {
   return (
     <aside
-      aria-label="\u554f\u984c\u4e00\u89a7"
+      aria-label={"\u554f\u984c\u4e00\u89a7"}
       className="hidden w-80 shrink-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:block"
     >
       <h2 className="mb-5 text-lg font-semibold text-slate-900">

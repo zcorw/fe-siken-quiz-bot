@@ -1,6 +1,13 @@
-import { initialQuizPageState } from "@/quiz/client/page-state";
-import { QuizPageShell } from "@/quiz/components/QuizPageShell";
+import { QuizPageClient } from "@/quiz/components/QuizPageClient";
 
-export default function QuizPage() {
-  return <QuizPageShell state={initialQuizPageState} />;
+type QuizPageProps = {
+  params: Promise<{
+    token: string;
+  }>;
+};
+
+export default async function QuizPage({ params }: QuizPageProps) {
+  const { token } = await params;
+
+  return <QuizPageClient token={token} />;
 }
