@@ -97,4 +97,59 @@ describe("quiz API schemas", () => {
       },
     });
   });
+
+  it("rejects HTML-specific fields so API responses stay Markdown-only", () => {
+    expect(() =>
+      activeQuizResponseSchema.parse({
+        status: "active",
+        token: "token-1",
+        totalQuestions: 20,
+        questions: [
+          {
+            index: 1,
+            questionUrl: "https://example.test/q1",
+            questionText: "![diagram](/assets/q1.png)",
+            questionHtml: "<img src='/assets/q1.png'>",
+            choices: [{ label: "ア", text: "選択肢" }],
+            hasImages: true,
+          },
+        ],
+      })
+    ).toThrow();
+
+    expect(() =>
+      submittedQuizResponseSchema.parse({
+        status: "submitted",
+        token: "token-1",
+        summary: {
+          totalQuestions: 20,
+          correctCount: 20,
+          incorrectCount: 0,
+          accuracy: 1,
+        },
+        selectionSummary: {
+          requestedScopeCount: 15,
+          reinforcementCount: 5,
+          wrongQuestionCount: 0,
+          weakTopicCount: 0,
+          highWeightTopicCount: 5,
+        },
+        questions: [
+          {
+            index: 1,
+            questionUrl: "https://example.test/q1",
+            questionText: "Markdown question",
+            choices: [{ label: "ア", text: "選択肢" }],
+            hasImages: false,
+            selectedAnswer: "ア",
+            correctAnswer: "ア",
+            isCorrect: true,
+            explanation: "Markdown explanation",
+            explanationHtml: "<p>unsafe</p>",
+            sourceUrl: "https://example.test/q1",
+          },
+        ],
+      })
+    ).toThrow();
+  });
 });
