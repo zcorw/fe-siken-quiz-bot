@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, inArray, lte, sql } from "drizzle-orm";
 import type { AppDrizzleDb } from "../client";
 import {
   answerRecords,
@@ -54,6 +54,8 @@ export interface SubmitQuizSessionSummary {
   correctCount: number;
   incorrectCount: number;
 }
+
+export type QuizSession = typeof quizSessions.$inferSelect;
 
 function serializeJson(value: JsonValue): string {
   return JSON.stringify(value);
@@ -122,6 +124,56 @@ export async function createQuizSession(
         }))
       )
       .run();
+  });
+}
+
+export async function findExpiredUnsubmittedSessions(
+  appDb: AppDrizzleDb,
+  nowIso: string
+): Promise<QuizSession[]> {
+  return appDb
+    .select()
+    .from(quizSessions)
+    .where(
+      and(
+        eq(quizSessions.status, "created"),
+        lte(quizSessions.expiresAt, nowIso)
+      )
+    )
+    .all();
+}
+
+export async function deletePurgeableUnsubmittedSessions(
+  appDb: AppDrizzleDb,
+  nowIso: string
+): Promise<number> {
+  return appDb.transaction((tx) => {
+    const purgeableSessions = tx
+      .select({ id: quizSessions.id })
+      .from(quizSessions)
+      .where(
+        and(
+          inArray(quizSessions.status, ["created", "error"]),
+          lte(quizSessions.purgeAfterAt, nowIso)
+        )
+      )
+      .all();
+
+    const purgeableSessionIds = purgeableSessions.map((session) => session.id);
+
+    if (purgeableSessionIds.length === 0) {
+      return 0;
+    }
+
+    tx.delete(quizSessionQuestions)
+      .where(inArray(quizSessionQuestions.quizSessionId, purgeableSessionIds))
+      .run();
+
+    tx.delete(quizSessions)
+      .where(inArray(quizSessions.id, purgeableSessionIds))
+      .run();
+
+    return purgeableSessionIds.length;
   });
 }
 

@@ -19,6 +19,8 @@ import {
 } from "../schema";
 import {
   createQuizSession,
+  deletePurgeableUnsubmittedSessions,
+  findExpiredUnsubmittedSessions,
   submitQuizSession,
   type CreateQuizSessionInput,
   type SubmitQuizSessionInput,
@@ -126,6 +128,14 @@ async function countSessions(appDb: AppDbClient, id = "session-1") {
 
 async function countAnswerRecords(appDb: AppDbClient) {
   const [row] = await appDb.db.select({ value: count() }).from(answerRecords);
+
+  return row.value;
+}
+
+async function countSessionQuestions(appDb: AppDbClient) {
+  const [row] = await appDb.db
+    .select({ value: count() })
+    .from(quizSessionQuestions);
 
   return row.value;
 }
@@ -589,6 +599,153 @@ describe("submitQuizSession", () => {
         activeWrong: 0,
         consecutiveCorrectAfterWrong: 2,
       });
+    } finally {
+      appDb.close();
+    }
+  });
+});
+
+describe("quiz session expiry and cleanup", () => {
+  afterEach(async () => {
+    await Promise.all(
+      tempDirs
+        .splice(0)
+        .map((tempDir) => rm(tempDir, { recursive: true, force: true }))
+    );
+  });
+
+  it("finds expired created sessions but excludes future and submitted sessions", async () => {
+    const appDb = await createMigratedAppDb();
+
+    try {
+      for (const session of [
+        {
+          id: "expired-created",
+          token: "token-expired-created",
+          expiresAt: "2026-05-31T01:00:00.000Z",
+        },
+        {
+          id: "future-created",
+          token: "token-future-created",
+          expiresAt: "2026-05-31T03:00:00.000Z",
+        },
+        {
+          id: "expired-submitted",
+          token: "token-expired-submitted",
+          expiresAt: "2026-05-31T01:00:00.000Z",
+        },
+      ]) {
+        await createQuizSession(
+          appDb.db,
+          makeSessionInput({
+            id: session.id,
+            token: session.token,
+            expiresAt: session.expiresAt,
+            questions: makeQuestions().map((question) => ({
+              ...question,
+              id: `${session.id}-${question.questionIndex}`,
+            })),
+          })
+        );
+      }
+
+      await submitQuizSession(appDb.db, {
+        quizSessionId: "expired-submitted",
+        submittedAt: "2026-05-31T01:30:00.000Z",
+        answers: makeAnswers(),
+      });
+
+      const expiredSessions = await findExpiredUnsubmittedSessions(
+        appDb.db,
+        "2026-05-31T02:00:00.000Z"
+      );
+
+      expect(expiredSessions.map((session) => session.id)).toEqual([
+        "expired-created",
+      ]);
+    } finally {
+      appDb.close();
+    }
+  });
+
+  it("deletes purgeable created and error sessions with questions but preserves submitted and future sessions", async () => {
+    const appDb = await createMigratedAppDb();
+
+    try {
+      for (const session of [
+        {
+          id: "old-created",
+          token: "token-old-created",
+          status: "created",
+          purgeAfterAt: "2026-05-30T00:00:00.000Z",
+        },
+        {
+          id: "old-error",
+          token: "token-old-error",
+          status: "error",
+          purgeAfterAt: "2026-05-30T00:00:00.000Z",
+        },
+        {
+          id: "old-submitted",
+          token: "token-old-submitted",
+          status: "submitted",
+          purgeAfterAt: "2026-05-30T00:00:00.000Z",
+        },
+        {
+          id: "future-created",
+          token: "token-future-created",
+          status: "created",
+          purgeAfterAt: "2026-06-02T00:00:00.000Z",
+        },
+      ]) {
+        await createQuizSession(
+          appDb.db,
+          makeSessionInput({
+            id: session.id,
+            token: session.token,
+            purgeAfterAt: session.purgeAfterAt,
+            questions: makeQuestions().map((question) => ({
+              ...question,
+              id: `${session.id}-${question.questionIndex}`,
+            })),
+          })
+        );
+
+        if (session.status === "error") {
+          await appDb.db
+            .update(quizSessions)
+            .set({ status: "error" })
+            .where(eq(quizSessions.id, session.id));
+        }
+
+        if (session.status === "submitted") {
+          await submitQuizSession(appDb.db, {
+            quizSessionId: session.id,
+            submittedAt: "2026-05-31T01:30:00.000Z",
+            answers: makeAnswers(),
+          });
+        }
+      }
+
+      const deletedCount = await deletePurgeableUnsubmittedSessions(
+        appDb.db,
+        "2026-05-31T00:00:00.000Z"
+      );
+
+      expect(deletedCount).toBe(2);
+      expect(await countSessionQuestions(appDb)).toBe(40);
+
+      const remainingSessions = await appDb.db
+        .select({
+          id: quizSessions.id,
+          status: quizSessions.status,
+        })
+        .from(quizSessions)
+        .orderBy(quizSessions.id);
+      expect(remainingSessions).toEqual([
+        { id: "future-created", status: "created" },
+        { id: "old-submitted", status: "submitted" },
+      ]);
     } finally {
       appDb.close();
     }
