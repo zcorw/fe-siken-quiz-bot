@@ -135,4 +135,23 @@ test("selects 20 answers and submits the quiz", async ({ page }) => {
   });
   await expect(page.getByTestId("quiz-result-view")).toBeVisible();
   await expect(page.getByRole("heading", { name: "結果" })).toBeVisible();
+  await expect(
+    page.getByTestId("desktop-result-summary").getByText("100%")
+  ).toBeVisible();
+  const desktopResult = page.getByTestId("desktop-result-view");
+  await expect(desktopResult.getByText("Question 1 text")).toBeVisible();
+  await expect(
+    desktopResult.getByRole("button", { name: "ア Choice A" })
+  ).toBeVisible();
+  await expect(
+    desktopResult.getByRole("button", { name: "イ Choice B" })
+  ).toBeVisible();
+  await expect(desktopResult.getByText("あなたの解答: ア")).toBeVisible();
+  await expect(desktopResult.getByText("正解: ア")).toBeVisible();
+  await expect(desktopResult.getByText("Explanation 1")).toBeVisible();
+  await expect(
+    desktopResult.getByRole("link", {
+      name: "https://www.fe-siken.com/kakomon/sample/submit-q1.html",
+    })
+  ).toBeVisible();
 });

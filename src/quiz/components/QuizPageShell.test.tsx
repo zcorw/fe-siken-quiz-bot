@@ -84,8 +84,8 @@ describe("QuizPageShell", () => {
     expect(
       screen.getByRole("heading", { name: labels.result })
     ).toBeInTheDocument();
-    expect(screen.getByText("\u6b63\u7b54\u7387")).toBeInTheDocument();
-    expect(screen.getByText("70%")).toBeInTheDocument();
+    expect(screen.getAllByText("\u6b63\u7b54\u7387")).toHaveLength(2);
+    expect(screen.getAllByText("70%")).toHaveLength(2);
   });
 
   it.each([
