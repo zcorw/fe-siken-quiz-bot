@@ -36,7 +36,10 @@ const submittedQuiz: SubmittedQuizResponseDto = {
       index: 2,
       questionUrl: "https://www.fe-siken.com/kakomon/sample/q2.html",
       questionText: "問2の本文",
-      choices: [{ label: "イ", text: "選択肢B" }],
+      choices: [
+        { label: "ア", text: "選択肢A" },
+        { label: "イ", text: "選択肢B" },
+      ],
       hasImages: false,
       selectedAnswer: "ア",
       correctAnswer: "イ",
@@ -84,7 +87,21 @@ describe("QuizResultView", () => {
       within(mobile).getByText("選択範囲 1問 / 復習・重点テーマ 1問")
     ).toBeInTheDocument();
     expect(within(mobile).getByText("問題 2")).toBeInTheDocument();
+    expect(within(mobile).getByText("問2の本文")).toBeInTheDocument();
+    expect(within(mobile).getByText("イ 選択肢B")).toBeInTheDocument();
+    expect(
+      within(mobile).getAllByText("あなたの解答: ア").length
+    ).toBeGreaterThan(0);
+    expect(within(mobile).getByText("正解: イ")).toBeInTheDocument();
     expect(within(mobile).getByText("問2の解説")).toBeInTheDocument();
+    expect(
+      within(mobile).getByRole("link", {
+        name: "https://www.fe-siken.com/kakomon/sample/q2.html",
+      })
+    ).toHaveAttribute(
+      "href",
+      "https://www.fe-siken.com/kakomon/sample/q2.html"
+    );
   });
 
   it("renders desktop result with all question statuses and selected detail", () => {
@@ -106,5 +123,7 @@ describe("QuizResultView", () => {
     );
 
     expect(within(desktop).getByText("問2の解説")).toBeInTheDocument();
+    expect(within(desktop).getByText("問2の本文")).toBeInTheDocument();
+    expect(within(desktop).getByText("あなたの解答: ア")).toBeInTheDocument();
   });
 });

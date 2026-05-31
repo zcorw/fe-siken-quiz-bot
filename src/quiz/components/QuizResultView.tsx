@@ -58,13 +58,7 @@ export function QuizResultView({ quiz }: QuizResultViewProps) {
               className="rounded-lg border border-slate-200 bg-white p-5"
               key={question.index}
             >
-              <h2 className="font-semibold">
-                {"\u554f\u984c "}
-                {question.index}
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-700">
-                {question.explanation}
-              </p>
+              <ExplanationDetail question={question} />
             </article>
           ))}
         </section>
@@ -103,18 +97,49 @@ export function QuizResultView({ quiz }: QuizResultViewProps) {
         </aside>
         <section className="rounded-lg border border-slate-200 bg-white p-6">
           {selectedQuestion ? (
-            <>
-              <h2 className="text-xl font-semibold">
-                {"\u554f\u984c "}
-                {selectedQuestion.index}
-              </h2>
-              <p className="mt-4 text-sm leading-6 text-slate-700">
-                {selectedQuestion.explanation}
-              </p>
-            </>
+            <ExplanationDetail question={selectedQuestion} />
           ) : null}
         </section>
       </div>
     </section>
+  );
+}
+
+type SubmittedQuestion = SubmittedQuizResponseDto["questions"][number];
+
+function ExplanationDetail({ question }: { question: SubmittedQuestion }) {
+  return (
+    <div className="space-y-4">
+      <h2 className="font-semibold">
+        {"\u554f\u984c "}
+        {question.index}
+      </h2>
+      {question.questionText ? (
+        <p className="text-sm leading-6 text-slate-700">
+          {question.questionText}
+        </p>
+      ) : null}
+      <div className="space-y-2">
+        {question.choices.map((choice) => (
+          <p className="text-sm text-slate-700" key={choice.label}>
+            {choice.label} {choice.text}
+          </p>
+        ))}
+      </div>
+      <div className="rounded-lg bg-slate-50 p-3 text-sm">
+        <p>
+          {"\u3042\u306a\u305f\u306e\u89e3\u7b54: "}
+          {question.selectedAnswer}
+        </p>
+        <p className="mt-1">
+          {"\u6b63\u89e3: "}
+          {question.correctAnswer}
+        </p>
+      </div>
+      <p className="text-sm leading-6 text-slate-700">{question.explanation}</p>
+      <a className="break-all text-sm text-blue-600" href={question.sourceUrl}>
+        {question.sourceUrl}
+      </a>
+    </div>
   );
 }
