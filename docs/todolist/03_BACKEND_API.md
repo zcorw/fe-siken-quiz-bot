@@ -16,7 +16,7 @@
 - [x] P0-API-02 实现 `GET /api/quiz/[token]` active 状态，隐藏正确答案、解析、source URL。
 - [x] P0-API-03 实现 `GET /api/quiz/[token]` submitted 状态，返回 summary、selectionSummary、原题、全部选项、用户答案、正确答案、解析、source URL。
 - [x] P0-API-04 实现 token not found、expired、load failed 错误映射。
-- [ ] P0-API-05 实现 `POST /api/quiz/[token]/submit` 请求校验：20 题完整、题号存在、选项合法。
+- [x] P0-API-05 实现 `POST /api/quiz/[token]/submit` 请求校验：20 题完整、题号存在、选项合法。
 - [ ] P0-API-06 实现 submit 成功响应和事务调用。
 - [ ] P0-API-07 实现 repeated submit：返回已提交结果，不更新历史。
 - [ ] P1-API-08 使用成熟限流库实现限流：GET 每 IP 60/min，POST 每 IP 10/min + 每 token 3/min。
