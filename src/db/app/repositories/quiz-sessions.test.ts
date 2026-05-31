@@ -21,6 +21,7 @@ import {
   createQuizSession,
   deletePurgeableUnsubmittedSessions,
   findExpiredUnsubmittedSessions,
+  findWeakTopicStats,
   submitQuizSession,
   type CreateQuizSessionInput,
   type SubmitQuizSessionInput,
@@ -745,6 +746,74 @@ describe("quiz session expiry and cleanup", () => {
       expect(remainingSessions).toEqual([
         { id: "future-created", status: "created" },
         { id: "old-submitted", status: "submitted" },
+      ]);
+    } finally {
+      appDb.close();
+    }
+  });
+});
+
+describe("findWeakTopicStats", () => {
+  afterEach(async () => {
+    await Promise.all(
+      tempDirs
+        .splice(0)
+        .map((tempDir) => rm(tempDir, { recursive: true, force: true }))
+    );
+  });
+
+  it("returns only topics below 60 percent accuracy with at least 3 attempts", async () => {
+    const appDb = await createMigratedAppDb();
+
+    try {
+      await appDb.db.insert(userTopicStats).values([
+        {
+          userId: "user-1",
+          topicKey: "network",
+          topicType: "topic",
+          attemptCount: 5,
+          correctCount: 2,
+          incorrectCount: 3,
+          accuracy: 0.4,
+          lastAnsweredAt: "2026-05-31T01:00:00.000Z",
+        },
+        {
+          userId: "user-1",
+          topicKey: "database",
+          topicType: "topic",
+          attemptCount: 3,
+          correctCount: 1,
+          incorrectCount: 2,
+          accuracy: 0.3333333333333333,
+          lastAnsweredAt: "2026-05-31T01:01:00.000Z",
+        },
+        {
+          userId: "user-1",
+          topicKey: "security",
+          topicType: "topic",
+          attemptCount: 5,
+          correctCount: 3,
+          incorrectCount: 2,
+          accuracy: 0.6,
+          lastAnsweredAt: "2026-05-31T01:02:00.000Z",
+        },
+        {
+          userId: "user-1",
+          topicKey: "algorithm",
+          topicType: "topic",
+          attemptCount: 2,
+          correctCount: 0,
+          incorrectCount: 2,
+          accuracy: 0,
+          lastAnsweredAt: "2026-05-31T01:03:00.000Z",
+        },
+      ]);
+
+      const weakTopics = await findWeakTopicStats(appDb.db, "user-1");
+
+      expect(weakTopics.map((topic) => topic.topicKey)).toEqual([
+        "database",
+        "network",
       ]);
     } finally {
       appDb.close();

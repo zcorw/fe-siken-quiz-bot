@@ -1,4 +1,4 @@
-import { and, eq, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lt, lte, sql } from "drizzle-orm";
 import type { AppDrizzleDb } from "../client";
 import {
   answerRecords,
@@ -56,6 +56,7 @@ export interface SubmitQuizSessionSummary {
 }
 
 export type QuizSession = typeof quizSessions.$inferSelect;
+export type UserTopicStat = typeof userTopicStats.$inferSelect;
 
 function serializeJson(value: JsonValue): string {
   return JSON.stringify(value);
@@ -175,6 +176,28 @@ export async function deletePurgeableUnsubmittedSessions(
 
     return purgeableSessionIds.length;
   });
+}
+
+export async function findWeakTopicStats(
+  appDb: AppDrizzleDb,
+  userId: string
+): Promise<UserTopicStat[]> {
+  return appDb
+    .select()
+    .from(userTopicStats)
+    .where(
+      and(
+        eq(userTopicStats.userId, userId),
+        lt(userTopicStats.accuracy, 0.6),
+        gte(userTopicStats.attemptCount, 3)
+      )
+    )
+    .orderBy(
+      asc(userTopicStats.accuracy),
+      asc(userTopicStats.topicType),
+      asc(userTopicStats.topicKey)
+    )
+    .all();
 }
 
 function validateSubmitAnswers(answers: SubmitQuizSessionAnswerInput[]): void {
