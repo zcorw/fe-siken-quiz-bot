@@ -12,12 +12,22 @@ export type CreateQuizSessionFunction = (input: {
   rawScopeInput: string;
   matchedScope: ScopeParseResult;
 }) => Promise<{ token: string }>;
+export type LogScopeParseFunction = (input: {
+  rawScopeInput: string;
+  result: ScopeParseResult;
+}) => Promise<unknown>;
+
+export interface BotLogger {
+  error(payload: unknown, message: string): void;
+}
 
 export interface HandleScopeMessageOptions {
   ctx: ScopeMessageContext;
   parseScope: ScopeParseFunction;
   createQuizSession?: CreateQuizSessionFunction;
   publicBaseUrl?: string;
+  logScopeParse?: LogScopeParseFunction;
+  logger?: BotLogger;
 }
 
 export async function handleScopeMessage({
@@ -25,6 +35,8 @@ export async function handleScopeMessage({
   parseScope,
   createQuizSession,
   publicBaseUrl,
+  logScopeParse,
+  logger,
 }: HandleScopeMessageOptions): Promise<void> {
   const text = ctx.message?.text?.trim();
 
@@ -32,7 +44,18 @@ export async function handleScopeMessage({
     return;
   }
 
-  const result = await parseScope(text);
+  let result: ScopeParseResult;
+
+  try {
+    result = await parseScope(text);
+    await logScopeParse?.({ rawScopeInput: text, result });
+  } catch (error) {
+    logger?.error({ error }, "Bot scope handling failed");
+    await ctx.reply(
+      "処理中にエラーが発生しました。少し時間をおいて再度お試しください。"
+    );
+    return;
+  }
 
   if (result.status === "matched") {
     const session = await createQuizSession?.({

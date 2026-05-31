@@ -70,6 +70,49 @@ describe("handleScopeMessage", () => {
     );
   });
 
+  it("records the scope parse result after parsing", async () => {
+    const parseResult = {
+      matchedCategories: [],
+      matchedTopics: ["データベース"],
+      method: "alias",
+      status: "matched" as const,
+      suggestions: [],
+    };
+    const logScopeParse = vi.fn().mockResolvedValue(undefined);
+
+    await handleScopeMessage({
+      ctx: { message: { text: "数据库" }, reply: vi.fn() },
+      parseScope: vi.fn().mockResolvedValue(parseResult),
+      createQuizSession: vi.fn().mockResolvedValue({ token: "token-1" }),
+      logScopeParse,
+    });
+
+    expect(logScopeParse).toHaveBeenCalledWith({
+      rawScopeInput: "数据库",
+      result: parseResult,
+    });
+  });
+
+  it("logs bot errors and replies with a generic failure message", async () => {
+    const logger = { error: vi.fn() };
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const error = new Error("parse failed");
+
+    await handleScopeMessage({
+      ctx: { message: { text: "数据库" }, reply },
+      parseScope: vi.fn().mockRejectedValue(error),
+      logger,
+    });
+
+    expect(logger.error).toHaveBeenCalledWith(
+      { error },
+      "Bot scope handling failed"
+    );
+    expect(reply).toHaveBeenCalledWith(
+      "処理中にエラーが発生しました。少し時間をおいて再度お試しください。"
+    );
+  });
+
   it("ignores commands so only /start and /help command handlers process them", async () => {
     const parseScope = vi.fn();
 

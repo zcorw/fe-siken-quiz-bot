@@ -22,7 +22,7 @@
 - [x] P0-BOT-08 匹配成功时创建或更新 Telegram user。
 - [x] P0-BOT-09 调用选题服务创建 20 题 session/token。
 - [x] P0-BOT-10 返回 `/quiz/{token}` 链接。
-- [ ] P1-BOT-11 记录 scope parse log 和 bot 错误日志。
+- [x] P1-BOT-11 记录 scope parse log 和 bot 错误日志。
 - [ ] P1-BOT-12 编写 webhook tests：secret 失败、start/help、文本成功、文本无匹配。
 
 ## 推荐使用的成熟工具 / 库
