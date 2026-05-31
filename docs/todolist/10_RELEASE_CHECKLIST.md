@@ -29,7 +29,7 @@
 - [x] P0-RC-09 移动端和 PC 端结果页均展示原题、全部选项、用户答案、正确答案、解析、URL。
 - [x] P0-RC-10 Telegram webhook secret 校验通过。
 - [x] P0-RC-11 Docker Compose 可 build 和启动。
-- [ ] P0-RC-12 外部 Nginx 示例配置已写入文档。
+- [x] P0-RC-12 外部 Nginx 示例配置已写入文档。
 - [ ] P1-RC-13 备份脚本可手动运行并生成备份。
 - [ ] P1-RC-14 token 过期和 invalid token 页面日文提示正确。
 - [ ] P1-RC-15 OpenAI 不可用时 Bot 有可理解的日文错误消息。
