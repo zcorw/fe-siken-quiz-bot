@@ -15,7 +15,7 @@
 - [x] P0-DB-03 生成并提交 Drizzle migration。
 - [x] P0-DB-04 初始化 `app.sqlite` 时启用 WAL。
 - [x] P0-DB-05 实现题库查询：按 `exam_part = 科目A`、category、topic、url 查询候选题。
-- [ ] P0-DB-06 实现题目详情查询：从 `question_details` 读取题干、选项、答案、解析、图片引用。
+- [x] P0-DB-06 实现题目详情查询：从 `question_details` 读取题干、选项、答案、解析、图片引用。
 - [ ] P0-DB-07 实现 session 创建事务：写入 session 和 20 条 session questions。
 - [ ] P0-DB-08 实现首次提交事务：校验状态、写 `answer_records`、更新 session summary、更新 question/topic stats。
 - [ ] P0-DB-09 实现重复提交幂等读取：已提交时不写历史，返回首次结果。
