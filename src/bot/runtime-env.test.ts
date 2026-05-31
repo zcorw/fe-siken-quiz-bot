@@ -11,24 +11,33 @@ describe("readBotRuntimeEnv", () => {
       readBotRuntimeEnv({
         BOT_HOST: "127.0.0.1",
         BOT_PORT: "3901",
+        APP_CONFIG_PATH: "/app/config/app.yaml",
+        OPENAI_API_KEY: "test-openai-key",
+        PUBLIC_BASE_URL: "https://example.test",
         TELEGRAM_BOT_TOKEN: "123:test-token",
         TELEGRAM_WEBHOOK_HEADER_SECRET: "header-secret",
         TELEGRAM_WEBHOOK_PATH_PREFIX: "/telegram/webhook",
         TELEGRAM_WEBHOOK_PATH_SECRET: "path-secret",
       })
     ).toEqual({
+      appConfigPath: "/app/config/app.yaml",
       botToken: "123:test-token",
       headerSecret: "header-secret",
       host: "127.0.0.1",
+      openAiApiKey: "test-openai-key",
       pathPrefix: "/telegram/webhook",
       pathSecret: "path-secret",
       port: 3901,
+      publicBaseUrl: "https://example.test",
     });
   });
 
   it("uses Docker-friendly defaults for host, port, and path prefix", () => {
     expect(
       readBotRuntimeEnv({
+        APP_CONFIG_PATH: "/app/config/app.yaml",
+        OPENAI_API_KEY: "test-openai-key",
+        PUBLIC_BASE_URL: "https://example.test",
         TELEGRAM_BOT_TOKEN: "123:test-token",
         TELEGRAM_WEBHOOK_HEADER_SECRET: "header-secret",
         TELEGRAM_WEBHOOK_PATH_SECRET: "path-secret",
@@ -41,8 +50,6 @@ describe("readBotRuntimeEnv", () => {
   });
 
   it("rejects missing required secrets", () => {
-    expect(() => readBotRuntimeEnv({})).toThrow(
-      "TELEGRAM_BOT_TOKEN is required"
-    );
+    expect(() => readBotRuntimeEnv({})).toThrow("APP_CONFIG_PATH is required");
   });
 });

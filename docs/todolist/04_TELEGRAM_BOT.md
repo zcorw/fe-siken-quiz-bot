@@ -24,6 +24,7 @@
 - [x] P0-BOT-10 返回 `/quiz/{token}` 链接。
 - [x] P1-BOT-11 记录 scope parse log 和 bot 错误日志。
 - [x] P1-BOT-12 编写 webhook tests：secret 失败、start/help、文本成功、文本无匹配。
+- [x] P0-BOT-13 将运行时 Bot 普通文本消息接入 scope parse、session 创建和 `/quiz/{token}` 回复流程。
 
 ## 推荐使用的成熟工具 / 库
 

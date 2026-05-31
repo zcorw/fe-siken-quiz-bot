@@ -1,16 +1,28 @@
 /**
  * @vitest-environment node
  */
-import { Bot } from "grammy";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { createTelegramBot } from "./telegram-bot";
+import {
+  registerTelegramBotHandlers,
+  type TelegramBotRegistrationTarget,
+} from "./telegram-bot";
 
-describe("createTelegramBot", () => {
-  it("creates a grammY bot with the configured token", () => {
-    const bot = createTelegramBot({ token: "123:test-token" });
+describe("registerTelegramBotHandlers", () => {
+  it("registers commands and text scope handling", () => {
+    const target = {
+      command: vi.fn(),
+      on: vi.fn(),
+    };
+    const handleTextMessage = vi.fn();
 
-    expect(bot).toBeInstanceOf(Bot);
-    expect(bot.token).toBe("123:test-token");
+    registerTelegramBotHandlers(
+      target as unknown as TelegramBotRegistrationTarget,
+      { handleTextMessage }
+    );
+
+    expect(target.command).toHaveBeenCalledWith("start", expect.any(Function));
+    expect(target.command).toHaveBeenCalledWith("help", expect.any(Function));
+    expect(target.on).toHaveBeenCalledWith("message:text", handleTextMessage);
   });
 });
