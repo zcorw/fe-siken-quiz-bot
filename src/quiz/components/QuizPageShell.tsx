@@ -1,3 +1,4 @@
+import type { SubmitQuizRequestDto } from "../api-schemas";
 import type { QuizPageState } from "../client/page-state";
 import { QuizActiveView } from "./QuizActiveView";
 import { QuizResultView } from "./QuizResultView";
@@ -9,10 +10,11 @@ const text = {
 };
 
 type QuizPageShellProps = {
+  onSubmitAnswers?: (request: SubmitQuizRequestDto) => Promise<void>;
   state: QuizPageState;
 };
 
-export function QuizPageShell({ state }: QuizPageShellProps) {
+export function QuizPageShell({ onSubmitAnswers, state }: QuizPageShellProps) {
   if (state.status === "loading") {
     return (
       <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
@@ -56,7 +58,7 @@ export function QuizPageShell({ state }: QuizPageShellProps) {
   if (state.status === "active") {
     return (
       <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
-        <QuizActiveView quiz={state.quiz} />
+        <QuizActiveView onSubmitAnswers={onSubmitAnswers} quiz={state.quiz} />
       </main>
     );
   }

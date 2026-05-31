@@ -4,8 +4,13 @@ import { useEffect, useState } from "react";
 import {
   fetchQuiz,
   QuizApiClientError,
+  submitQuiz,
   type QuizResponseDto,
 } from "../client/api";
+import type {
+  SubmitQuizRequestDto,
+  SubmittedQuizResponseDto,
+} from "../api-schemas";
 import {
   createQuizPageErrorState,
   createQuizPageReadyState,
@@ -17,11 +22,16 @@ import { QuizPageShell } from "./QuizPageShell";
 type QuizPageClientProps = {
   token: string;
   loadQuiz?: (token: string) => Promise<QuizResponseDto>;
+  submitAnswers?: (
+    token: string,
+    request: SubmitQuizRequestDto
+  ) => Promise<SubmittedQuizResponseDto>;
 };
 
 export function QuizPageClient({
   token,
   loadQuiz = fetchQuiz,
+  submitAnswers = submitQuiz,
 }: QuizPageClientProps) {
   const [state, setState] = useState<QuizPageState>(initialQuizPageState);
 
@@ -56,5 +66,10 @@ export function QuizPageClient({
     };
   }, [loadQuiz, token]);
 
-  return <QuizPageShell state={state} />;
+  async function handleSubmitAnswers(request: SubmitQuizRequestDto) {
+    const submittedQuiz = await submitAnswers(token, request);
+    setState(createQuizPageReadyState(submittedQuiz));
+  }
+
+  return <QuizPageShell onSubmitAnswers={handleSubmitAnswers} state={state} />;
 }

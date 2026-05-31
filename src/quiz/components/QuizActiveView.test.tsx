@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ActiveQuizResponseDto } from "../api-schemas";
 import { QuizActiveView } from "./QuizActiveView";
 
@@ -49,5 +49,24 @@ describe("QuizActiveView", () => {
 
     expect(screen.getByText("問2の本文")).toBeInTheDocument();
     expect(screen.getByText("問題 2")).toBeInTheDocument();
+  });
+
+  it("submits all selected answers after every question is answered", async () => {
+    const onSubmitAnswers = vi.fn().mockResolvedValue(undefined);
+    render(<QuizActiveView onSubmitAnswers={onSubmitAnswers} quiz={quiz} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "ア 選択肢A" }));
+    fireEvent.click(screen.getByRole("button", { name: "次へ" }));
+    fireEvent.click(screen.getByRole("button", { name: "ア 選択肢A" }));
+    fireEvent.click(screen.getByRole("button", { name: "提出する" }));
+
+    await waitFor(() => {
+      expect(onSubmitAnswers).toHaveBeenCalledWith({
+        answers: [
+          { questionIndex: 1, selectedAnswer: "ア" },
+          { questionIndex: 2, selectedAnswer: "ア" },
+        ],
+      });
+    });
   });
 });

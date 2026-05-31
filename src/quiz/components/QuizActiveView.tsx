@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import type { ActiveQuizResponseDto } from "../api-schemas";
+import type { SubmitQuizRequestDto } from "../api-schemas";
 import { useQuizAnswers } from "../client/use-quiz-answers";
 import { useQuestionCursor } from "../client/use-question-cursor";
 import { DesktopQuestionSidebar } from "./DesktopQuestionSidebar";
@@ -13,10 +15,14 @@ import { SubmitQuizButton } from "./SubmitQuizButton";
 
 type QuizActiveViewProps = {
   quiz: ActiveQuizResponseDto;
+  onSubmitAnswers?: (request: SubmitQuizRequestDto) => Promise<void>;
 };
 
-export function QuizActiveView({ quiz }: QuizActiveViewProps) {
-  const { answers, answeredCount, selectAnswer } = useQuizAnswers(quiz.token);
+export function QuizActiveView({ onSubmitAnswers, quiz }: QuizActiveViewProps) {
+  const [submitting, setSubmitting] = useState(false);
+  const { answers, answeredCount, clearAnswers, selectAnswer } = useQuizAnswers(
+    quiz.token
+  );
   const { currentQuestionIndex, goNext, goPrevious, goToQuestion } =
     useQuestionCursor(quiz.totalQuestions);
   const currentQuestion =
@@ -26,6 +32,25 @@ export function QuizActiveView({ quiz }: QuizActiveViewProps) {
     quiz.questions[0] ??
     null;
   const answeredQuestionIndexes = Object.keys(answers).map(Number);
+
+  async function handleSubmit() {
+    if (onSubmitAnswers === undefined) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await onSubmitAnswers({
+        answers: quiz.questions.map((question) => ({
+          questionIndex: question.index,
+          selectedAnswer: answers[question.index] ?? "",
+        })),
+      });
+      clearAnswers();
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <div className="mx-auto flex max-w-6xl gap-8">
@@ -71,8 +96,8 @@ export function QuizActiveView({ quiz }: QuizActiveViewProps) {
         />
         <SubmitQuizButton
           answeredCount={answeredCount}
-          onSubmit={() => undefined}
-          submitting={false}
+          onSubmit={handleSubmit}
+          submitting={submitting}
           totalQuestions={quiz.totalQuestions}
         />
       </section>
