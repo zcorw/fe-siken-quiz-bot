@@ -9,7 +9,6 @@ const labels = {
   question: "\u554f\u984c 1",
   progress: "\u89e3\u7b54\u6e08\u307f 0 / 20",
   result: "\u7d50\u679c",
-  accuracy: "\u6b63\u7b54\u7387 70%",
   expired:
     "\u3053\u306e\u30ea\u30f3\u30af\u306f\u671f\u9650\u5207\u308c\u3067\u3059",
   telegram:
@@ -85,7 +84,8 @@ describe("QuizPageShell", () => {
     expect(
       screen.getByRole("heading", { name: labels.result })
     ).toBeInTheDocument();
-    expect(screen.getByText(labels.accuracy)).toBeInTheDocument();
+    expect(screen.getByText("\u6b63\u7b54\u7387")).toBeInTheDocument();
+    expect(screen.getByText("70%")).toBeInTheDocument();
   });
 
   it.each([

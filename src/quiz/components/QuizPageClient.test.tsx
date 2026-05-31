@@ -71,6 +71,7 @@ describe("QuizPageClient", () => {
       expect(screen.getByTestId("quiz-result-view")).toBeInTheDocument();
     });
     expect(screen.getByRole("heading", { name: "結果" })).toBeInTheDocument();
-    expect(screen.getByText("正答率 100%")).toBeInTheDocument();
+    expect(screen.getByText("正答率")).toBeInTheDocument();
+    expect(screen.getByText("100%")).toBeInTheDocument();
   });
 });
