@@ -115,6 +115,12 @@ describe("QuizResultView", () => {
         name: "\u30a4 \u9078\u629e\u80a2B",
       })
     ).toHaveAttribute("data-state", "correct");
+    expect(
+      within(mobile).queryByRole("button", { name: "提出する" })
+    ).not.toBeInTheDocument();
+    expect(
+      within(mobile).getByText("提出済み・解答はロックされています")
+    ).toBeInTheDocument();
   });
 
   it("renders desktop result with all question statuses and selected detail", () => {

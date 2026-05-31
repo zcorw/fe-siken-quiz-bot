@@ -26,6 +26,11 @@ export function QuizResultView({ quiz }: QuizResultViewProps) {
     >
       <h1 className="text-2xl font-semibold">{"\u7d50\u679c"}</h1>
       <div className="space-y-4 lg:hidden" data-testid="mobile-result-view">
+        <p className="rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-600">
+          {
+            "\u63d0\u51fa\u6e08\u307f\u30fb\u89e3\u7b54\u306f\u30ed\u30c3\u30af\u3055\u308c\u3066\u3044\u307e\u3059"
+          }
+        </p>
         <section className="rounded-lg bg-white p-5 shadow-sm">
           <p className="text-sm text-slate-600">{"\u6b63\u7b54\u7387"}</p>
           <p className="mt-3 text-4xl font-semibold">
