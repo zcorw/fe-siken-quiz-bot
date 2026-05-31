@@ -2,7 +2,11 @@ import OpenAI from "openai";
 import { z } from "zod";
 
 import type { AppConfig } from "@/config/schema";
-import type { ScopeParseResult } from "@/quiz/scope-match";
+import {
+  parseLocalScope,
+  type QuestionBankKeywordIndex,
+  type ScopeParseResult,
+} from "@/quiz/scope-match";
 
 interface OpenAIResponseCreateParams {
   model: string;
@@ -39,6 +43,11 @@ export interface ParseScopeWithOpenAIInput {
   availableScope: AvailableScopeForAI;
 }
 
+export interface ParseScopeInput extends ParseScopeWithOpenAIInput {
+  topicsConfig: AppConfig["topics"];
+  questionBankKeywords: QuestionBankKeywordIndex;
+}
+
 const openAIScopeParseResultSchema = z.strictObject({
   matchedTopics: z.array(z.string()),
   matchedCategories: z.array(z.string()),
@@ -68,6 +77,33 @@ const scopeParseJsonSchema = {
 
 export function createOpenAIScopeClient(apiKey: string): OpenAIScopeClient {
   return new OpenAI({ apiKey });
+}
+
+export async function parseScope(
+  input: ParseScopeInput
+): Promise<ScopeParseResult> {
+  const localResult = parseLocalScope(
+    input.input,
+    input.topicsConfig,
+    input.questionBankKeywords,
+    input.aiConfig.max_suggestions
+  );
+
+  if (localResult.status === "matched") {
+    return localResult;
+  }
+
+  try {
+    return await parseScopeWithOpenAI(input);
+  } catch {
+    return {
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "openai_unavailable",
+      status: "ai_unavailable",
+      suggestions: [],
+    };
+  }
 }
 
 export async function parseScopeWithOpenAI({

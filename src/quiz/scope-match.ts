@@ -44,8 +44,9 @@ export type ScopeParseMethod =
   | "alias"
   | "question_bank_keyword"
   | "openai"
+  | "openai_unavailable"
   | "none";
-export type ScopeParseStatus = "matched" | "no_match";
+export type ScopeParseStatus = "matched" | "no_match" | "ai_unavailable";
 
 export interface ScopeParseResult {
   matchedTopics: string[];

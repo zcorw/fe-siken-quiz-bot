@@ -4,7 +4,11 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { AppConfig } from "@/config/schema";
-import { createOpenAIScopeClient, parseScopeWithOpenAI } from "./scope-parser";
+import {
+  createOpenAIScopeClient,
+  parseScope,
+  parseScopeWithOpenAI,
+} from "./scope-parser";
 
 const aiConfig: AppConfig["ai"] = {
   provider: "openai",
@@ -126,6 +130,58 @@ describe("parseScopeWithOpenAI", () => {
     expect(userMessage).toContain("Do not create questions.");
     expect(userMessage).toContain("Do not rewrite question text.");
     expect(userMessage).toContain("Do not answer or explain exam questions.");
+  });
+});
+
+describe("parseScope", () => {
+  it("returns local matches without calling OpenAI", async () => {
+    const create = vi.fn();
+
+    const result = await parseScope({
+      input: "DB",
+      topicsConfig: {
+        standard_topics: ["データベース"],
+        high_weight_topics: ["データベース"],
+        aliases: { データベース: ["DB"] },
+        standard_topic_mappings: {},
+      },
+      questionBankKeywords: { categories: [], topics: ["データベース"] },
+      aiConfig,
+      availableScope,
+      client: { responses: { create } },
+    });
+
+    expect(result.status).toBe("matched");
+    expect(result.method).toBe("alias");
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("returns ai_unavailable when local matching fails and OpenAI fallback rejects", async () => {
+    const result = await parseScope({
+      input: "unknown",
+      topicsConfig: {
+        standard_topics: ["データベース"],
+        high_weight_topics: ["データベース"],
+        aliases: { データベース: ["DB"] },
+        standard_topic_mappings: {},
+      },
+      questionBankKeywords: { categories: [], topics: ["データベース"] },
+      aiConfig,
+      availableScope,
+      client: {
+        responses: {
+          create: vi.fn().mockRejectedValue(new Error("network down")),
+        },
+      },
+    });
+
+    expect(result).toEqual({
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "openai_unavailable",
+      status: "ai_unavailable",
+      suggestions: [],
+    });
   });
 });
 
