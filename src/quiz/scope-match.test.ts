@@ -5,6 +5,7 @@ import {
   matchQuestionBankKeywords,
   matchTopicAlias,
   normalizeScopeText,
+  parseLocalScope,
 } from "./scope-match";
 
 const topicsConfig: AppConfig["topics"] = {
@@ -76,5 +77,50 @@ describe("matchQuestionBankKeywords", () => {
       matchedCategories: [],
       matchedTopics: [],
     });
+  });
+});
+
+describe("parseLocalScope", () => {
+  const questionBankKeywords = {
+    categories: ["テクノロジ系", "マネジメント系"],
+    topics: ["ネットワーク", "データベース", "プロジェクトマネジメント"],
+  };
+
+  it("returns a matched alias parse result before question bank keywords", () => {
+    expect(parseLocalScope("DB", topicsConfig, questionBankKeywords)).toEqual({
+      matchedCategories: [],
+      matchedTopics: ["データベース"],
+      method: "alias",
+      status: "matched",
+      suggestions: [],
+    });
+  });
+
+  it("returns a question bank keyword parse result when aliases do not match", () => {
+    expect(
+      parseLocalScope(
+        "プロジェクトマネジメント",
+        topicsConfig,
+        questionBankKeywords
+      )
+    ).toEqual({
+      matchedCategories: [],
+      matchedTopics: ["プロジェクトマネジメント"],
+      method: "question_bank_keyword",
+      status: "matched",
+      suggestions: [],
+    });
+  });
+
+  it("returns no_match with the complete result shape when local matching fails", () => {
+    expect(parseLocalScope("法務", topicsConfig, questionBankKeywords)).toEqual(
+      {
+        matchedCategories: [],
+        matchedTopics: [],
+        method: "none",
+        status: "no_match",
+        suggestions: [],
+      }
+    );
   });
 });

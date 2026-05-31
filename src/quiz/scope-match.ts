@@ -38,6 +38,17 @@ export interface QuestionBankKeywordMatch {
   matchedTopics: string[];
 }
 
+export type ScopeParseMethod = "alias" | "question_bank_keyword" | "none";
+export type ScopeParseStatus = "matched" | "no_match";
+
+export interface ScopeParseResult {
+  matchedTopics: string[];
+  matchedCategories: string[];
+  suggestions: string[];
+  method: ScopeParseMethod;
+  status: ScopeParseStatus;
+}
+
 export function matchQuestionBankKeywords(
   input: string,
   keywords: QuestionBankKeywordIndex
@@ -47,6 +58,46 @@ export function matchQuestionBankKeywords(
   return {
     matchedCategories: matchKeywords(normalizedInput, keywords.categories),
     matchedTopics: matchKeywords(normalizedInput, keywords.topics),
+  };
+}
+
+export function parseLocalScope(
+  input: string,
+  topicsConfig: AppConfig["topics"],
+  keywords: QuestionBankKeywordIndex
+): ScopeParseResult {
+  const matchedAliasTopics = matchTopicAlias(input, topicsConfig);
+
+  if (matchedAliasTopics.length > 0) {
+    return {
+      matchedCategories: [],
+      matchedTopics: matchedAliasTopics,
+      method: "alias",
+      status: "matched",
+      suggestions: [],
+    };
+  }
+
+  const keywordMatch = matchQuestionBankKeywords(input, keywords);
+
+  if (
+    keywordMatch.matchedCategories.length > 0 ||
+    keywordMatch.matchedTopics.length > 0
+  ) {
+    return {
+      ...keywordMatch,
+      method: "question_bank_keyword",
+      status: "matched",
+      suggestions: [],
+    };
+  }
+
+  return {
+    matchedCategories: [],
+    matchedTopics: [],
+    method: "none",
+    status: "no_match",
+    suggestions: [],
   };
 }
 
