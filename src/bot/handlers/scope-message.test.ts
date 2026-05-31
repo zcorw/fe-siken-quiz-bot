@@ -47,6 +47,29 @@ describe("handleScopeMessage", () => {
     });
   });
 
+  it("replies with a quiz URL after session creation", async () => {
+    const parseScope = vi.fn().mockResolvedValue({
+      matchedCategories: [],
+      matchedTopics: ["データベース"],
+      method: "alias",
+      status: "matched",
+      suggestions: [],
+    });
+    const createQuizSession = vi.fn().mockResolvedValue({ token: "token-1" });
+    const reply = vi.fn().mockResolvedValue(undefined);
+
+    await handleScopeMessage({
+      ctx: { message: { text: "数据库" }, reply },
+      parseScope,
+      createQuizSession,
+      publicBaseUrl: "https://example.test",
+    });
+
+    expect(reply).toHaveBeenCalledWith(
+      "演習を作成しました。\nhttps://example.test/quiz/token-1"
+    );
+  });
+
   it("ignores commands so only /start and /help command handlers process them", async () => {
     const parseScope = vi.fn();
 

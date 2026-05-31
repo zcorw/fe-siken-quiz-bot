@@ -11,18 +11,20 @@ export type ScopeParseFunction = (input: string) => Promise<ScopeParseResult>;
 export type CreateQuizSessionFunction = (input: {
   rawScopeInput: string;
   matchedScope: ScopeParseResult;
-}) => Promise<unknown>;
+}) => Promise<{ token: string }>;
 
 export interface HandleScopeMessageOptions {
   ctx: ScopeMessageContext;
   parseScope: ScopeParseFunction;
   createQuizSession?: CreateQuizSessionFunction;
+  publicBaseUrl?: string;
 }
 
 export async function handleScopeMessage({
   ctx,
   parseScope,
   createQuizSession,
+  publicBaseUrl,
 }: HandleScopeMessageOptions): Promise<void> {
   const text = ctx.message?.text?.trim();
 
@@ -33,10 +35,16 @@ export async function handleScopeMessage({
   const result = await parseScope(text);
 
   if (result.status === "matched") {
-    await createQuizSession?.({
+    const session = await createQuizSession?.({
       matchedScope: result,
       rawScopeInput: text,
     });
+
+    if (session !== undefined && publicBaseUrl !== undefined) {
+      await ctx.reply(
+        `演習を作成しました。\n${publicBaseUrl.replace(/\/$/, "")}/quiz/${session.token}`
+      );
+    }
     return;
   }
 
