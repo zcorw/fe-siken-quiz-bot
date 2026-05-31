@@ -1,0 +1,48 @@
+services:
+  edge:
+    image: nginx:1.27-alpine
+    depends_on:
+      - bot
+      - web
+    ports:
+      - "${EDGE_HOST:-127.0.0.1}:${EDGE_PORT:-3100}:8080"
+    restart: unless-stopped
+    volumes:
+      - ./nginx/edge.conf:/etc/nginx/conf.d/default.conf:ro
+
+  web:
+    build:
+      context: ..
+      dockerfile: Dockerfile.web
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      APP_CONFIG_PATH: /app/config/app.yaml
+      APP_DB_PATH: /app/data/app.sqlite
+      QUESTION_DB_PATH: /app/data/fe_siken_questions.sqlite
+    restart: unless-stopped
+    volumes:
+      - ../assets:/app/public/assets:ro
+      - ../config:/app/config:ro
+      - ../data:/app/data
+
+  bot:
+    build:
+      context: ..
+      dockerfile: Dockerfile.bot
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      APP_CONFIG_PATH: /app/config/app.yaml
+      APP_DB_PATH: /app/data/app.sqlite
+      BOT_HOST: 0.0.0.0
+      BOT_PORT: 3001
+      QUESTION_DB_PATH: /app/data/fe_siken_questions.sqlite
+      TELEGRAM_WEBHOOK_PATH_PREFIX: /telegram/webhook
+    restart: unless-stopped
+    volumes:
+      - ../assets:/app/assets:ro
+      - ../config:/app/config:ro
+      - ../data:/app/data
