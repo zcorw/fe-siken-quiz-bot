@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { SubmittedQuizResponseDto } from "../api-schemas";
+import { OptionButton } from "./OptionButton";
 
 type QuizResultViewProps = {
   quiz: SubmittedQuizResponseDto;
@@ -109,7 +110,10 @@ type SubmittedQuestion = SubmittedQuizResponseDto["questions"][number];
 
 function ExplanationDetail({ question }: { question: SubmittedQuestion }) {
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4"
+      data-testid={`explanation-detail-${question.index}`}
+    >
       <h2 className="font-semibold">
         {"\u554f\u984c "}
         {question.index}
@@ -120,11 +124,25 @@ function ExplanationDetail({ question }: { question: SubmittedQuestion }) {
         </p>
       ) : null}
       <div className="space-y-2">
-        {question.choices.map((choice) => (
-          <p className="text-sm text-slate-700" key={choice.label}>
-            {choice.label} {choice.text}
-          </p>
-        ))}
+        {question.choices.map((choice) => {
+          const resultState =
+            choice.label === question.correctAnswer
+              ? "correct"
+              : choice.label === question.selectedAnswer
+                ? "incorrect"
+                : undefined;
+
+          return (
+            <OptionButton
+              key={choice.label}
+              label={choice.label}
+              onSelect={() => undefined}
+              resultState={resultState}
+              selected={choice.label === question.selectedAnswer}
+              text={choice.text}
+            />
+          );
+        })}
       </div>
       <div className="rounded-lg bg-slate-50 p-3 text-sm">
         <p>

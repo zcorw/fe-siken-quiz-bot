@@ -88,7 +88,9 @@ describe("QuizResultView", () => {
     ).toBeInTheDocument();
     expect(within(mobile).getByText("問題 2")).toBeInTheDocument();
     expect(within(mobile).getByText("問2の本文")).toBeInTheDocument();
-    expect(within(mobile).getByText("イ 選択肢B")).toBeInTheDocument();
+    expect(
+      within(mobile).getByRole("button", { name: "イ 選択肢B" })
+    ).toBeInTheDocument();
     expect(
       within(mobile).getAllByText("あなたの解答: ア").length
     ).toBeGreaterThan(0);
@@ -102,6 +104,17 @@ describe("QuizResultView", () => {
       "href",
       "https://www.fe-siken.com/kakomon/sample/q2.html"
     );
+    const question2 = within(mobile).getByTestId("explanation-detail-2");
+    expect(
+      within(question2).getByRole("button", {
+        name: "\u30a2 \u9078\u629e\u80a2A",
+      })
+    ).toHaveAttribute("data-state", "incorrect");
+    expect(
+      within(question2).getByRole("button", {
+        name: "\u30a4 \u9078\u629e\u80a2B",
+      })
+    ).toHaveAttribute("data-state", "correct");
   });
 
   it("renders desktop result with all question statuses and selected detail", () => {
