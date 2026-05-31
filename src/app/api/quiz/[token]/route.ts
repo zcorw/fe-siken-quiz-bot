@@ -32,7 +32,7 @@ export async function GET(
     }
 
     return jsonError(
-      new ApiError("INVALID_TOKEN", 500, "Failed to load quiz.")
+      new ApiError("QUIZ_LOAD_FAILED", 500, "Failed to load quiz.")
     );
   } finally {
     appDb.close();

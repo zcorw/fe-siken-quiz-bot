@@ -87,7 +87,7 @@ export async function loadQuizByToken({
 
         if (detail === null || answer === undefined) {
           throw new ApiError(
-            "INVALID_TOKEN",
+            "QUIZ_LOAD_FAILED",
             500,
             "Question result not found."
           );
@@ -121,7 +121,11 @@ export async function loadQuizByToken({
       const detail = getQuestionDetail(questionDb, sessionQuestion.questionUrl);
 
       if (detail === null) {
-        throw new ApiError("INVALID_TOKEN", 500, "Question detail not found.");
+        throw new ApiError(
+          "QUIZ_LOAD_FAILED",
+          500,
+          "Question detail not found."
+        );
       }
 
       return {

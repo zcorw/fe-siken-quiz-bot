@@ -15,6 +15,7 @@ import {
 } from "@/db/app/repositories/quiz-sessions";
 import { users } from "@/db/app/schema";
 import { loadQuizByToken } from "./quiz-service";
+import { ApiError } from "@/lib/api-response";
 
 const migrationsDir = path.join(process.cwd(), "drizzle");
 const tempDirs: string[] = [];
@@ -241,6 +242,117 @@ describe("loadQuizByToken", () => {
         { label: "ア", text: "選択肢ア" },
         { label: "イ", text: "選択肢イ" },
       ]);
+    } finally {
+      appDb.close();
+      questionDb.close();
+    }
+  });
+
+  it("maps missing tokens to INVALID_TOKEN", async () => {
+    const appDb = await createMigratedAppDb();
+    const questionDb = await createQuestionBankFixture();
+
+    try {
+      await expect(
+        loadQuizByToken({
+          appDb: appDb.db,
+          questionDb,
+          token: "missing",
+          nowIso: "2026-05-31T01:30:00.000Z",
+        })
+      ).rejects.toMatchObject({
+        code: "INVALID_TOKEN",
+        status: 404,
+      } satisfies Partial<ApiError>);
+    } finally {
+      appDb.close();
+      questionDb.close();
+    }
+  });
+
+  it("maps expired unsubmitted tokens to TOKEN_EXPIRED", async () => {
+    const appDb = await createMigratedAppDb();
+    const questionDb = await createQuestionBankFixture();
+
+    try {
+      await createQuizSession(appDb.db, {
+        id: "session-1",
+        token: "token-1",
+        userId: "user-1",
+        rawScopeInput: "database",
+        matchedScopeJson: { matchedTopics: ["データベース"] },
+        selectionSummaryJson: { requestedScopeCount: 15 },
+        createdAt: "2026-05-31T01:00:00.000Z",
+        expiresAt: "2026-05-31T01:10:00.000Z",
+        purgeAfterAt: "2026-07-07T01:00:00.000Z",
+        questions: Array.from({ length: 20 }, (_, index) => ({
+          id: `session-question-${index + 1}`,
+          questionUrl: `https://example.test/q${index + 1}.html`,
+          questionIndex: index + 1,
+          sourceType: "requested",
+          sourceTopic: "データベース",
+          sourceCategory: "テクノロジ系",
+          selectionReason: null,
+        })),
+      });
+
+      await expect(
+        loadQuizByToken({
+          appDb: appDb.db,
+          questionDb,
+          token: "token-1",
+          nowIso: "2026-05-31T01:30:00.000Z",
+        })
+      ).rejects.toMatchObject({
+        code: "TOKEN_EXPIRED",
+        status: 410,
+      } satisfies Partial<ApiError>);
+    } finally {
+      appDb.close();
+      questionDb.close();
+    }
+  });
+
+  it("maps missing question details to QUIZ_LOAD_FAILED", async () => {
+    const appDb = await createMigratedAppDb();
+    const questionDb = await createQuestionBankFixture();
+
+    try {
+      await createQuizSession(appDb.db, {
+        id: "session-1",
+        token: "token-1",
+        userId: "user-1",
+        rawScopeInput: "database",
+        matchedScopeJson: { matchedTopics: ["データベース"] },
+        selectionSummaryJson: { requestedScopeCount: 15 },
+        createdAt: "2026-05-31T01:00:00.000Z",
+        expiresAt: "2026-06-07T01:00:00.000Z",
+        purgeAfterAt: "2026-07-07T01:00:00.000Z",
+        questions: Array.from({ length: 20 }, (_, index) => ({
+          id: `session-question-${index + 1}`,
+          questionUrl:
+            index === 0
+              ? "https://example.test/missing.html"
+              : `https://example.test/q${index + 1}.html`,
+          questionIndex: index + 1,
+          sourceType: "requested",
+          sourceTopic: "データベース",
+          sourceCategory: "テクノロジ系",
+          selectionReason: null,
+        })),
+      });
+
+      await expect(
+        loadQuizByToken({
+          appDb: appDb.db,
+          questionDb,
+          token: "token-1",
+          nowIso: "2026-05-31T01:30:00.000Z",
+        })
+      ).rejects.toMatchObject({
+        code: "QUIZ_LOAD_FAILED",
+        status: 500,
+      } satisfies Partial<ApiError>);
     } finally {
       appDb.close();
       questionDb.close();

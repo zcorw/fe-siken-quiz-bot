@@ -66,6 +66,7 @@ export const submitQuizRequestSchema = z.strictObject({
 export const apiErrorCodeSchema = z.enum([
   "INVALID_TOKEN",
   "TOKEN_EXPIRED",
+  "QUIZ_LOAD_FAILED",
   "QUIZ_ALREADY_SUBMITTED",
   "INCOMPLETE_ANSWERS",
   "INVALID_ANSWER",
