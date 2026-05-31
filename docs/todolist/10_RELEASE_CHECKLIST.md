@@ -24,7 +24,7 @@
 - [x] P0-RC-04 `pnpm test:e2e` 通过。
 - [x] P0-RC-05 migration 可在空 `app.sqlite` 上执行。
 - [x] P0-RC-06 `GET /api/quiz/{token}` active 不返回答案、解析、URL。
-- [ ] P0-RC-07 `POST /api/quiz/{token}/submit` 首次提交写历史。
+- [x] P0-RC-07 `POST /api/quiz/{token}/submit` 首次提交写历史。
 - [ ] P0-RC-08 重复提交不更新历史。
 - [ ] P0-RC-09 移动端和 PC 端结果页均展示原题、全部选项、用户答案、正确答案、解析、URL。
 - [ ] P0-RC-10 Telegram webhook secret 校验通过。
