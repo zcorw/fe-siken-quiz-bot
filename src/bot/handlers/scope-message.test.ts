@@ -24,6 +24,29 @@ describe("handleScopeMessage", () => {
     expect(parseScope).toHaveBeenCalledWith("数据库");
   });
 
+  it("calls quiz session creation when scope parsing matches", async () => {
+    const parseResult = {
+      matchedCategories: [],
+      matchedTopics: ["データベース"],
+      method: "alias",
+      status: "matched" as const,
+      suggestions: [],
+    };
+    const parseScope = vi.fn().mockResolvedValue(parseResult);
+    const createQuizSession = vi.fn().mockResolvedValue({ token: "token-1" });
+
+    await handleScopeMessage({
+      ctx: { message: { text: "数据库" }, reply: vi.fn() },
+      parseScope,
+      createQuizSession,
+    });
+
+    expect(createQuizSession).toHaveBeenCalledWith({
+      matchedScope: parseResult,
+      rawScopeInput: "数据库",
+    });
+  });
+
   it("ignores commands so only /start and /help command handlers process them", async () => {
     const parseScope = vi.fn();
 

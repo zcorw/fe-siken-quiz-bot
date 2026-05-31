@@ -8,15 +8,21 @@ export interface ScopeMessageContext extends ReplyContext {
 }
 
 export type ScopeParseFunction = (input: string) => Promise<ScopeParseResult>;
+export type CreateQuizSessionFunction = (input: {
+  rawScopeInput: string;
+  matchedScope: ScopeParseResult;
+}) => Promise<unknown>;
 
 export interface HandleScopeMessageOptions {
   ctx: ScopeMessageContext;
   parseScope: ScopeParseFunction;
+  createQuizSession?: CreateQuizSessionFunction;
 }
 
 export async function handleScopeMessage({
   ctx,
   parseScope,
+  createQuizSession,
 }: HandleScopeMessageOptions): Promise<void> {
   const text = ctx.message?.text?.trim();
 
@@ -25,6 +31,14 @@ export async function handleScopeMessage({
   }
 
   const result = await parseScope(text);
+
+  if (result.status === "matched") {
+    await createQuizSession?.({
+      matchedScope: result,
+      rawScopeInput: text,
+    });
+    return;
+  }
 
   if (result.status === "no_match") {
     if (result.suggestions.length > 0) {
