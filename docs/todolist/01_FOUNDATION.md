@@ -11,7 +11,7 @@
 ## 具体任务列表
 
 - [x] P0-FD-01 初始化 Next.js + TypeScript 项目，采用 App Router。
-- [ ] P0-FD-02 配置 ESLint、Prettier、TypeScript strict mode。
+- [x] P0-FD-02 配置 ESLint、Prettier、TypeScript strict mode。
 - [ ] P0-FD-03 安装并配置 Vitest、Testing Library、Playwright。
 - [ ] P0-FD-04 建立目录：`src/config`、`src/db`、`src/quiz`、`src/bot`、`src/ai`、`src/markdown`、`src/lib`。
 - [ ] P0-FD-05 创建 `config/app.yaml` 示例文件，覆盖 quiz、topics、ai、telegram、deployment 基础字段。

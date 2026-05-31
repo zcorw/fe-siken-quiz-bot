@@ -1,0 +1,14 @@
+.next
+node_modules
+out
+build
+dist
+coverage
+playwright-report
+test-results
+.vercel
+docs
+pnpm-lock.yaml
+pnpm-workspace.yaml
+next-env.d.ts
+tsconfig.tsbuildinfo
