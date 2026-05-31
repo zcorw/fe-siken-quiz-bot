@@ -6,7 +6,8 @@ import { QuizPageShell } from "./QuizPageShell";
 const labels = {
   loading: "\u8aad\u307f\u8fbc\u307f\u4e2d",
   title: "\u79d1\u76eeA \u6f14\u7fd2",
-  progress: "\u554f\u984c 1 / 20",
+  question: "\u554f\u984c 1",
+  progress: "\u89e3\u7b54\u6e08\u307f 0 / 20",
   result: "\u7d50\u679c",
   accuracy: "\u6b63\u7b54\u7387 70%",
   expired:
@@ -35,7 +36,12 @@ describe("QuizPageShell", () => {
     expect(
       screen.getByRole("heading", { name: labels.title })
     ).toBeInTheDocument();
+    expect(screen.getByText(labels.question)).toBeInTheDocument();
     expect(screen.getByText(labels.progress)).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "0"
+    );
   });
 
   it("renders submitted quiz state", () => {

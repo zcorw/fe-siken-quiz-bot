@@ -13,7 +13,7 @@
 
 - [x] P0-FE-01 建立 `/quiz/[token]` 页面数据加载状态：loading、active、submitted、not_found、expired、error。
 - [x] P0-FE-02 实现 API client 和 Zod response parse。
-- [ ] P0-FE-03 实现 Top Progress：文字在上、进度条在下。
+- [x] P0-FE-03 实现 Top Progress：文字在上、进度条在下。
 - [ ] P0-FE-04 实现 QuestionContent：渲染题干 Markdown 和图片。
 - [ ] P0-FE-05 实现 OptionButton：未选、已选、提交后正确/错误状态。
 - [ ] P0-FE-06 实现本地未提交答案状态，按 token 保存到 `localStorage`，提交成功后清除。

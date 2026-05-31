@@ -1,4 +1,5 @@
 import type { QuizPageState } from "../client/page-state";
+import { QuizProgressHeader } from "./QuizProgressHeader";
 
 const text = {
   title: "\u79d1\u76eeA \u6f14\u7fd2",
@@ -57,12 +58,13 @@ export function QuizPageShell({ state }: QuizPageShellProps) {
   if (state.status === "active") {
     return (
       <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
-        <section className="mx-auto max-w-5xl">
+        <section className="mx-auto max-w-5xl space-y-6">
           <h1 className="text-2xl font-semibold">{text.title}</h1>
-          <p className="mt-4">
-            {"\u554f\u984c 1 / "}
-            {state.quiz.totalQuestions}
-          </p>
+          <QuizProgressHeader
+            answeredCount={0}
+            currentQuestionIndex={1}
+            totalQuestions={state.quiz.totalQuestions}
+          />
         </section>
       </main>
     );
