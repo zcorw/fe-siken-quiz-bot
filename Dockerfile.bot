@@ -6,7 +6,9 @@ RUN corepack enable
 
 FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+RUN apk add --no-cache g++ make python3 \
+  && pnpm install --frozen-lockfile --prod \
+  && pnpm rebuild better-sqlite3
 
 FROM deps AS runner
 ENV BOT_HOST=0.0.0.0

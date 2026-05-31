@@ -39,8 +39,14 @@ services:
       APP_DB_PATH: /app/data/app.sqlite
       BOT_HOST: 0.0.0.0
       BOT_PORT: 3001
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       QUESTION_DB_PATH: /app/data/fe_siken_questions.sqlite
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_WEBHOOK_HEADER_SECRET: ${TELEGRAM_WEBHOOK_HEADER_SECRET:-}
       TELEGRAM_WEBHOOK_PATH_PREFIX: /telegram/webhook
+      TELEGRAM_WEBHOOK_PATH_SECRET: ${TELEGRAM_WEBHOOK_PATH_SECRET:-}
+      TELEGRAM_WEBHOOK_SECRET_TOKEN: ${TELEGRAM_WEBHOOK_SECRET_TOKEN:-}
     restart: unless-stopped
     volumes:
       - ../assets:/app/assets:ro

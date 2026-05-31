@@ -6,7 +6,9 @@ RUN corepack enable
 
 FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN apk add --no-cache g++ make python3 \
+  && pnpm install --frozen-lockfile \
+  && pnpm rebuild better-sqlite3
 
 FROM deps AS builder
 ENV NEXT_TELEMETRY_DISABLED=1
