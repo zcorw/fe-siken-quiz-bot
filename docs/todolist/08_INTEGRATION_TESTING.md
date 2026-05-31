@@ -16,7 +16,7 @@
 
 - [x] P0-IT-01 建立测试 fixture：临时 `app.sqlite`、小型题库 fixture 或受控题库查询 mock。
 - [x] P0-IT-02 集成测试：Bot 收到主题后创建 user、session、20 题和 token。
-- [ ] P0-IT-03 集成测试：`GET /api/quiz/{token}` active 返回 20 题且不泄漏答案。
+- [x] P0-IT-03 集成测试：`GET /api/quiz/{token}` active 返回 20 题且不泄漏答案。
 - [ ] P0-IT-04 E2E：用户打开 quiz，选择 20 题，提交。
 - [ ] P0-IT-05 集成测试：提交后写 `answer_records` 和统计。
 - [ ] P0-IT-06 E2E：提交后结果页显示成绩、原题、全部选项、答案、解析、URL。
