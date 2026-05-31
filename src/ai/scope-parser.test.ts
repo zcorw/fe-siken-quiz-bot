@@ -183,6 +183,50 @@ describe("parseScope", () => {
       suggestions: [],
     });
   });
+
+  it("parses Chinese alias input through local matching", async () => {
+    const result = await parseScope({
+      input: "数据库",
+      topicsConfig: {
+        standard_topics: ["データベース"],
+        high_weight_topics: ["データベース"],
+        aliases: { データベース: ["数据库"] },
+        standard_topic_mappings: {},
+      },
+      questionBankKeywords: { categories: [], topics: ["データベース"] },
+      aiConfig,
+      availableScope,
+      client: { responses: { create: vi.fn() } },
+    });
+
+    expect(result).toMatchObject({
+      matchedTopics: ["データベース"],
+      method: "alias",
+      status: "matched",
+    });
+  });
+
+  it("parses Japanese natural topic input through question bank keywords", async () => {
+    const result = await parseScope({
+      input: "ネットワークを練習したい",
+      topicsConfig: {
+        standard_topics: ["ネットワーク"],
+        high_weight_topics: ["ネットワーク"],
+        aliases: { ネットワーク: ["网络"] },
+        standard_topic_mappings: {},
+      },
+      questionBankKeywords: { categories: [], topics: ["ネットワーク"] },
+      aiConfig,
+      availableScope,
+      client: { responses: { create: vi.fn() } },
+    });
+
+    expect(result).toMatchObject({
+      matchedTopics: ["ネットワーク"],
+      method: "question_bank_keyword",
+      status: "matched",
+    });
+  });
 });
 
 describe("createOpenAIScopeClient", () => {
