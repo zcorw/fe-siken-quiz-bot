@@ -16,7 +16,7 @@
 - [x] P0-AI-03 实现 `questions.category` 和 `questions.topic` 关键词匹配。
 - [x] P0-AI-04 实现 parse result：matchedTopics、matchedCategories、suggestions、method、status。
 - [x] P0-AI-05 实现 OpenAI fallback，使用官方 SDK 和结构化 JSON 输出。
-- [ ] P0-AI-06 AI 只允许返回题库已有主题或 YAML 标准主题，不生成新主题。
+- [x] P0-AI-06 AI 只允许返回题库已有主题或 YAML 标准主题，不生成新主题。
 - [ ] P0-AI-07 AI 不可生成题目、改写题干、判断答案或生成额外解析。
 - [ ] P0-AI-08 无匹配时返回 2-3 个相近主题建议。
 - [ ] P0-AI-09 写入 `scope_parse_logs`。

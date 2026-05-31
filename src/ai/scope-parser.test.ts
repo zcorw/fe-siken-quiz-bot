@@ -74,6 +74,35 @@ describe("parseScopeWithOpenAI", () => {
       })
     ).rejects.toThrow("Invalid OpenAI scope parse JSON");
   });
+
+  it("does not allow OpenAI to return topics outside the available scope", async () => {
+    const result = await parseScopeWithOpenAI({
+      client: {
+        responses: {
+          create: vi.fn().mockResolvedValue({
+            output_text: JSON.stringify({
+              matchedTopics: ["存在しないテーマ"],
+              matchedCategories: [],
+              suggestions: ["ネットワーク"],
+              method: "openai",
+              status: "matched",
+            }),
+          }),
+        },
+      },
+      input: "unknown",
+      aiConfig,
+      availableScope,
+    });
+
+    expect(result).toEqual({
+      matchedTopics: [],
+      matchedCategories: [],
+      suggestions: ["ネットワーク"],
+      method: "openai",
+      status: "no_match",
+    });
+  });
 });
 
 describe("createOpenAIScopeClient", () => {

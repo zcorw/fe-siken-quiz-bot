@@ -109,10 +109,13 @@ export async function parseScopeWithOpenAI({
     },
   });
 
-  return parseOpenAIOutput(response.output_text);
+  return parseOpenAIOutput(response.output_text, availableScope);
 }
 
-function parseOpenAIOutput(outputText: string): ScopeParseResult {
+function parseOpenAIOutput(
+  outputText: string,
+  availableScope: AvailableScopeForAI
+): ScopeParseResult {
   let parsed: unknown;
 
   try {
@@ -127,5 +130,42 @@ function parseOpenAIOutput(outputText: string): ScopeParseResult {
     throw new Error("Invalid OpenAI scope parse result");
   }
 
-  return result.data;
+  return restrictToAvailableScope(result.data, availableScope);
+}
+
+function restrictToAvailableScope(
+  result: ScopeParseResult,
+  availableScope: AvailableScopeForAI
+): ScopeParseResult {
+  const allowedTopics = new Set([
+    ...availableScope.standardTopics,
+    ...availableScope.topics,
+  ]);
+  const allowedCategories = new Set(availableScope.categories);
+  const allowedSuggestions = new Set([
+    ...availableScope.standardTopics,
+    ...availableScope.topics,
+    ...availableScope.categories,
+  ]);
+
+  const matchedTopics = result.matchedTopics.filter((topic) =>
+    allowedTopics.has(topic)
+  );
+  const matchedCategories = result.matchedCategories.filter((category) =>
+    allowedCategories.has(category)
+  );
+  const suggestions = result.suggestions.filter((suggestion) =>
+    allowedSuggestions.has(suggestion)
+  );
+
+  return {
+    ...result,
+    matchedCategories,
+    matchedTopics,
+    status:
+      matchedTopics.length > 0 || matchedCategories.length > 0
+        ? "matched"
+        : "no_match",
+    suggestions,
+  };
 }
