@@ -13,7 +13,7 @@
 ## 具体任务列表
 
 - [x] P0-BOT-01 安装并配置 `grammY`。
-- [ ] P0-BOT-02 实现 webhook HTTP server，监听 `/telegram/webhook/{pathSecret}`。
+- [x] P0-BOT-02 实现 webhook HTTP server，监听 `/telegram/webhook/{pathSecret}`。
 - [ ] P0-BOT-03 校验 path secret 和 `X-Telegram-Bot-Api-Secret-Token`；path secret 错误返回 404，header secret 错误返回 403。
 - [ ] P0-BOT-04 实现 `/start` 日文欢迎消息。
 - [ ] P0-BOT-05 实现 `/help` 日文帮助消息。
