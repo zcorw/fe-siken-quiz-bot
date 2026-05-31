@@ -6,6 +6,7 @@ import {
   matchTopicAlias,
   normalizeScopeText,
   parseLocalScope,
+  suggestSimilarScopeTerms,
 } from "./scope-match";
 
 const topicsConfig: AppConfig["topics"] = {
@@ -122,5 +123,33 @@ describe("parseLocalScope", () => {
         suggestions: [],
       }
     );
+  });
+
+  it("returns similar suggestions when local matching fails", () => {
+    expect(
+      parseLocalScope("データベス", topicsConfig, questionBankKeywords, 3)
+    ).toEqual({
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "none",
+      status: "no_match",
+      suggestions: ["データベース"],
+    });
+  });
+});
+
+describe("suggestSimilarScopeTerms", () => {
+  it("returns up to the requested number of unique similar scope suggestions", () => {
+    expect(
+      suggestSimilarScopeTerms(
+        "ネットワク",
+        topicsConfig,
+        {
+          categories: ["テクノロジ系"],
+          topics: ["ネットワーク", "データベース"],
+        },
+        2
+      )
+    ).toEqual(["ネットワーク"]);
   });
 });
