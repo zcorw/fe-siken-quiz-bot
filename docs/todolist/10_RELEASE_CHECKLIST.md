@@ -30,7 +30,7 @@
 - [x] P0-RC-10 Telegram webhook secret 校验通过。
 - [x] P0-RC-11 Docker Compose 可 build 和启动。
 - [x] P0-RC-12 外部 Nginx 示例配置已写入文档。
-- [ ] P1-RC-13 备份脚本可手动运行并生成备份。
+- [x] P1-RC-13 备份脚本可手动运行并生成备份。
 - [ ] P1-RC-14 token 过期和 invalid token 页面日文提示正确。
 - [ ] P1-RC-15 OpenAI 不可用时 Bot 有可理解的日文错误消息。
 - [ ] P1-RC-16 Playwright 截图与当前 Figma 高保真稿关键布局一致。
