@@ -18,7 +18,7 @@
 - [x] P0-DP-03 创建 `deploy/nginx/edge.conf`，按路径转发 `/quiz`、`/api`、`/assets` 到 web，`/telegram/webhook` 到 bot。
 - [x] P0-DP-04 创建 `deploy/docker-compose.yml`，包含 `edge`、`web`、`bot`。
 - [x] P0-DP-05 将 `EDGE_HOST`、`EDGE_PORT`、数据路径、配置路径、secret 通过 env 配置。
-- [ ] P0-DP-06 配置 volume：`data/`、`config/`、`assets/`。
+- [x] P0-DP-06 配置 volume：`data/`、`config/`、`assets/`。
 - [ ] P0-DP-07 编写外部 VPS Nginx 示例，只代理到 Docker edge 单端口，不在 Docker 内处理 Certbot；域名使用占位值，部署时替换。
 - [ ] P0-DP-08 编写 Telegram webhook 设置命令说明，包含 secret token。
 - [ ] P1-DP-09 编写备份脚本：每日由 VPS cron 备份 `app.sqlite` 和 `config/app.yaml`，保留 7 天。
