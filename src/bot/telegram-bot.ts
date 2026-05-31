@@ -1,9 +1,12 @@
 import { Bot } from "grammy";
+import { handleStartCommand } from "./handlers/start";
 
 export interface CreateTelegramBotOptions {
   token: string;
 }
 
 export function createTelegramBot({ token }: CreateTelegramBotOptions): Bot {
-  return new Bot(token);
+  const bot = new Bot(token);
+  bot.command("start", handleStartCommand);
+  return bot;
 }
