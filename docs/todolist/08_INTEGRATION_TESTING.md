@@ -21,7 +21,7 @@
 - [x] P0-IT-05 集成测试：提交后写 `answer_records` 和统计。
 - [x] P0-IT-06 E2E：提交后结果页显示成绩、原题、全部选项、答案、解析、URL。
 - [x] P0-IT-07 集成测试：重复提交不新增历史。
-- [ ] P0-IT-08 E2E：移动端 bottom sheet 与 PC 常驻侧栏。
+- [x] P0-IT-08 E2E：移动端 bottom sheet 与 PC 常驻侧栏。
 - [ ] P1-IT-09 集成测试：过期未提交 token 返回 expired。
 - [ ] P1-IT-10 集成测试：AI 无法解析时 Bot 返回建议。
 
