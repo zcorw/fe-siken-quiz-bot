@@ -20,7 +20,15 @@ const activeQuiz: ActiveQuizResponseDto = {
   status: "active",
   token: "quiz-token",
   totalQuestions: 20,
-  questions: [],
+  questions: [
+    {
+      index: 1,
+      questionUrl: "https://www.fe-siken.com/kakomon/29_haru/q8.html",
+      questionText: "公開鍵暗号方式に関する問題です。",
+      choices: [],
+      hasImages: false,
+    },
+  ],
 };
 
 describe("QuizPageShell", () => {
@@ -42,6 +50,9 @@ describe("QuizPageShell", () => {
       "aria-valuenow",
       "0"
     );
+    expect(
+      screen.getByText("公開鍵暗号方式に関する問題です。")
+    ).toBeInTheDocument();
   });
 
   it("renders submitted quiz state", () => {
