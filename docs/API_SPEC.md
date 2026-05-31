@@ -201,6 +201,7 @@
 | `TOKEN_EXPIRED` | 410 | 未提交 token 已过期 |
 | `QUIZ_LOAD_FAILED` | 500 | 题目或结果数据加载失败 |
 | `QUIZ_ALREADY_SUBMITTED` | 409 | token 已提交；API 应返回已提交结果 |
+| `RATE_LIMITED` | 429 | 请求过于频繁 |
 | `INCOMPLETE_ANSWERS` | 422 | 未提交满 20 题 |
 | `INVALID_ANSWER` | 422 | 答案不属于该题选项 |
 | `QUESTION_NOT_IN_SESSION` | 422 | 提交了 session 中不存在的题号 |

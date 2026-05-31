@@ -1,16 +1,26 @@
 import { openAppDb } from "@/db/app/client";
 import { openQuestionBank } from "@/db/question-bank/client";
 import { ApiError, jsonError, jsonSuccess } from "@/lib/api-response";
+import {
+  consumeRateLimit,
+  createMemoryRateLimiter,
+  getClientIp,
+} from "@/lib/rate-limit";
 import { loadQuizByToken } from "@/quiz/quiz-service";
 
 export const runtime = "nodejs";
+
+const getQuizIpLimiter = createMemoryRateLimiter({
+  points: 60,
+  durationSeconds: 60,
+});
 
 interface RouteContext {
   params: Promise<{ token: string }> | { token: string };
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: RouteContext
 ): Promise<Response> {
   const { token } = await context.params;
@@ -18,6 +28,8 @@ export async function GET(
   const questionDb = openQuestionBank();
 
   try {
+    await consumeRateLimit(getQuizIpLimiter, `get:ip:${getClientIp(request)}`);
+
     return jsonSuccess(
       await loadQuizByToken({
         appDb: appDb.db,
