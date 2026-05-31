@@ -103,6 +103,30 @@ describe("parseScopeWithOpenAI", () => {
       status: "no_match",
     });
   });
+
+  it("instructs OpenAI not to generate questions, rewrite content, answer, or explain", async () => {
+    const create = vi.fn().mockResolvedValue({
+      output_text: JSON.stringify({
+        matchedTopics: [],
+        matchedCategories: [],
+        suggestions: [],
+        method: "openai",
+        status: "no_match",
+      }),
+    });
+
+    await parseScopeWithOpenAI({
+      client: { responses: { create } },
+      input: "問題を作って",
+      aiConfig,
+      availableScope,
+    });
+
+    const userMessage = create.mock.calls[0]?.[0].input[1].content;
+    expect(userMessage).toContain("Do not create questions.");
+    expect(userMessage).toContain("Do not rewrite question text.");
+    expect(userMessage).toContain("Do not answer or explain exam questions.");
+  });
 });
 
 describe("createOpenAIScopeClient", () => {
