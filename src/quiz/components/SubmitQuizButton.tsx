@@ -27,7 +27,7 @@ export function SubmitQuizButton({
         onClick={onSubmit}
         type="button"
       >
-        {"\u63d0\u51fa\u3059\u308b"}
+        {submitting ? "\u63d0\u51fa\u4e2d" : "\u63d0\u51fa\u3059\u308b"}
       </button>
       {!readyToSubmit ? (
         <p className="text-center text-sm text-slate-500">{hintText}</p>

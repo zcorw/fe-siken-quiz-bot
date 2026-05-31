@@ -35,4 +35,18 @@ describe("SubmitQuizButton", () => {
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
+
+  it("disables repeated submit while submitting", () => {
+    const onSubmit = vi.fn();
+    render(
+      <SubmitQuizButton
+        answeredCount={20}
+        onSubmit={onSubmit}
+        submitting
+        totalQuestions={20}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "提出中" })).toBeDisabled();
+  });
 });
