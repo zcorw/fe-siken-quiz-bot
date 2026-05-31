@@ -16,7 +16,7 @@
 - [x] P0-OV-02 每次开始开发前检查当前 git 状态，避免覆盖用户已有改动。
 - [x] P0-OV-03 每个任务执行完成后运行对应验证命令，并记录结果。
 - [x] P0-OV-04 每个阶段完成后更新对应 TodoList checkbox。
-- [ ] P1-OV-05 前后端接口对接前，对照 `docs/API_SPEC.md` 和 Figma 结果页结构做一次字段完整性检查。
+- [x] P1-OV-05 前后端接口对接前，对照 `docs/API_SPEC.md` 和 Figma 结果页结构做一次字段完整性检查。
 - [ ] P1-OV-06 Docker 部署前，对照 `docs/TECH_ARCHITECTURE.md` 检查路径、端口、secret、volume。
 
 ## 已确认技术与产品决策
