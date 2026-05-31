@@ -38,7 +38,11 @@ export interface QuestionBankKeywordMatch {
   matchedTopics: string[];
 }
 
-export type ScopeParseMethod = "alias" | "question_bank_keyword" | "none";
+export type ScopeParseMethod =
+  | "alias"
+  | "question_bank_keyword"
+  | "openai"
+  | "none";
 export type ScopeParseStatus = "matched" | "no_match";
 
 export interface ScopeParseResult {
