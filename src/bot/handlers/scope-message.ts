@@ -24,5 +24,18 @@ export async function handleScopeMessage({
     return;
   }
 
-  await parseScope(text);
+  const result = await parseScope(text);
+
+  if (result.status === "no_match") {
+    if (result.suggestions.length > 0) {
+      await ctx.reply(
+        `分野を特定できませんでした。近い候補: ${result.suggestions.join("、")}`
+      );
+      return;
+    }
+
+    await ctx.reply(
+      "分野を特定できませんでした。練習したい分野を入力し直してください。"
+    );
+  }
 }

@@ -18,7 +18,7 @@
 - [x] P0-BOT-04 实现 `/start` 日文欢迎消息。
 - [x] P0-BOT-05 实现 `/help` 日文帮助消息。
 - [x] P0-BOT-06 实现普通文本输入处理：调用 scope parse。
-- [ ] P0-BOT-07 无匹配时返回 2-3 个相近主题建议，不创建 session。
+- [x] P0-BOT-07 无匹配时返回 2-3 个相近主题建议，不创建 session。
 - [ ] P0-BOT-08 匹配成功时创建或更新 Telegram user。
 - [ ] P0-BOT-09 调用选题服务创建 20 题 session/token。
 - [ ] P0-BOT-10 返回 `/quiz/{token}` 链接。

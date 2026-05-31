@@ -34,4 +34,44 @@ describe("handleScopeMessage", () => {
 
     expect(parseScope).not.toHaveBeenCalled();
   });
+
+  it("replies with suggestions when scope parsing returns no_match suggestions", async () => {
+    const parseScope = vi.fn().mockResolvedValue({
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "none",
+      status: "no_match",
+      suggestions: ["データベース", "ネットワーク"],
+    });
+    const reply = vi.fn().mockResolvedValue(undefined);
+
+    await handleScopeMessage({
+      ctx: { message: { text: "データベス" }, reply },
+      parseScope,
+    });
+
+    expect(reply).toHaveBeenCalledWith(
+      "分野を特定できませんでした。近い候補: データベース、ネットワーク"
+    );
+  });
+
+  it("asks the user to retry when no suggestions are available", async () => {
+    const parseScope = vi.fn().mockResolvedValue({
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "none",
+      status: "no_match",
+      suggestions: [],
+    });
+    const reply = vi.fn().mockResolvedValue(undefined);
+
+    await handleScopeMessage({
+      ctx: { message: { text: "unknown" }, reply },
+      parseScope,
+    });
+
+    expect(reply).toHaveBeenCalledWith(
+      "分野を特定できませんでした。練習したい分野を入力し直してください。"
+    );
+  });
 });
