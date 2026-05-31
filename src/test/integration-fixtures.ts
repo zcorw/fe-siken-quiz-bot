@@ -60,32 +60,60 @@ export async function cleanupIntegrationFixtures(): Promise<void> {
   );
 }
 
-export async function createMigratedAppDbFixture(): Promise<AppDbClient> {
+export interface CreateMigratedAppDbFixtureOptions {
+  seedUser?: boolean;
+}
+
+export async function createMigratedAppDbFixture({
+  seedUser = true,
+}: CreateMigratedAppDbFixtureOptions = {}): Promise<AppDbClient> {
   const tempDir = await makeTempDir("fe-integration-app-");
   const appDb = openAppDb({ path: path.join(tempDir, "app.sqlite") });
   appDbClients.push(appDb);
   appDb.sqlite.exec(await loadMigrationSql());
   appDb.sqlite.pragma("foreign_keys = ON");
 
-  await appDb.db.insert(users).values({
-    id: "user-1",
-    telegramUserId: "telegram-1",
-    telegramUsername: "fixture_user",
-    createdAt: "2026-05-31T00:00:00.000Z",
-    lastSeenAt: "2026-05-31T00:00:00.000Z",
-  });
+  if (seedUser) {
+    await appDb.db.insert(users).values({
+      id: "user-1",
+      telegramUserId: "telegram-1",
+      telegramUsername: "fixture_user",
+      createdAt: "2026-05-31T00:00:00.000Z",
+      lastSeenAt: "2026-05-31T00:00:00.000Z",
+    });
+  }
 
   return appDb;
 }
 
-export async function createQuestionBankFixture(
-  questionCount = 20
-): Promise<Database.Database> {
+export interface CreateQuestionBankFixtureOptions {
+  questionCount?: number;
+  category?: string;
+  topic?: string;
+}
+
+export async function createQuestionBankFixture({
+  category = "\u30c6\u30af\u30ce\u30ed\u30b8\u7cfb",
+  questionCount = 20,
+  topic = "\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9",
+}: CreateQuestionBankFixtureOptions = {}): Promise<Database.Database> {
   const tempDir = await makeTempDir("fe-integration-question-bank-");
   const db = new Database(path.join(tempDir, "questions.sqlite"));
   questionDbs.push(db);
 
   db.exec(`
+    CREATE TABLE questions (
+      id INTEGER PRIMARY KEY,
+      source_page_label TEXT,
+      source_page_url TEXT,
+      exam_part TEXT,
+      question_no TEXT,
+      topic TEXT,
+      category TEXT,
+      url TEXT NOT NULL UNIQUE,
+      scraped_at TEXT
+    );
+
     CREATE TABLE question_details (
       question_url TEXT PRIMARY KEY,
       question_text TEXT,
@@ -96,6 +124,20 @@ export async function createQuestionBankFixture(
       has_images INTEGER,
       fetched_at TEXT
     );
+  `);
+
+  const insertQuestion = db.prepare(`
+    INSERT INTO questions (
+      id,
+      source_page_label,
+      source_page_url,
+      exam_part,
+      question_no,
+      topic,
+      category,
+      url,
+      scraped_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const insert = db.prepare(`
@@ -112,6 +154,18 @@ export async function createQuestionBankFixture(
   `);
 
   for (let index = 1; index <= questionCount; index += 1) {
+    insertQuestion.run(
+      index,
+      "\u4ee4\u548c6\u5e74\u6625",
+      "https://example.test/source.html",
+      "\u79d1\u76eeA",
+      `\u554f${index}`,
+      topic,
+      category,
+      `https://example.test/q${index}.html`,
+      "2026-05-31T00:00:00.000Z"
+    );
+
     insert.run(
       `https://example.test/q${index}.html`,
       `\u554f\u984c\u6587 ${index}`,

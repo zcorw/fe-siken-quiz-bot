@@ -2,6 +2,12 @@ import type { ScopeParseResult } from "@/quiz/scope-match";
 import type { ReplyContext } from "./start";
 
 export interface ScopeMessageContext extends ReplyContext {
+  from?: {
+    id: number;
+    username?: string;
+    first_name?: string;
+    last_name?: string;
+  };
   message?: {
     text?: string;
   };
@@ -11,6 +17,12 @@ export type ScopeParseFunction = (input: string) => Promise<ScopeParseResult>;
 export type CreateQuizSessionFunction = (input: {
   rawScopeInput: string;
   matchedScope: ScopeParseResult;
+  telegramUser?: {
+    id: number;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+  };
 }) => Promise<{ token: string }>;
 export type LogScopeParseFunction = (input: {
   rawScopeInput: string;
@@ -61,6 +73,15 @@ export async function handleScopeMessage({
     const session = await createQuizSession?.({
       matchedScope: result,
       rawScopeInput: text,
+      telegramUser:
+        ctx.from === undefined
+          ? undefined
+          : {
+              id: ctx.from.id,
+              firstName: ctx.from.first_name,
+              lastName: ctx.from.last_name,
+              username: ctx.from.username,
+            },
     });
 
     if (session !== undefined && publicBaseUrl !== undefined) {
