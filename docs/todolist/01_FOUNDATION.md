@@ -13,7 +13,7 @@
 - [x] P0-FD-01 初始化 Next.js + TypeScript 项目，采用 App Router。
 - [x] P0-FD-02 配置 ESLint、Prettier、TypeScript strict mode。
 - [x] P0-FD-03 安装并配置 Vitest、Testing Library、Playwright。
-- [ ] P0-FD-04 建立目录：`src/config`、`src/db`、`src/quiz`、`src/bot`、`src/ai`、`src/markdown`、`src/lib`。
+- [x] P0-FD-04 建立目录：`src/config`、`src/db`、`src/quiz`、`src/bot`、`src/ai`、`src/markdown`、`src/lib`。
 - [ ] P0-FD-05 创建 `config/app.yaml` 示例文件，覆盖 quiz、topics、ai、telegram、deployment 基础字段。
 - [ ] P0-FD-06 使用成熟 YAML parser 读取配置，使用 Zod 校验配置结构。
 - [ ] P0-FD-07 创建 `.env.example`，包含数据库路径、OpenAI key、Telegram token、webhook secrets、public base URL、edge port。
