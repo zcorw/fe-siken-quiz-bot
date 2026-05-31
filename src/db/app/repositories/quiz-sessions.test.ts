@@ -9,10 +9,19 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { openAppDb, type AppDbClient } from "../client";
-import { quizSessionQuestions, quizSessions, users } from "../schema";
+import {
+  answerRecords,
+  quizSessionQuestions,
+  quizSessions,
+  userQuestionStats,
+  userTopicStats,
+  users,
+} from "../schema";
 import {
   createQuizSession,
+  submitQuizSession,
   type CreateQuizSessionInput,
+  type SubmitQuizSessionInput,
 } from "./quiz-sessions";
 
 const migrationsDir = path.join(process.cwd(), "drizzle");
@@ -90,11 +99,33 @@ function makeSessionInput(
   };
 }
 
+function makeAnswers(
+  overrides: Partial<SubmitQuizSessionInput["answers"][number]> = {}
+): SubmitQuizSessionInput["answers"] {
+  return Array.from({ length: 20 }, (_, index) => {
+    const questionIndex = index + 1;
+    const correctAnswer = "A";
+
+    return {
+      questionIndex,
+      selectedAnswer: questionIndex % 3 === 0 ? "B" : correctAnswer,
+      correctAnswer,
+      ...overrides,
+    };
+  });
+}
+
 async function countSessions(appDb: AppDbClient, id = "session-1") {
   const [row] = await appDb.db
     .select({ value: count() })
     .from(quizSessions)
     .where(eq(quizSessions.id, id));
+
+  return row.value;
+}
+
+async function countAnswerRecords(appDb: AppDbClient) {
+  const [row] = await appDb.db.select({ value: count() }).from(answerRecords);
 
   return row.value;
 }
@@ -248,6 +279,240 @@ describe("createQuizSession", () => {
       ).rejects.toThrow();
 
       expect(await countSessions(appDb)).toBe(0);
+    } finally {
+      appDb.close();
+    }
+  });
+});
+
+describe("submitQuizSession", () => {
+  afterEach(async () => {
+    await Promise.all(
+      tempDirs
+        .splice(0)
+        .map((tempDir) => rm(tempDir, { recursive: true, force: true }))
+    );
+  });
+
+  it("submits first answers and updates session, answer, question, and topic stats", async () => {
+    const appDb = await createMigratedAppDb();
+
+    try {
+      await createQuizSession(appDb.db, makeSessionInput());
+
+      const summary = await submitQuizSession(appDb.db, {
+        quizSessionId: "session-1",
+        submittedAt: "2026-05-31T01:30:00.000Z",
+        answers: makeAnswers(),
+      });
+
+      expect(summary).toEqual({
+        totalQuestions: 20,
+        correctCount: 14,
+        incorrectCount: 6,
+      });
+
+      const [session] = await appDb.db
+        .select()
+        .from(quizSessions)
+        .where(eq(quizSessions.id, "session-1"));
+      expect(session).toMatchObject({
+        status: "submitted",
+        correctCount: 14,
+        incorrectCount: 6,
+        submittedAt: "2026-05-31T01:30:00.000Z",
+      });
+
+      const records = await appDb.db
+        .select()
+        .from(answerRecords)
+        .orderBy(answerRecords.quizSessionQuestionId);
+      expect(records).toHaveLength(20);
+      expect(records[0]).toMatchObject({
+        quizSessionId: "session-1",
+        quizSessionQuestionId: "session-question-1",
+        userId: "user-1",
+        questionUrl: "https://example.test/questions/1",
+        selectedAnswer: "A",
+        correctAnswer: "A",
+        isCorrect: 1,
+        answeredAt: "2026-05-31T01:30:00.000Z",
+      });
+
+      const questionStats = await appDb.db
+        .select()
+        .from(userQuestionStats)
+        .where(
+          eq(userQuestionStats.questionUrl, "https://example.test/questions/3")
+        );
+      expect(questionStats[0]).toMatchObject({
+        userId: "user-1",
+        attemptCount: 1,
+        correctCount: 0,
+        incorrectCount: 1,
+        lastAnsweredAt: "2026-05-31T01:30:00.000Z",
+        lastIsCorrect: 0,
+        activeWrong: 1,
+        consecutiveCorrectAfterWrong: 0,
+      });
+
+      const topicStats = await appDb.db
+        .select()
+        .from(userTopicStats)
+        .orderBy(userTopicStats.topicType, userTopicStats.topicKey);
+      expect(topicStats).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            userId: "user-1",
+            topicKey: "technology",
+            topicType: "category",
+            attemptCount: 20,
+            correctCount: 14,
+            incorrectCount: 6,
+            accuracy: 0.7,
+            lastAnsweredAt: "2026-05-31T01:30:00.000Z",
+          }),
+          expect.objectContaining({
+            userId: "user-1",
+            topicKey: "network",
+            topicType: "topic",
+            attemptCount: 10,
+            correctCount: 7,
+            incorrectCount: 3,
+            accuracy: 0.7,
+            lastAnsweredAt: "2026-05-31T01:30:00.000Z",
+          }),
+        ])
+      );
+    } finally {
+      appDb.close();
+    }
+  });
+
+  it("rejects incomplete answers before writing and keeps the session created", async () => {
+    const appDb = await createMigratedAppDb();
+
+    try {
+      await createQuizSession(appDb.db, makeSessionInput());
+
+      await expect(
+        submitQuizSession(appDb.db, {
+          quizSessionId: "session-1",
+          submittedAt: "2026-05-31T01:30:00.000Z",
+          answers: makeAnswers().slice(0, 19),
+        })
+      ).rejects.toThrow("submitQuizSession requires exactly 20 answers");
+
+      expect(await countAnswerRecords(appDb)).toBe(0);
+      const [session] = await appDb.db
+        .select()
+        .from(quizSessions)
+        .where(eq(quizSessions.id, "session-1"));
+      expect(session.status).toBe("created");
+      expect(session.submittedAt).toBeNull();
+    } finally {
+      appDb.close();
+    }
+  });
+
+  it("rejects an already submitted session without duplicating answer records", async () => {
+    const appDb = await createMigratedAppDb();
+
+    try {
+      await createQuizSession(appDb.db, makeSessionInput());
+      await submitQuizSession(appDb.db, {
+        quizSessionId: "session-1",
+        submittedAt: "2026-05-31T01:30:00.000Z",
+        answers: makeAnswers(),
+      });
+
+      await expect(
+        submitQuizSession(appDb.db, {
+          quizSessionId: "session-1",
+          submittedAt: "2026-05-31T01:31:00.000Z",
+          answers: makeAnswers({ selectedAnswer: "A" }),
+        })
+      ).rejects.toThrow("Quiz session session-1 has already been submitted.");
+
+      expect(await countAnswerRecords(appDb)).toBe(20);
+    } finally {
+      appDb.close();
+    }
+  });
+
+  it("tracks active wrong questions until two consecutive correct answers", async () => {
+    const appDb = await createMigratedAppDb();
+
+    try {
+      const questions = makeQuestions();
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        await createQuizSession(
+          appDb.db,
+          makeSessionInput({
+            id: `session-${attempt}`,
+            token: `token-${attempt}`,
+            questions: questions.map((question) => ({
+              ...question,
+              id: `${question.id}-attempt-${attempt}`,
+            })),
+          })
+        );
+      }
+
+      await submitQuizSession(appDb.db, {
+        quizSessionId: "session-1",
+        submittedAt: "2026-05-31T01:30:00.000Z",
+        answers: makeAnswers().map((answer) =>
+          answer.questionIndex === 1
+            ? { ...answer, selectedAnswer: "B", correctAnswer: "A" }
+            : { ...answer, selectedAnswer: "A", correctAnswer: "A" }
+        ),
+      });
+
+      let [questionStat] = await appDb.db
+        .select()
+        .from(userQuestionStats)
+        .where(
+          eq(userQuestionStats.questionUrl, "https://example.test/questions/1")
+        );
+      expect(questionStat).toMatchObject({
+        activeWrong: 1,
+        consecutiveCorrectAfterWrong: 0,
+      });
+
+      await submitQuizSession(appDb.db, {
+        quizSessionId: "session-2",
+        submittedAt: "2026-05-31T01:31:00.000Z",
+        answers: makeAnswers({ selectedAnswer: "A", correctAnswer: "A" }),
+      });
+
+      [questionStat] = await appDb.db
+        .select()
+        .from(userQuestionStats)
+        .where(
+          eq(userQuestionStats.questionUrl, "https://example.test/questions/1")
+        );
+      expect(questionStat).toMatchObject({
+        activeWrong: 1,
+        consecutiveCorrectAfterWrong: 1,
+      });
+
+      await submitQuizSession(appDb.db, {
+        quizSessionId: "session-3",
+        submittedAt: "2026-05-31T01:32:00.000Z",
+        answers: makeAnswers({ selectedAnswer: "A", correctAnswer: "A" }),
+      });
+
+      [questionStat] = await appDb.db
+        .select()
+        .from(userQuestionStats)
+        .where(
+          eq(userQuestionStats.questionUrl, "https://example.test/questions/1")
+        );
+      expect(questionStat).toMatchObject({
+        activeWrong: 0,
+        consecutiveCorrectAfterWrong: 2,
+      });
     } finally {
       appDb.close();
     }
