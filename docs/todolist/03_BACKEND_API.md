@@ -11,7 +11,7 @@
 
 ## 具体任务列表
 
-- [ ] P0-API-01 定义 API DTO 和 Zod schema：active response、submitted response、submit request、error response。
+- [x] P0-API-01 定义 API DTO 和 Zod schema：active response、submitted response、submit request、error response。
 - [ ] P0-API-00 所有 API route 明确使用 Node.js runtime，以支持本地 SQLite 文件访问。
 - [ ] P0-API-02 实现 `GET /api/quiz/[token]` active 状态，隐藏正确答案、解析、source URL。
 - [ ] P0-API-03 实现 `GET /api/quiz/[token]` submitted 状态，返回 summary、selectionSummary、原题、全部选项、用户答案、正确答案、解析、source URL。
