@@ -54,4 +54,60 @@ describe("createTelegramWebhookServer", () => {
     await expect(response.json()).resolves.toEqual({ ok: true });
     expect(handleUpdate).toHaveBeenCalledWith({ update_id: 1 });
   });
+
+  it("returns 404 for an invalid path secret", async () => {
+    const handleUpdate = vi.fn();
+    const server = createTelegramWebhookServer({
+      bot: { handleUpdate },
+      pathPrefix: "/telegram/webhook",
+      pathSecret: "path-secret",
+      headerSecret: "header-secret",
+    });
+    await listen(server);
+
+    const { port } = server.address() as AddressInfo;
+    const response = await fetch(
+      `http://127.0.0.1:${port}/telegram/webhook/wrong-secret`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-telegram-bot-api-secret-token": "header-secret",
+        },
+        body: JSON.stringify({ update_id: 1 }),
+      }
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({ ok: false });
+    expect(handleUpdate).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for an invalid Telegram header secret", async () => {
+    const handleUpdate = vi.fn();
+    const server = createTelegramWebhookServer({
+      bot: { handleUpdate },
+      pathPrefix: "/telegram/webhook",
+      pathSecret: "path-secret",
+      headerSecret: "header-secret",
+    });
+    await listen(server);
+
+    const { port } = server.address() as AddressInfo;
+    const response = await fetch(
+      `http://127.0.0.1:${port}/telegram/webhook/path-secret`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-telegram-bot-api-secret-token": "wrong-secret",
+        },
+        body: JSON.stringify({ update_id: 1 }),
+      }
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ ok: false });
+    expect(handleUpdate).not.toHaveBeenCalled();
+  });
 });
