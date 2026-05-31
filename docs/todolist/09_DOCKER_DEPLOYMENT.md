@@ -21,7 +21,7 @@
 - [x] P0-DP-06 配置 volume：`data/`、`config/`、`assets/`。
 - [x] P0-DP-07 编写外部 VPS Nginx 示例，只代理到 Docker edge 单端口，不在 Docker 内处理 Certbot；域名使用占位值，部署时替换。
 - [x] P0-DP-08 编写 Telegram webhook 设置命令说明，包含 secret token。
-- [ ] P1-DP-09 编写备份脚本：每日由 VPS cron 备份 `app.sqlite` 和 `config/app.yaml`，保留 7 天。
+- [x] P1-DP-09 编写备份脚本：每日由 VPS cron 备份 `app.sqlite` 和 `config/app.yaml`，保留 7 天。
 - [ ] P1-DP-10 编写部署 smoke test：访问 `/quiz/invalid-token`、检查 webhook secret 拒绝。
 
 ## 推荐使用的成熟工具 / 库
