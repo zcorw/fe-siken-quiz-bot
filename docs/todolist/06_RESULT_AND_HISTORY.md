@@ -19,7 +19,7 @@
 - [x] P0-RH-05 正确/错误选项状态与用户答案状态可区分。
 - [x] P0-RH-06 已提交状态隐藏提交按钮，体现答案锁定。
 - [x] P0-RH-06A 已提交 token 再次打开时允许只读切换题目详情，不允许重新提交。
-- [ ] P0-RH-07 后端首次提交时写入 `answer_records`。
+- [x] P0-RH-07 后端首次提交时写入 `answer_records`。
 - [ ] P0-RH-08 后端首次提交时更新 `user_question_stats`。
 - [ ] P0-RH-09 后端首次提交时更新 `user_topic_stats`。
 - [ ] P0-RH-10 重复访问已提交 token 时返回首次答案和结果。
