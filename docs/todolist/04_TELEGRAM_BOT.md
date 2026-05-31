@@ -19,7 +19,7 @@
 - [x] P0-BOT-05 实现 `/help` 日文帮助消息。
 - [x] P0-BOT-06 实现普通文本输入处理：调用 scope parse。
 - [x] P0-BOT-07 无匹配时返回 2-3 个相近主题建议，不创建 session。
-- [ ] P0-BOT-08 匹配成功时创建或更新 Telegram user。
+- [x] P0-BOT-08 匹配成功时创建或更新 Telegram user。
 - [ ] P0-BOT-09 调用选题服务创建 20 题 session/token。
 - [ ] P0-BOT-10 返回 `/quiz/{token}` 链接。
 - [ ] P1-BOT-11 记录 scope parse log 和 bot 错误日志。
