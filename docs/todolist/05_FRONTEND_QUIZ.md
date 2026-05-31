@@ -18,7 +18,7 @@
 - [x] P0-FE-05 实现 OptionButton：未选、已选、提交后正确/错误状态。
 - [x] P0-FE-06 实现本地未提交答案状态，按 token 保存到 `localStorage`，提交成功后清除。
 - [x] P0-FE-07 实现上一题 / 下一题跳转。
-- [ ] P0-FE-08 移动端实现 Question Navigation bottom sheet，1-20 题号 5 列换行。
+- [x] P0-FE-08 移动端实现 Question Navigation bottom sheet，1-20 题号 5 列换行。
 - [ ] P0-FE-09 PC 端实现常驻右侧题号栏，1-20 题号换行。
 - [ ] P0-FE-10 未答满 20 题时禁用提交或提示未答题。
 - [ ] P0-FE-11 提交中禁用重复操作。
