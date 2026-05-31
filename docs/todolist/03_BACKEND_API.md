@@ -20,7 +20,7 @@
 - [x] P0-API-06 实现 submit 成功响应和事务调用。
 - [x] P0-API-07 实现 repeated submit：返回已提交结果，不更新历史。
 - [x] P1-API-08 使用成熟限流库实现限流：GET 每 IP 60/min，POST 每 IP 10/min + 每 token 3/min。
-- [ ] P1-API-09 添加 API route tests，覆盖所有错误码。
+- [x] P1-API-09 添加 API route tests，覆盖所有错误码。
 - [ ] P1-API-10 增加 Markdown 输出安全策略：API 保留 Markdown，前端渲染时 sanitizer；API 不拼 HTML。
 
 ## 推荐使用的成熟工具 / 库
