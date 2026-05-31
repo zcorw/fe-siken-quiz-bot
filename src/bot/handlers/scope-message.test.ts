@@ -144,6 +144,26 @@ describe("handleScopeMessage", () => {
     );
   });
 
+  it("replies with suggestions when AI fallback is unavailable", async () => {
+    const parseScope = vi.fn().mockResolvedValue({
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "openai_unavailable",
+      status: "ai_unavailable",
+      suggestions: ["\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9"],
+    });
+    const reply = vi.fn().mockResolvedValue(undefined);
+
+    await handleScopeMessage({
+      ctx: { message: { text: "databese" }, reply },
+      parseScope,
+    });
+
+    expect(reply).toHaveBeenCalledWith(
+      "\u5206\u91ce\u3092\u7279\u5b9a\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u8fd1\u3044\u5019\u88dc: \u30c7\u30fc\u30bf\u30d9\u30fc\u30b9"
+    );
+  });
+
   it("asks the user to retry when no suggestions are available", async () => {
     const parseScope = vi.fn().mockResolvedValue({
       matchedCategories: [],

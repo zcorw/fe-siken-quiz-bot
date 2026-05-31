@@ -184,6 +184,38 @@ describe("parseScope", () => {
     });
   });
 
+  it("keeps local suggestions when OpenAI fallback is unavailable", async () => {
+    const result = await parseScope({
+      input: "databese",
+      topicsConfig: {
+        standard_topics: ["database"],
+        high_weight_topics: ["database"],
+        aliases: { database: [] },
+        standard_topic_mappings: {},
+      },
+      questionBankKeywords: { categories: [], topics: ["database"] },
+      aiConfig,
+      availableScope: {
+        standardTopics: ["database"],
+        categories: [],
+        topics: ["database"],
+      },
+      client: {
+        responses: {
+          create: vi.fn().mockRejectedValue(new Error("network down")),
+        },
+      },
+    });
+
+    expect(result).toEqual({
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "openai_unavailable",
+      status: "ai_unavailable",
+      suggestions: ["database"],
+    });
+  });
+
   it("parses Chinese alias input through local matching", async () => {
     const result = await parseScope({
       input: "数据库",

@@ -101,7 +101,7 @@ export async function parseScope(
       matchedTopics: [],
       method: "openai_unavailable",
       status: "ai_unavailable",
-      suggestions: [],
+      suggestions: localResult.suggestions,
     };
   }
 }
