@@ -13,7 +13,7 @@
 
 ## 具体任务列表
 
-- [ ] P0-DP-01 创建独立 `Dockerfile.web`，构建 Next.js standalone 或 production server。
+- [x] P0-DP-01 创建独立 `Dockerfile.web`，构建 Next.js standalone 或 production server。
 - [ ] P0-DP-02 创建独立 `Dockerfile.bot`，构建 Telegram webhook server。
 - [ ] P0-DP-03 创建 `deploy/nginx/edge.conf`，按路径转发 `/quiz`、`/api`、`/assets` 到 web，`/telegram/webhook` 到 bot。
 - [ ] P0-DP-04 创建 `deploy/docker-compose.yml`，包含 `edge`、`web`、`bot`。
