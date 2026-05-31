@@ -9,7 +9,10 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { openAppDb, type AppDbClient } from "@/db/app/client";
-import { createQuizSession } from "@/db/app/repositories/quiz-sessions";
+import {
+  createQuizSession,
+  submitQuizSession,
+} from "@/db/app/repositories/quiz-sessions";
 import { users } from "@/db/app/schema";
 import { loadQuizByToken } from "./quiz-service";
 
@@ -136,6 +139,9 @@ describe("loadQuizByToken", () => {
       });
 
       expect(response.status).toBe("active");
+      if (response.status !== "active") {
+        throw new Error("Expected active response.");
+      }
       expect(response.totalQuestions).toBe(20);
       expect(response.questions).toHaveLength(20);
       expect(response.questions[0]).toEqual({
@@ -151,6 +157,90 @@ describe("loadQuizByToken", () => {
       expect(response.questions[0]).not.toHaveProperty("correctAnswer");
       expect(response.questions[0]).not.toHaveProperty("explanation");
       expect(response.questions[0]).not.toHaveProperty("sourceUrl");
+    } finally {
+      appDb.close();
+      questionDb.close();
+    }
+  });
+
+  it("loads submitted quiz data with summary, answers, explanations, and source URLs", async () => {
+    const appDb = await createMigratedAppDb();
+    const questionDb = await createQuestionBankFixture();
+
+    try {
+      await createQuizSession(appDb.db, {
+        id: "session-1",
+        token: "token-1",
+        userId: "user-1",
+        rawScopeInput: "database",
+        matchedScopeJson: { matchedTopics: ["データベース"] },
+        selectionSummaryJson: {
+          requestedScopeCount: 15,
+          reinforcementCount: 5,
+          wrongQuestionCount: 1,
+          weakTopicCount: 2,
+          highWeightTopicCount: 2,
+        },
+        createdAt: "2026-05-31T01:00:00.000Z",
+        expiresAt: "2026-06-07T01:00:00.000Z",
+        purgeAfterAt: "2026-07-07T01:00:00.000Z",
+        questions: Array.from({ length: 20 }, (_, index) => ({
+          id: `session-question-${index + 1}`,
+          questionUrl: `https://example.test/q${index + 1}.html`,
+          questionIndex: index + 1,
+          sourceType: "requested",
+          sourceTopic: "データベース",
+          sourceCategory: "テクノロジ系",
+          selectionReason: null,
+        })),
+      });
+      await submitQuizSession(appDb.db, {
+        quizSessionId: "session-1",
+        submittedAt: "2026-05-31T01:30:00.000Z",
+        answers: Array.from({ length: 20 }, (_, index) => ({
+          questionIndex: index + 1,
+          selectedAnswer: index === 0 ? "イ" : "ア",
+          correctAnswer: "ア",
+        })),
+      });
+
+      const response = await loadQuizByToken({
+        appDb: appDb.db,
+        questionDb,
+        token: "token-1",
+        nowIso: "2026-05-31T01:31:00.000Z",
+      });
+
+      expect(response.status).toBe("submitted");
+      if (response.status !== "submitted") {
+        throw new Error("Expected submitted response.");
+      }
+      expect(response.summary).toEqual({
+        totalQuestions: 20,
+        correctCount: 19,
+        incorrectCount: 1,
+        accuracy: 0.95,
+      });
+      expect(response.selectionSummary).toEqual({
+        requestedScopeCount: 15,
+        reinforcementCount: 5,
+        wrongQuestionCount: 1,
+        weakTopicCount: 2,
+        highWeightTopicCount: 2,
+      });
+      expect(response.questions[0]).toMatchObject({
+        index: 1,
+        questionUrl: "https://example.test/q1.html",
+        selectedAnswer: "イ",
+        correctAnswer: "ア",
+        isCorrect: false,
+        explanation: "解説 1",
+        sourceUrl: "https://example.test/q1.html",
+      });
+      expect(response.questions[0].choices).toEqual([
+        { label: "ア", text: "選択肢ア" },
+        { label: "イ", text: "選択肢イ" },
+      ]);
     } finally {
       appDb.close();
       questionDb.close();
