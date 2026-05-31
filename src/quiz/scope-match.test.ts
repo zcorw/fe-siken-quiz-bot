@@ -6,6 +6,7 @@ import {
   matchTopicAlias,
   normalizeScopeText,
   parseLocalScope,
+  resolveNoMatchAction,
   suggestSimilarScopeTerms,
 } from "./scope-match";
 
@@ -151,5 +152,37 @@ describe("suggestSimilarScopeTerms", () => {
         2
       )
     ).toEqual(["ネットワーク"]);
+  });
+});
+
+describe("resolveNoMatchAction", () => {
+  it("returns suggestions when a no_match result has suggestions", () => {
+    expect(
+      resolveNoMatchAction({
+        matchedCategories: [],
+        matchedTopics: [],
+        method: "none",
+        status: "no_match",
+        suggestions: ["データベース", "ネットワーク"],
+      })
+    ).toEqual({
+      type: "suggestions",
+      suggestions: ["データベース", "ネットワーク"],
+    });
+  });
+
+  it("returns a retry input prompt when there are no suggestions", () => {
+    expect(
+      resolveNoMatchAction({
+        matchedCategories: [],
+        matchedTopics: [],
+        method: "none",
+        status: "no_match",
+        suggestions: [],
+      })
+    ).toEqual({
+      message: "練習したい分野を入力し直してください。",
+      type: "retry_input",
+    });
   });
 });

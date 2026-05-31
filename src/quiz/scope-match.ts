@@ -56,6 +56,10 @@ export interface ScopeParseResult {
   status: ScopeParseStatus;
 }
 
+export type ScopeNoMatchAction =
+  | { type: "suggestions"; suggestions: string[] }
+  | { type: "retry_input"; message: string };
+
 export function matchQuestionBankKeywords(
   input: string,
   keywords: QuestionBankKeywordIndex
@@ -145,6 +149,22 @@ export function suggestSimilarScopeTerms(
   }
 
   return suggestions;
+}
+
+export function resolveNoMatchAction(
+  result: ScopeParseResult
+): ScopeNoMatchAction {
+  if (result.suggestions.length > 0) {
+    return {
+      type: "suggestions",
+      suggestions: result.suggestions,
+    };
+  }
+
+  return {
+    message: "練習したい分野を入力し直してください。",
+    type: "retry_input",
+  };
 }
 
 function matchKeywords(normalizedInput: string, keywords: string[]): string[] {
