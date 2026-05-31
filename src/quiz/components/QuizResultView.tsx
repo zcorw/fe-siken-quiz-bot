@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { SubmittedQuizResponseDto } from "../api-schemas";
 
 type QuizResultViewProps = {
@@ -5,6 +8,16 @@ type QuizResultViewProps = {
 };
 
 export function QuizResultView({ quiz }: QuizResultViewProps) {
+  const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(
+    quiz.questions[0]?.index ?? 1
+  );
+  const selectedQuestion =
+    quiz.questions.find(
+      (question) => question.index === selectedQuestionIndex
+    ) ??
+    quiz.questions[0] ??
+    null;
+
   return (
     <section
       className="mx-auto max-w-5xl space-y-6"
@@ -54,6 +67,52 @@ export function QuizResultView({ quiz }: QuizResultViewProps) {
               </p>
             </article>
           ))}
+        </section>
+      </div>
+      <div
+        className="hidden grid-cols-[320px_minmax(0,1fr)] gap-6 lg:grid"
+        data-testid="desktop-result-view"
+      >
+        <aside className="rounded-lg border border-slate-200 bg-white p-5">
+          <h2 className="mb-4 font-semibold">{"\u554f\u984c\u4e00\u89a7"}</h2>
+          <div className="space-y-2">
+            {quiz.questions.map((question) => {
+              const statusText = question.isCorrect
+                ? "\u6b63\u89e3"
+                : "\u4e0d\u6b63\u89e3";
+
+              return (
+                <button
+                  aria-label={`\u554f\u984c ${question.index} ${statusText}`}
+                  className="flex w-full items-center justify-between rounded-lg border border-slate-200 px-4 py-3 text-left text-sm"
+                  data-state={question.isCorrect ? "correct" : "incorrect"}
+                  data-testid="result-question-button"
+                  key={question.index}
+                  onClick={() => setSelectedQuestionIndex(question.index)}
+                  type="button"
+                >
+                  <span>
+                    {"\u554f\u984c "}
+                    {question.index}
+                  </span>
+                  <span>{statusText}</span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+        <section className="rounded-lg border border-slate-200 bg-white p-6">
+          {selectedQuestion ? (
+            <>
+              <h2 className="text-xl font-semibold">
+                {"\u554f\u984c "}
+                {selectedQuestion.index}
+              </h2>
+              <p className="mt-4 text-sm leading-6 text-slate-700">
+                {selectedQuestion.explanation}
+              </p>
+            </>
+          ) : null}
         </section>
       </div>
     </section>

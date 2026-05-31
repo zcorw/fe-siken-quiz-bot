@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { SubmittedQuizResponseDto } from "../api-schemas";
 import { QuizResultView } from "./QuizResultView";
@@ -47,6 +47,28 @@ const submittedQuiz: SubmittedQuizResponseDto = {
   ],
 };
 
+const desktopQuiz: SubmittedQuizResponseDto = {
+  ...submittedQuiz,
+  summary: {
+    totalQuestions: 20,
+    correctCount: 19,
+    incorrectCount: 1,
+    accuracy: 0.95,
+  },
+  questions: Array.from({ length: 20 }, (_, index) => ({
+    index: index + 1,
+    questionUrl: `https://www.fe-siken.com/kakomon/sample/q${index + 1}.html`,
+    questionText: `問${index + 1}の本文`,
+    choices: [{ label: "ア", text: "選択肢A" }],
+    hasImages: false,
+    selectedAnswer: index === 1 ? "ア" : "イ",
+    correctAnswer: "ア",
+    isCorrect: index !== 1,
+    explanation: `問${index + 1}の解説`,
+    sourceUrl: `https://www.fe-siken.com/kakomon/sample/q${index + 1}.html`,
+  })),
+};
+
 describe("QuizResultView", () => {
   it("renders the mobile result summary, composition, and explanations in one column", () => {
     render(<QuizResultView quiz={submittedQuiz} />);
@@ -63,5 +85,26 @@ describe("QuizResultView", () => {
     ).toBeInTheDocument();
     expect(within(mobile).getByText("問題 2")).toBeInTheDocument();
     expect(within(mobile).getByText("問2の解説")).toBeInTheDocument();
+  });
+
+  it("renders desktop result with all question statuses and selected detail", () => {
+    render(<QuizResultView quiz={desktopQuiz} />);
+
+    const desktop = screen.getByTestId("desktop-result-view");
+    expect(desktop).toHaveClass("hidden");
+    expect(desktop).toHaveClass("lg:grid");
+    expect(
+      within(desktop).getAllByTestId("result-question-button")
+    ).toHaveLength(20);
+    expect(
+      within(desktop).getByRole("button", { name: "問題 2 不正解" })
+    ).toHaveAttribute("data-state", "incorrect");
+    expect(within(desktop).getByText("問1の解説")).toBeInTheDocument();
+
+    fireEvent.click(
+      within(desktop).getByRole("button", { name: "問題 2 不正解" })
+    );
+
+    expect(within(desktop).getByText("問2の解説")).toBeInTheDocument();
   });
 });
