@@ -12,6 +12,7 @@ import { openAppDb, type AppDbClient } from "@/db/app/client";
 import { createQuizSession } from "@/db/app/repositories/quiz-sessions";
 import { users } from "@/db/app/schema";
 import { validateSubmitQuizRequest } from "./submit-service";
+import { submitQuizByToken } from "./submit-service";
 
 const migrationsDir = path.join(process.cwd(), "drizzle");
 const tempDirs: string[] = [];
@@ -218,6 +219,51 @@ describe("validateSubmitQuizRequest", () => {
           nowIso: "2026-05-31T01:30:00.000Z",
         })
       ).rejects.toMatchObject({ code: "INVALID_ANSWER", status: 422 });
+    } finally {
+      appDb.close();
+      questionDb.close();
+    }
+  });
+});
+
+describe("submitQuizByToken", () => {
+  afterEach(async () => {
+    await Promise.all(
+      tempDirs
+        .splice(0)
+        .map((tempDir) => rm(tempDir, { recursive: true, force: true }))
+    );
+  });
+
+  it("submits answers through the transaction and returns submitted quiz data", async () => {
+    const appDb = await createMigratedAppDb();
+    const questionDb = await createQuestionBankFixture();
+
+    try {
+      const response = await submitQuizByToken({
+        appDb: appDb.db,
+        questionDb,
+        token: "token-1",
+        request: {
+          answers: makeAnswers().map((answer, index) =>
+            index === 0 ? { ...answer, selectedAnswer: "イ" } : answer
+          ),
+        },
+        submittedAt: "2026-05-31T01:30:00.000Z",
+      });
+
+      expect(response.status).toBe("submitted");
+      expect(response.summary).toEqual({
+        totalQuestions: 20,
+        correctCount: 19,
+        incorrectCount: 1,
+        accuracy: 0.95,
+      });
+      expect(response.questions[0]).toMatchObject({
+        selectedAnswer: "イ",
+        correctAnswer: "ア",
+        isCorrect: false,
+      });
     } finally {
       appDb.close();
       questionDb.close();
