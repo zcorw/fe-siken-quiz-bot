@@ -11,7 +11,7 @@
 ## 具体任务列表
 
 - [x] P0-DB-01 使用 `better-sqlite3` 定义题库只读连接模块，路径来自环境变量或配置。
-- [ ] P0-DB-02 定义 `app.sqlite` Drizzle schema：`users`、`quiz_sessions`、`quiz_session_questions`、`answer_records`、`user_question_stats`、`user_topic_stats`、`scope_parse_logs`。
+- [x] P0-DB-02 定义 `app.sqlite` Drizzle schema：`users`、`quiz_sessions`、`quiz_session_questions`、`answer_records`、`user_question_stats`、`user_topic_stats`、`scope_parse_logs`。
 - [ ] P0-DB-03 生成并提交 Drizzle migration。
 - [ ] P0-DB-04 初始化 `app.sqlite` 时启用 WAL。
 - [ ] P0-DB-05 实现题库查询：按 `exam_part = 科目A`、category、topic、url 查询候选题。
