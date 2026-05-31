@@ -36,6 +36,12 @@ export function QuizPageShell({ state }: QuizPageShellProps) {
         >
           <h1 className="text-xl font-semibold">{state.message}</h1>
           <p className="mt-3 text-sm text-slate-600">{text.telegram}</p>
+          <a
+            className="mt-5 inline-flex h-11 items-center rounded-lg bg-teal-600 px-5 font-semibold text-white"
+            href="https://t.me/"
+          >
+            {"Telegram\u3078\u623b\u308b"}
+          </a>
         </section>
       </main>
     );

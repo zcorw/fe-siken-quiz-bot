@@ -88,12 +88,23 @@ describe("QuizPageShell", () => {
     expect(screen.getByText(labels.accuracy)).toBeInTheDocument();
   });
 
-  it("renders error states with Telegram guidance", () => {
-    render(
-      <QuizPageShell state={{ status: "expired", message: labels.expired }} />
-    );
+  it.each([
+    [
+      "not_found",
+      "\u3053\u306e\u30ea\u30f3\u30af\u306f\u7121\u52b9\u3067\u3059",
+    ],
+    ["expired", labels.expired],
+    [
+      "error",
+      "\u8aad\u307f\u8fbc\u307f\u306b\u5931\u6557\u3057\u307e\u3057\u305f",
+    ],
+  ] as const)("renders %s state with Telegram guidance", (status, message) => {
+    render(<QuizPageShell state={{ status, message }} />);
 
-    expect(screen.getByText(labels.expired)).toBeInTheDocument();
+    expect(screen.getByText(message)).toBeInTheDocument();
     expect(screen.getByText(labels.telegram)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Telegramへ戻る" })
+    ).toHaveAttribute("href", "https://t.me/");
   });
 });
