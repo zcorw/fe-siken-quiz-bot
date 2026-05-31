@@ -1,0 +1,14 @@
+.worktrees/
+node_modules/
+.next/
+out/
+dist/
+coverage/
+playwright-report/
+test-results/
+.env
+.env.*
+!.env.example
+*.log
+data/app.sqlite
+data/app.sqlite-*
