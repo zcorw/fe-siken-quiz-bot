@@ -34,7 +34,7 @@ async function createQuestionBankFixture(): Promise<Database.Database> {
       question_no TEXT,
       topic TEXT,
       category TEXT,
-      url TEXT UNIQUE,
+      url TEXT,
       scraped_at TEXT
     );
 
@@ -52,7 +52,8 @@ async function createQuestionBankFixture(): Promise<Database.Database> {
       (3, '令和6年春', 'https://example.test/r6', '科目A', '問3', 'セキュリティ', 'テクノロジ系', 'https://example.test/r6/q3.html', '2026-01-01T00:00:00Z'),
       (1, '令和5年秋', 'https://example.test/r5', '科目A', '問1', 'ネットワーク', 'テクノロジ系', 'https://example.test/r5/q1.html', '2026-01-01T00:00:00Z'),
       (2, '令和5年秋', 'https://example.test/r5', '科目A', '問2', 'マネジメント', 'マネジメント系', 'https://example.test/r5/q2.html', '2026-01-01T00:00:00Z'),
-      (4, '令和6年春', 'https://example.test/r6', '科目B', '問4', 'セキュリティ', 'テクノロジ系', 'https://example.test/r6/q4.html', '2026-01-01T00:00:00Z');
+      (4, '令和6年春', 'https://example.test/r6', '科目B', '問4', 'セキュリティ', 'テクノロジ系', 'https://example.test/r6/q4.html', '2026-01-01T00:00:00Z'),
+      (5, '令和5年秋', 'https://example.test/r5', '科目A', '問1', 'ネットワーク', 'テクノロジ系', 'https://example.test/r5/q1.html', '2026-01-01T00:00:00Z');
   `);
 
   db.exec(`
@@ -142,6 +143,30 @@ describe("question candidate queries", () => {
           url: "https://example.test/r5/q2.html",
         }).map((row) => row.id)
       ).toEqual([2]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it("filters candidates by multiple categories with URL deduplication", async () => {
+    const db = await createQuestionBankFixture();
+
+    try {
+      expect(
+        findQuestionCandidates(db, {
+          categories: ["テクノロジ系", "マネジメント系"],
+        }).map((row) => row.id)
+      ).toEqual([1, 2, 3]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it("returns no candidates for an empty category list", async () => {
+    const db = await createQuestionBankFixture();
+
+    try {
+      expect(findQuestionCandidates(db, { categories: [] })).toEqual([]);
     } finally {
       db.close();
     }

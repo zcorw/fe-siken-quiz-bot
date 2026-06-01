@@ -201,11 +201,11 @@
 
 **依赖任务:** 任务 1。
 
-- [ ] 在 `src/db/question-bank/queries.ts` 增加按多个 category 查询候选题的能力。
-- [ ] 保持 `exam_part = '科目A'` 固定过滤。
-- [ ] 保持 URL 去重。
-- [ ] 保持参数化 SQL。
-- [ ] 避免使用 `questions.topic` 作为范围筛选主条件。
+- [x] 在 `src/db/question-bank/queries.ts` 增加按多个 category 查询候选题的能力。
+- [x] 保持 `exam_part = '科目A'` 固定过滤。
+- [x] 保持 URL 去重。
+- [x] 保持参数化 SQL。
+- [x] 避免使用 `questions.topic` 作为范围筛选主条件。
 
 **测试方式:**
 

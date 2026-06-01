@@ -16,6 +16,7 @@ export interface QuestionCandidateRow {
 
 export interface QuestionCandidateFilters {
   category?: string;
+  categories?: string[];
   topic?: string;
   url?: string;
 }
@@ -81,12 +82,23 @@ export function findQuestionCandidates(
   db: Database.Database,
   filters: QuestionCandidateFilters = {}
 ): QuestionCandidateRow[] {
+  if (filters.categories !== undefined && filters.categories.length === 0) {
+    return [];
+  }
+
   const whereClauses = ["exam_part = ?"];
   const parameters: string[] = [EXAM_PART_SUBJECT_A];
 
   if (filters.category !== undefined) {
     whereClauses.push("category = ?");
     parameters.push(filters.category);
+  }
+
+  if (filters.categories !== undefined) {
+    whereClauses.push(
+      `category IN (${filters.categories.map(() => "?").join(", ")})`
+    );
+    parameters.push(...filters.categories);
   }
 
   if (filters.topic !== undefined) {
@@ -102,6 +114,26 @@ export function findQuestionCandidates(
   const rows = db
     .prepare(
       `
+        WITH filtered_questions AS (
+          SELECT
+            id,
+            source_page_label,
+            source_page_url,
+            exam_part,
+            question_no,
+            topic,
+            category,
+            url,
+            scraped_at
+          FROM questions
+          WHERE ${whereClauses.join(" AND ")}
+        ),
+        deduped_questions AS (
+          SELECT
+            *,
+            ROW_NUMBER() OVER (PARTITION BY url ORDER BY id ASC) AS url_rank
+          FROM filtered_questions
+        )
         SELECT
           id,
           source_page_label,
@@ -112,8 +144,8 @@ export function findQuestionCandidates(
           category,
           url,
           scraped_at
-        FROM questions
-        WHERE ${whereClauses.join(" AND ")}
+        FROM deduped_questions
+        WHERE url_rank = 1
         ORDER BY id ASC
       `
     )
