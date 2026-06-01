@@ -400,6 +400,47 @@ describe("submitQuizSession", () => {
     }
   });
 
+  it("updates configured topic stats from the matched major category", async () => {
+    const appDb = await createMigratedAppDb();
+
+    try {
+      await createQuizSession(
+        appDb.db,
+        makeSessionInput({
+          matchedScopeJson: {
+            majorCategory: "ネットワーク",
+            scopeType: "minor_category",
+          },
+        })
+      );
+
+      await submitQuizSession(appDb.db, {
+        quizSessionId: "session-1",
+        submittedAt: "2026-05-31T01:30:00.000Z",
+        answers: makeAnswers(),
+      });
+
+      const topicStats = await appDb.db
+        .select()
+        .from(userTopicStats)
+        .where(eq(userTopicStats.topicType, "configured_topic"));
+
+      expect(topicStats).toEqual([
+        expect.objectContaining({
+          accuracy: 0.7,
+          attemptCount: 20,
+          correctCount: 14,
+          incorrectCount: 6,
+          topicKey: "ネットワーク",
+          topicType: "configured_topic",
+          userId: "user-1",
+        }),
+      ]);
+    } finally {
+      appDb.close();
+    }
+  });
+
   it("rejects incomplete answers before writing and keeps the session created", async () => {
     const appDb = await createMigratedAppDb();
 

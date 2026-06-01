@@ -297,13 +297,13 @@
 
 **依赖任务:** 任务 6、任务 7。
 
-- [ ] 确认 `answer_records` 继续记录题目 URL、正确答案和用户答案。
-- [ ] `user_question_stats` 逻辑保持不变。
-- [ ] `user_topic_stats` 中：
+- [x] 确认 `answer_records` 继续记录题目 URL、正确答案和用户答案。
+- [x] `user_question_stats` 逻辑保持不变。
+- [x] `user_topic_stats` 中：
   - `topic` 继续表示题目要点。
   - `category` 表示数据库小分类。
   - `configured_topic` 或新字段表示大分类。
-- [ ] 文档中说明常错题 / 弱项题的来源不受分类匹配改造影响。
+- [x] 文档中说明常错题 / 弱项题的来源不受分类匹配改造影响。
 
 **测试方式:**
 

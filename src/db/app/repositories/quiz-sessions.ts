@@ -401,6 +401,9 @@ export async function submitQuizSession(
         correctCount: number;
       }
     >();
+    const configuredTopic = parseMatchedScopeMajorCategory(
+      session.matchedScopeJson
+    );
 
     for (const answer of answerRows) {
       for (const topic of [
@@ -409,6 +412,9 @@ export async function submitQuizSession(
           : null,
         answer.sourceCategory
           ? { topicKey: answer.sourceCategory, topicType: "category" }
+          : null,
+        configuredTopic
+          ? { topicKey: configuredTopic, topicType: "configured_topic" }
           : null,
       ]) {
         if (!topic) {
@@ -466,4 +472,29 @@ export async function submitQuizSession(
       incorrectCount,
     };
   });
+}
+
+function parseMatchedScopeMajorCategory(
+  matchedScopeJson: string | null
+): string | null {
+  if (matchedScopeJson === null || matchedScopeJson.trim() === "") {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(matchedScopeJson) as unknown;
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      !Array.isArray(parsed) &&
+      "majorCategory" in parsed &&
+      typeof parsed.majorCategory === "string"
+    ) {
+      return parsed.majorCategory;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }
