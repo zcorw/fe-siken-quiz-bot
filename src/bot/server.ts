@@ -9,11 +9,16 @@ export interface TelegramWebhookBot {
   handleUpdate(update: unknown): Promise<void>;
 }
 
+export interface TelegramWebhookLogger {
+  error(payload: unknown, message: string): void;
+}
+
 export interface CreateTelegramWebhookServerOptions {
   bot: TelegramWebhookBot;
   pathPrefix: string;
   pathSecret: string;
   headerSecret: string;
+  logger?: TelegramWebhookLogger;
 }
 
 export function createTelegramWebhookServer({
@@ -21,6 +26,7 @@ export function createTelegramWebhookServer({
   pathPrefix,
   pathSecret,
   headerSecret,
+  logger,
 }: CreateTelegramWebhookServerOptions): Server {
   return createServer(async (request, response) => {
     try {
@@ -39,7 +45,8 @@ export function createTelegramWebhookServer({
 
       await bot.handleUpdate(JSON.parse(await readBody(request)) as unknown);
       writeJson(response, 200, { ok: true });
-    } catch {
+    } catch (error) {
+      logger?.error({ error }, "Telegram webhook handling failed");
       writeJson(response, 500, { ok: false });
     }
   });

@@ -110,4 +110,37 @@ describe("createTelegramWebhookServer", () => {
     await expect(response.json()).resolves.toEqual({ ok: false });
     expect(handleUpdate).not.toHaveBeenCalled();
   });
+
+  it("logs webhook handler errors before returning 500", async () => {
+    const error = new Error("reply failed");
+    const handleUpdate = vi.fn().mockRejectedValue(error);
+    const logger = { error: vi.fn() };
+    const server = createTelegramWebhookServer({
+      bot: { handleUpdate },
+      pathPrefix: "/telegram/webhook",
+      pathSecret: "path-secret",
+      headerSecret: "header-secret",
+      logger,
+    });
+    await listen(server);
+
+    const { port } = server.address() as AddressInfo;
+    const response = await fetch(
+      `http://127.0.0.1:${port}/telegram/webhook/path-secret`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-telegram-bot-api-secret-token": "header-secret",
+        },
+        body: JSON.stringify({ update_id: 1 }),
+      }
+    );
+
+    expect(response.status).toBe(500);
+    expect(logger.error).toHaveBeenCalledWith(
+      { error },
+      "Telegram webhook handling failed"
+    );
+  });
 });

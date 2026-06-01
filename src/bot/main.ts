@@ -63,6 +63,7 @@ async function start(): Promise<void> {
   const server = createTelegramWebhookServer({
     bot,
     headerSecret: env.headerSecret,
+    logger: console,
     pathPrefix: env.pathPrefix,
     pathSecret: env.pathSecret,
   });
