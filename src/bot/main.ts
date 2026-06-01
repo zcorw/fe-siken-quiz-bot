@@ -5,12 +5,14 @@ import { openQuestionBank } from "@/db/question-bank/client";
 import { listQuestionBankKeywords } from "@/db/question-bank/queries";
 
 import { handleScopeMessage } from "./handlers/scope-message";
+import { loadRuntimeEnvFile } from "./load-runtime-env-file";
 import { createQuizSessionFromScopeMessage } from "./quiz-session-factory";
 import { createTelegramWebhookServer } from "./server";
 import { createTelegramBot } from "./telegram-bot";
 import { readBotRuntimeEnv } from "./runtime-env";
 
 async function start(): Promise<void> {
+  loadRuntimeEnvFile();
   const env = readBotRuntimeEnv();
   const appConfig = await loadAppConfig(env.appConfigPath);
   const appDb = openAppDb();
