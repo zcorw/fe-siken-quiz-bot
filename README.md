@@ -1,36 +1,195 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# fe-siken-quiz-bot
 
-## Getting Started
+Telegram Bot + Web quiz app for learners preparing for Japan's Fundamental Information Technology Engineer Examination.
 
-First, run the development server:
+Users enter one practice scope in Telegram, receive a `/quiz/{token}` link, answer 20 questions in the browser, and review their result with explanations. The first submitted result is recorded against the Telegram user and later used for weak-topic and wrong-question selection.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Features
+
+- Telegram Bot entrypoint with `/start`, `/help`, and topic input.
+- Web quiz page with 20 questions, answer progress, mobile bottom-sheet navigation, and desktop side navigation.
+- Result page with score summary, original question text, all choices, selected answer, correct answer, explanation, and source URL.
+- Token-based access without web login.
+- First submission only updates user history; repeated visits are read-only.
+- Scope selection from configured FE category tree, with OpenAI fallback suggestions when local matching fails.
+- SQLite app database managed by Drizzle migrations.
+- FE question bank read from `fe_siken_questions.sqlite`.
+- Docker Compose deployment with `web`, `bot`, `edge`, and one-shot `migrate` services.
+- GitHub Actions deployment to a VPS over SSH.
+
+## Tech Stack
+
+- Next.js, React, TypeScript
+- grammY for Telegram Bot webhook handling
+- SQLite + better-sqlite3
+- Drizzle ORM + Drizzle Kit
+- OpenAI SDK
+- Zod for validation
+- Vitest, Playwright
+- Docker Compose + Nginx
+
+## Project Structure
+
+```text
+app/                     Next.js routes and API handlers
+src/
+  ai/                    OpenAI scope parsing
+  bot/                   Telegram bot runtime
+  config/                YAML config loading and validation
+  db/                    App DB and question DB access
+  quiz/                  Quiz selection, submit, and UI logic
+config/
+  app.yaml               Runtime product/category configuration
+drizzle/                 App DB migrations
+deploy/
+  docker-compose.yml     Production Docker Compose stack
+  nginx/                 Internal edge and external VPS Nginx examples
+  scripts/               Deploy, init, backup, smoke-test scripts
+docs/                    Product, API, architecture, deployment docs
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Local Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Requirements:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Node.js 22
+- pnpm 10
+- SQLite question bank file: `fe_siken_questions.sqlite`
 
-## Learn More
+Install dependencies:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm install
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create local environment file:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+cp .env.development.example .env
+```
 
-## Deploy on Vercel
+Prepare local files:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+./fe_siken_questions.sqlite
+./config/app.yaml
+./data/app.sqlite
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Run migrations:
+
+```bash
+pnpm db:migrate
+```
+
+Start the web app:
+
+```bash
+pnpm dev
+```
+
+Start the Telegram Bot webhook server in another terminal:
+
+```bash
+pnpm bot:start
+```
+
+## Telegram Local Debugging
+
+For real Telegram webhook testing, expose the local bot server with a public HTTPS tunnel and set the webhook to:
+
+```text
+https://<your-public-url>/telegram/webhook/<TELEGRAM_WEBHOOK_PATH_SECRET>
+```
+
+The request must include Telegram's `X-Telegram-Bot-Api-Secret-Token`, configured by `TELEGRAM_WEBHOOK_SECRET_TOKEN`.
+
+See [deploy/TELEGRAM_WEBHOOK.md](deploy/TELEGRAM_WEBHOOK.md) for webhook commands.
+
+## Environment Files
+
+Use separate templates for development and production:
+
+- `.env.development.example`
+- `.env.production.example`
+
+Production `.env` should be placed on the VPS under `/opt/fe-quiz-bot/.env`. Runtime database, config, and assets live outside the Git checkout so deployments can safely run `git reset --hard`.
+
+## Testing
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm test:e2e
+```
+
+## Docker Deployment
+
+The Docker stack contains:
+
+- `edge`: internal Nginx reverse proxy
+- `web`: Next.js web/API service
+- `bot`: Telegram webhook service
+- `migrate`: one-shot migration service
+
+Validate Compose config:
+
+```bash
+docker compose --profile tools -f deploy/docker-compose.yml config
+```
+
+Production VPS runtime layout:
+
+```text
+/opt/fe-quiz-bot/
+  .env
+  config/app.yaml
+  data/fe_siken_questions.sqlite
+  data/app.sqlite
+  assets/fe-siken/
+  app/                 Git checkout
+```
+
+Deployment details are in [docs/deployment-github-actions.md](docs/deployment-github-actions.md).
+
+## GitHub Actions Deployment
+
+Pushing to `main` triggers `.github/workflows/deploy.yml`.
+
+Required GitHub repository secrets:
+
+- `VPS_HOST`
+- `VPS_USER`
+- `VPS_SSH_KEY`
+
+Optional secrets:
+
+- `VPS_SSH_PORT`
+- `VPS_DEPLOY_ROOT`
+- `VPS_DEPLOY_DIR`
+- `VPS_REPO_URL`
+- `SMOKE_BASE_URL`
+
+The workflow SSHs into the VPS, pulls the latest `main`, checks runtime files, runs migrations, rebuilds containers, restarts services, and runs a smoke test.
+
+## Important Runtime Data
+
+Do not commit these files:
+
+- `.env`
+- `fe_siken_questions.sqlite`
+- `data/app.sqlite`
+- `data/app.sqlite-*`
+
+Question images should be available under:
+
+```text
+assets/fe-siken/
+```
+
+and served as:
+
+```text
+/assets/fe-siken/...
+```
