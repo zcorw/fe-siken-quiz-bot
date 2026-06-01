@@ -33,7 +33,7 @@
 - [x] P1-RC-13 备份脚本可手动运行并生成备份。
 - [x] P1-RC-14 token 过期和 invalid token 页面日文提示正确。
 - [x] P1-RC-15 OpenAI 不可用时 Bot 有可理解的日文错误消息。
-- [ ] P1-RC-16 Playwright 截图与当前 Figma 高保真稿关键布局一致。（Blocked：当前仓库没有 Figma 文件链接、高保真导出或 preview 目录；已完成 Playwright 截图 smoke test，但无法做真实视觉对照）
+- [x] P1-RC-16 Playwright 截图与当前 Figma 高保真稿关键布局一致。（已使用 `design-reference/` 中的 Figma PNG 导出图完成关键布局对照）
 
 ## 推荐使用的成熟工具 / 库
 
