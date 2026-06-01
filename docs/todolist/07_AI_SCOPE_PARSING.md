@@ -2,7 +2,7 @@
 
 ## 目标
 
-实现用户输入范围解析：优先 YAML/题库匹配，失败时使用 OpenAI API 结构化解析和相近主题建议。
+实现用户输入范围解析：优先 `topics.category_tree` 大分类 / 小分类与别名匹配，失败时使用 OpenAI API 从既有分类中结构化推荐和相近主题建议。
 
 ## 依赖任务
 
@@ -11,12 +11,12 @@
 
 ## 具体任务列表
 
-- [x] P0-AI-01 定义标准主题、别名、高权重主题的 YAML schema。
+- [x] P0-AI-01 定义分类树、别名、高权重主题的 YAML schema。
 - [x] P0-AI-02 实现 alias exact/normalized match。
-- [x] P0-AI-03 实现 `questions.category` 和 `questions.topic` 关键词匹配。
+- [x] P0-AI-03 实现 `topics.category_tree` 大分类 / 小分类关键词匹配。
 - [x] P0-AI-04 实现 parse result：matchedTopics、matchedCategories、suggestions、method、status。
 - [x] P0-AI-05 实现 OpenAI fallback，使用官方 SDK 和结构化 JSON 输出。
-- [x] P0-AI-06 AI 只允许返回题库已有主题或 YAML 标准主题，不生成新主题。
+- [x] P0-AI-06 AI 只允许返回既有大分类 / 小分类，不生成新主题。
 - [x] P0-AI-07 AI 不可生成题目、改写题干、判断答案或生成额外解析。
 - [x] P0-AI-08 无匹配时返回 2-3 个相近主题建议。
 - [x] P0-AI-09 写入 `scope_parse_logs`。
@@ -48,13 +48,13 @@
 ## 测试方式
 
 - Unit：alias 命中不调用 AI。
-- Unit：category/topic 命中不调用 AI。
+- Unit：大分类 / 小分类命中不调用 AI。
 - Unit：本地无匹配时调用 mocked OpenAI。
 - Unit：AI 返回不存在主题时被拒绝或转为 no_match。
 
 ## 验收标准
 
-- 解析顺序为 YAML alias -> category/topic -> AI fallback。
+- 解析顺序为 `topics.category_tree` 大分类 / 小分类 -> YAML alias -> AI fallback。
 - OpenAI model 从 YAML 读取，默认 `gpt-4.1-mini`。
 - 所有解析结果可追踪记录。
 
@@ -63,4 +63,4 @@
 - 已确认：OpenAI API 失败且本地匹配失败时，不创建测试，提示稍后重试。
 - 已确认：无匹配时返回相近主题建议；没有建议则提示重新输入。
 - AI 假设：OpenAI 输出使用 JSON schema/structured output 能力；若当前 SDK 环境不可用，退回 Zod parse 普通 JSON。
-- AI 假设：主题别名初始 YAML 内容由现有高权重主题列表和题库 topic/category 派生。
+- AI 假设：主题别名初始 YAML 内容由现有高权重主题列表和分类树派生。
