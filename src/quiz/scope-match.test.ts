@@ -14,12 +14,14 @@ const topicsConfig: AppConfig["topics"] = {
   category_tree: {
     データベース: ["データ操作"],
     ネットワーク: ["通信プロトコル"],
+    通信プロトコル: ["プロトコル設計"],
     情報セキュリティ: ["情報セキュリティ"],
   },
   high_weight_topics: ["情報セキュリティ"],
   aliases: {
     データベース: ["DB", "数据库"],
     ネットワーク: ["网络", "通信ネットワーク"],
+    通信プロトコル: [],
     情報セキュリティ: ["セキュリティ", "信息安全"],
   },
 };
@@ -123,6 +125,20 @@ describe("parseLocalScope", () => {
     });
   });
 
+  it("prioritizes an exact minor category over an exact major category with the same name", () => {
+    expect(
+      parseLocalScope("通信プロトコル", topicsConfig, questionBankKeywords)
+    ).toMatchObject({
+      candidateMinorCategories: ["通信プロトコル"],
+      majorCategory: "ネットワーク",
+      matchedCategories: ["通信プロトコル"],
+      method: "local_exact",
+      minorCategory: "通信プロトコル",
+      scopeType: "minor_category",
+      status: "matched",
+    });
+  });
+
   it("returns a major category result for alias input", () => {
     expect(parseLocalScope("网络", topicsConfig, questionBankKeywords)).toEqual({
       candidateMinorCategories: ["通信プロトコル"],
@@ -137,10 +153,26 @@ describe("parseLocalScope", () => {
     });
   });
 
-  it("returns a question bank keyword parse result when aliases do not match", () => {
+  it("does not treat a single alias phrase containing its major category as multiple scopes", () => {
     expect(
       parseLocalScope(
-        "プロジェクトマネジメント",
+        "通信ネットワークを練習したい",
+        topicsConfig,
+        questionBankKeywords,
+        3
+      )
+    ).toMatchObject({
+      method: "local_fuzzy",
+      scopeType: "no_match",
+      status: "no_match",
+      suggestions: ["ネットワーク"],
+    });
+  });
+
+  it("returns a single-scope retry result when multiple configured scopes are present", () => {
+    expect(
+      parseLocalScope(
+        "ネットワークとデータベース",
         topicsConfig,
         questionBankKeywords
       )
@@ -148,12 +180,33 @@ describe("parseLocalScope", () => {
       candidateMinorCategories: [],
       majorCategory: undefined,
       matchedCategories: [],
-      matchedTopics: ["プロジェクトマネジメント"],
-      method: "question_bank_keyword",
+      matchedTopics: [],
+      method: "local_multi_scope",
       minorCategory: undefined,
-      scopeType: "topic_keyword",
-      status: "matched",
+      scopeType: "no_match",
+      status: "needs_single_scope",
       suggestions: [],
+    });
+  });
+
+  it("uses local Fuse suggestions instead of question topic matching when exact configured matching fails", () => {
+    expect(
+      parseLocalScope(
+        "ネットワークを練習したい",
+        topicsConfig,
+        questionBankKeywords,
+        3
+      )
+    ).toEqual({
+      candidateMinorCategories: [],
+      majorCategory: undefined,
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "local_fuzzy",
+      minorCategory: undefined,
+      scopeType: "no_match",
+      status: "no_match",
+      suggestions: ["ネットワーク"],
     });
   });
 
@@ -175,13 +228,13 @@ describe("parseLocalScope", () => {
 
   it("returns similar suggestions when local matching fails", () => {
     expect(
-      parseLocalScope("データベス", topicsConfig, questionBankKeywords, 3)
+      parseLocalScope("データベス", topicsConfig, questionBankKeywords, 1)
     ).toEqual({
       candidateMinorCategories: [],
       majorCategory: undefined,
       matchedCategories: [],
       matchedTopics: [],
-      method: "none",
+      method: "local_fuzzy",
       minorCategory: undefined,
       scopeType: "no_match",
       status: "no_match",
@@ -214,7 +267,7 @@ describe("resolveNoMatchAction", () => {
         majorCategory: undefined,
         matchedCategories: [],
         matchedTopics: [],
-        method: "none",
+        method: "local_fuzzy",
         minorCategory: undefined,
         scopeType: "no_match",
         status: "no_match",
@@ -223,6 +276,25 @@ describe("resolveNoMatchAction", () => {
     ).toEqual({
       type: "suggestions",
       suggestions: ["データベース", "ネットワーク"],
+    });
+  });
+
+  it("returns a single-scope retry prompt for multiple configured scopes", () => {
+    expect(
+      resolveNoMatchAction({
+        candidateMinorCategories: [],
+        majorCategory: undefined,
+        matchedCategories: [],
+        matchedTopics: [],
+        method: "local_multi_scope",
+        minorCategory: undefined,
+        scopeType: "no_match",
+        status: "needs_single_scope",
+        suggestions: [],
+      })
+    ).toEqual({
+      message: "練習範囲は1つだけ入力してください。",
+      type: "retry_input",
     });
   });
 

@@ -225,7 +225,7 @@ describe("parseScope", () => {
       minorCategory: undefined,
       scopeType: "ai_unavailable",
       status: "ai_unavailable",
-      suggestions: ["database"],
+      suggestions: ["database", "database design"],
     });
   });
 
@@ -252,7 +252,7 @@ describe("parseScope", () => {
     });
   });
 
-  it("parses Japanese natural topic input through question bank keywords", async () => {
+  it("keeps local suggestions for Japanese natural category input when OpenAI fallback is unavailable", async () => {
     const result = await parseScope({
       input: "ネットワークを練習したい",
       topicsConfig: {
@@ -267,9 +267,10 @@ describe("parseScope", () => {
     });
 
     expect(result).toMatchObject({
-      matchedTopics: ["ネットワーク"],
-      method: "question_bank_keyword",
-      status: "matched",
+      matchedTopics: [],
+      method: "openai_unavailable",
+      status: "ai_unavailable",
+      suggestions: ["ネットワーク"],
     });
   });
 });

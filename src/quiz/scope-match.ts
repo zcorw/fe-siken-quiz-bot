@@ -48,12 +48,17 @@ export type ScopeParseMethod =
   | "local_exact"
   | "local_alias"
   | "local_fuzzy"
+  | "local_multi_scope"
   | "alias"
   | "question_bank_keyword"
   | "openai"
   | "openai_unavailable"
   | "none";
-export type ScopeParseStatus = "matched" | "no_match" | "ai_unavailable";
+export type ScopeParseStatus =
+  | "matched"
+  | "no_match"
+  | "needs_single_scope"
+  | "ai_unavailable";
 export type ScopeType =
   | "major_category"
   | "minor_category"
@@ -96,6 +101,20 @@ export function parseLocalScope(
   keywords: QuestionBankKeywordIndex,
   maxSuggestions = 0
 ): ScopeParseResult {
+  if (hasMultipleConfiguredScopes(input, topicsConfig)) {
+    return {
+      candidateMinorCategories: [],
+      majorCategory: undefined,
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "local_multi_scope",
+      minorCategory: undefined,
+      scopeType: "no_match",
+      status: "needs_single_scope",
+      suggestions: [],
+    };
+  }
+
   const exactCategoryMatch = matchConfiguredCategory(input, topicsConfig);
 
   if (exactCategoryMatch !== undefined) {
@@ -119,48 +138,69 @@ export function parseLocalScope(
     };
   }
 
-  const keywordMatch = matchQuestionBankKeywords(input, keywords);
+  const suggestions =
+    maxSuggestions > 0
+      ? suggestSimilarScopeTerms(input, topicsConfig, keywords, maxSuggestions)
+      : [];
 
-  if (
-    keywordMatch.matchedCategories.length > 0 ||
-    keywordMatch.matchedTopics.length > 0
-  ) {
-    const scopeType =
-      keywordMatch.matchedCategories.length > 0
-        ? "category_keyword"
-        : "topic_keyword";
-
-    return {
-      candidateMinorCategories: [],
-      majorCategory: undefined,
-      ...keywordMatch,
-      method: "question_bank_keyword",
-      minorCategory: undefined,
-      scopeType,
-      status: "matched",
-      suggestions: [],
-    };
-  }
+  const method: ScopeParseMethod =
+    maxSuggestions > 0 && suggestions.length > 0 ? "local_fuzzy" : "none";
 
   return {
     candidateMinorCategories: [],
     majorCategory: undefined,
     matchedCategories: [],
     matchedTopics: [],
-    method: "none",
+    method,
     minorCategory: undefined,
     scopeType: "no_match",
     status: "no_match",
-    suggestions:
-      maxSuggestions > 0
-        ? suggestSimilarScopeTerms(
-            input,
-            topicsConfig,
-            keywords,
-            maxSuggestions
-          )
-        : [],
+    suggestions,
   };
+}
+
+function hasMultipleConfiguredScopes(
+  input: string,
+  topicsConfig: AppConfig["topics"]
+): boolean {
+  const normalizedInput = normalizeScopeText(input);
+  const normalizedScopeNames = new Map<string, string>();
+
+  for (const [minorCategory] of getMinorToMajorCategoryMap(topicsConfig)) {
+    normalizedScopeNames.set(
+      normalizeScopeText(minorCategory),
+      `minor:${minorCategory}`
+    );
+  }
+
+  for (const majorCategory of getMajorCategories(topicsConfig)) {
+    const normalizedMajorCategory = normalizeScopeText(majorCategory);
+    if (!normalizedScopeNames.has(normalizedMajorCategory)) {
+      normalizedScopeNames.set(normalizedMajorCategory, `major:${majorCategory}`);
+    }
+  }
+
+  for (const [majorCategory, aliases] of Object.entries(topicsConfig.aliases)) {
+    for (const alias of aliases) {
+      normalizedScopeNames.set(
+        normalizeScopeText(alias),
+        `major:${majorCategory}`
+      );
+    }
+  }
+
+  const containedScopes = new Set<string>();
+
+  for (const [normalizedScopeName, canonicalScope] of normalizedScopeNames) {
+    if (
+      normalizedInput !== normalizedScopeName &&
+      normalizedInput.includes(normalizedScopeName)
+    ) {
+      containedScopes.add(canonicalScope);
+    }
+  }
+
+  return containedScopes.size > 1;
 }
 
 function matchConfiguredCategory(
@@ -211,7 +251,10 @@ export function suggestSimilarScopeTerms(
   keywords: QuestionBankKeywordIndex,
   maxSuggestions: number
 ): string[] {
-  const candidates = buildSuggestionCandidates(topicsConfig, keywords);
+  void keywords;
+
+  const candidates = buildSuggestionCandidates(topicsConfig);
+  const normalizedInput = normalizeScopeText(input);
   const fuse = new Fuse(candidates, {
     keys: ["normalizedText"],
     threshold: 0.45,
@@ -220,7 +263,22 @@ export function suggestSimilarScopeTerms(
   const suggestions: string[] = [];
   const seen = new Set<string>();
 
-  for (const result of fuse.search(normalizeScopeText(input))) {
+  for (const candidate of candidates) {
+    if (
+      normalizedInput !== candidate.normalizedText &&
+      normalizedInput.includes(candidate.normalizedText) &&
+      !seen.has(candidate.suggestion)
+    ) {
+      suggestions.push(candidate.suggestion);
+      seen.add(candidate.suggestion);
+    }
+
+    if (suggestions.length >= maxSuggestions) {
+      return suggestions;
+    }
+  }
+
+  for (const result of fuse.search(normalizedInput)) {
     const suggestion = result.item.suggestion;
     if (!seen.has(suggestion)) {
       suggestions.push(suggestion);
@@ -238,6 +296,13 @@ export function suggestSimilarScopeTerms(
 export function resolveNoMatchAction(
   result: ScopeParseResult
 ): ScopeNoMatchAction {
+  if (result.status === "needs_single_scope") {
+    return {
+      message: "練習範囲は1つだけ入力してください。",
+      type: "retry_input",
+    };
+  }
+
   if (result.suggestions.length > 0) {
     return {
       type: "suggestions",
@@ -267,8 +332,7 @@ interface SuggestionCandidate {
 }
 
 function buildSuggestionCandidates(
-  topicsConfig: AppConfig["topics"],
-  keywords: QuestionBankKeywordIndex
+  topicsConfig: AppConfig["topics"]
 ): SuggestionCandidate[] {
   const candidates: SuggestionCandidate[] = [];
 
@@ -279,17 +343,10 @@ function buildSuggestionCandidates(
     });
   }
 
-  for (const category of keywords.categories) {
+  for (const [minorCategory] of getMinorToMajorCategoryMap(topicsConfig)) {
     candidates.push({
-      normalizedText: normalizeScopeText(category),
-      suggestion: category,
-    });
-  }
-
-  for (const topic of keywords.topics) {
-    candidates.push({
-      normalizedText: normalizeScopeText(topic),
-      suggestion: topic,
+      normalizedText: normalizeScopeText(minorCategory),
+      suggestion: minorCategory,
     });
   }
 

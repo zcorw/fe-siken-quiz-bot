@@ -96,7 +96,11 @@ export async function handleScopeMessage({
     return;
   }
 
-  if (result.status === "no_match" || result.status === "ai_unavailable") {
+  if (
+    result.status === "no_match" ||
+    result.status === "needs_single_scope" ||
+    result.status === "ai_unavailable"
+  ) {
     if (result.suggestions.length > 0) {
       await ctx.reply(
         `分野を特定できませんでした。近い候補: ${result.suggestions.join("、")}`

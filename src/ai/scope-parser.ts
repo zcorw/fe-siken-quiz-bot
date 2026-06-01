@@ -89,7 +89,10 @@ export async function parseScope(
     input.aiConfig.max_suggestions
   );
 
-  if (localResult.status === "matched") {
+  if (
+    localResult.status === "matched" ||
+    localResult.status === "needs_single_scope"
+  ) {
     return localResult;
   }
 
