@@ -18,6 +18,12 @@ describe("loadAppConfig", () => {
     expect(config.topics.standard_topic_mappings["データ操作"]).toBe(
       "データベース"
     );
+    expect(config.topics.standard_topic_mappings["通信プロトコル"]).toBe(
+      "ネットワーク"
+    );
+    expect(config.topics.standard_topic_mappings["データ通信と制御"]).toBe(
+      "ネットワーク"
+    );
     expect(config.ai).toMatchObject({
       provider: "openai",
       model: "gpt-4.1-mini",
