@@ -53,10 +53,14 @@ export async function createQuizSessionFromScopeMessage({
     telegramUsername: telegramUser.username ?? null,
   });
 
-  const matchedTopic = matchedScope.majorCategory ?? matchedScope.matchedTopics[0];
+  const matchedTopic =
+    matchedScope.scopeType === "topic_keyword"
+      ? matchedScope.matchedTopics[0]
+      : undefined;
   const matchedCategory =
     matchedScope.minorCategory ?? matchedScope.matchedCategories[0];
   const candidates = resolveQuestionCandidates(questionDb, {
+    candidateMinorCategories: matchedScope.candidateMinorCategories,
     matchedCategory,
     matchedTopic,
     topicsConfig,
@@ -117,13 +121,22 @@ function resolveQuestionCandidates(
   {
     matchedCategory,
     matchedTopic,
+    candidateMinorCategories,
     topicsConfig,
   }: {
+    candidateMinorCategories?: string[];
     matchedCategory?: string;
     matchedTopic?: string;
     topicsConfig?: AppConfig["topics"];
   }
 ): QuestionCandidateRow[] {
+  if (candidateMinorCategories !== undefined && candidateMinorCategories.length > 0) {
+    const allowedCategories = new Set(candidateMinorCategories);
+    return findQuestionCandidates(questionDb).filter((candidate) =>
+      allowedCategories.has(candidate.category ?? "")
+    );
+  }
+
   const directCandidates = findQuestionCandidates(questionDb, {
     category: matchedCategory,
     topic: matchedTopic,
