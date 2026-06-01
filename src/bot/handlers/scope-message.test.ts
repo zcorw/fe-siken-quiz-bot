@@ -156,6 +156,63 @@ describe("handleScopeMessage", () => {
     );
   });
 
+  it("shows OpenAI candidate scopes as Telegram callback buttons without creating a quiz session", async () => {
+    const parseScope = vi.fn().mockResolvedValue({
+      candidateMinorCategories: [],
+      candidateScopes: [
+        {
+          majorCategory: "database",
+          name: "database",
+          scopeType: "major_category",
+        },
+        {
+          majorCategory: "network",
+          name: "tcp/ip",
+          scopeType: "minor_category",
+        },
+      ],
+      majorCategory: undefined,
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "openai",
+      minorCategory: undefined,
+      scopeType: "no_match",
+      status: "no_match",
+      suggestions: ["database", "tcp/ip"],
+    });
+    const createQuizSession = vi.fn();
+    const reply = vi.fn().mockResolvedValue(undefined);
+
+    await handleScopeMessage({
+      ctx: { message: { text: "unknown" }, reply },
+      parseScope,
+      createQuizSession,
+    });
+
+    expect(createQuizSession).not.toHaveBeenCalled();
+    expect(reply).toHaveBeenCalledWith(
+      expect.stringContaining("近い候補"),
+      expect.objectContaining({
+        reply_markup: expect.objectContaining({
+          inline_keyboard: [
+            [
+              {
+                callback_data: "scope_candidate:major_category:database",
+                text: "database",
+              },
+            ],
+            [
+              {
+                callback_data: "scope_candidate:minor_category:tcp%2Fip",
+                text: "tcp/ip",
+              },
+            ],
+          ],
+        }),
+      })
+    );
+  });
+
   it("replies with suggestions when AI fallback is unavailable", async () => {
     const parseScope = vi.fn().mockResolvedValue({
       matchedCategories: [],

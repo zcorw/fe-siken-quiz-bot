@@ -3,6 +3,8 @@ import { InlineKeyboard } from "grammy";
 import { resolveNoMatchAction, type ScopeParseResult } from "@/quiz/scope-match";
 import type { ReplyContext } from "./start";
 
+const SCOPE_CANDIDATE_CALLBACK_PREFIX = "scope_candidate";
+
 export interface ScopeMessageContext extends ReplyContext {
   from?: {
     id: number;
@@ -104,6 +106,19 @@ export async function handleScopeMessage({
     const action = resolveNoMatchAction(result);
 
     if (action.type === "suggestions") {
+      if (
+        result.candidateScopes !== undefined &&
+        result.candidateScopes.length > 0
+      ) {
+        await ctx.reply(
+          `分野を特定できませんでした。近い候補: ${action.suggestions.join("、")}`,
+          {
+            reply_markup: buildCandidateScopeKeyboard(result.candidateScopes),
+          }
+        );
+        return;
+      }
+
       await ctx.reply(
         `分野を特定できませんでした。近い候補: ${action.suggestions.join("、")}`
       );
@@ -116,4 +131,38 @@ export async function handleScopeMessage({
         : `分野を特定できませんでした。${action.message}`
     );
   }
+}
+
+export interface CandidateScopeButtonPayload {
+  scopeType: "major_category" | "minor_category";
+  name: string;
+}
+
+export function buildCandidateScopeCallbackData({
+  scopeType,
+  name,
+}: CandidateScopeButtonPayload): string {
+  return `${SCOPE_CANDIDATE_CALLBACK_PREFIX}:${scopeType}:${encodeURIComponent(name)}`;
+}
+
+function buildCandidateScopeKeyboard(
+  candidateScopes: NonNullable<ScopeParseResult["candidateScopes"]>
+): InlineKeyboard {
+  const keyboard = new InlineKeyboard();
+
+  candidateScopes.forEach((candidateScope, index) => {
+    if (index > 0) {
+      keyboard.row();
+    }
+
+    keyboard.text(
+      candidateScope.name,
+      buildCandidateScopeCallbackData({
+        name: candidateScope.name,
+        scopeType: candidateScope.scopeType,
+      })
+    );
+  });
+
+  return keyboard;
 }

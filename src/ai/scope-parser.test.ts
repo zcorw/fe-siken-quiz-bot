@@ -17,6 +17,14 @@ const aiConfig: AppConfig["ai"] = {
   max_suggestions: 3,
 };
 
+const categoryTreeAvailableScope = {
+  majorCategories: ["database", "network"],
+  minorCategories: [
+    { majorCategory: "database", minorCategory: "sql" },
+    { majorCategory: "network", minorCategory: "tcp/ip" },
+  ],
+};
+
 const availableScope = {
   standardTopics: ["データベース", "ネットワーク"],
   categories: ["テクノロジ系"],
@@ -138,6 +146,110 @@ describe("parseScopeWithOpenAI", () => {
     expect(userMessage).toContain("Do not create questions.");
     expect(userMessage).toContain("Do not rewrite question text.");
     expect(userMessage).toContain("Do not answer or explain exam questions.");
+  });
+
+  it("sends raw input, major categories, minor categories with parents, and existing-category-only rules", async () => {
+    const create = vi.fn().mockResolvedValue({
+      output_text: JSON.stringify({
+        candidates: [],
+        method: "openai",
+        status: "no_match",
+      }),
+    });
+
+    await parseScopeWithOpenAI({
+      client: { responses: { create } },
+      input: "raw learner request",
+      aiConfig,
+      availableScope: categoryTreeAvailableScope,
+    });
+
+    const userMessage = JSON.parse(create.mock.calls[0]?.[0].input[1].content);
+    expect(userMessage).toMatchObject({
+      rawInput: "raw learner request",
+      majorCategories: ["database", "network"],
+      minorCategories: [
+        { majorCategory: "database", minorCategory: "sql" },
+        { majorCategory: "network", minorCategory: "tcp/ip" },
+      ],
+    });
+    expect(userMessage.rules).toContain(
+      "Return only existing major or minor categories from the provided lists."
+    );
+  });
+
+  it("parses whitelisted OpenAI major and minor candidates without treating them as immediate matches", async () => {
+    const result = await parseScopeWithOpenAI({
+      client: {
+        responses: {
+          create: vi.fn().mockResolvedValue({
+            output_text: JSON.stringify({
+              candidates: [
+                { scopeType: "major_category", name: "database" },
+                { scopeType: "minor_category", name: "tcp/ip" },
+              ],
+              method: "openai",
+              status: "matched",
+            }),
+          }),
+        },
+      },
+      input: "unknown",
+      aiConfig,
+      availableScope: categoryTreeAvailableScope,
+    });
+
+    expect(result).toMatchObject({
+      candidateScopes: [
+        {
+          majorCategory: "database",
+          name: "database",
+          scopeType: "major_category",
+        },
+        {
+          majorCategory: "network",
+          name: "tcp/ip",
+          scopeType: "minor_category",
+        },
+      ],
+      majorCategory: undefined,
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "openai",
+      minorCategory: undefined,
+      scopeType: "no_match",
+      status: "no_match",
+      suggestions: ["database", "tcp/ip"],
+    });
+  });
+
+  it("filters OpenAI candidates that are not in the configured major or minor categories", async () => {
+    const result = await parseScopeWithOpenAI({
+      client: {
+        responses: {
+          create: vi.fn().mockResolvedValue({
+            output_text: JSON.stringify({
+              candidates: [
+                { scopeType: "major_category", name: "missing major" },
+                { scopeType: "minor_category", name: "missing minor" },
+              ],
+              method: "openai",
+              status: "matched",
+            }),
+          }),
+        },
+      },
+      input: "unknown",
+      aiConfig,
+      availableScope: categoryTreeAvailableScope,
+    });
+
+    expect(result).toMatchObject({
+      candidateScopes: [],
+      scopeType: "no_match",
+      status: "no_match",
+      suggestions: [],
+    });
   });
 });
 

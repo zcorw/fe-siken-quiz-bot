@@ -1,6 +1,6 @@
 import { createOpenAIScopeClient, parseScope } from "@/ai/scope-parser";
 import { loadAppConfig } from "@/config/app-config";
-import { getMajorCategories } from "@/config/schema";
+import { getMajorCategories, getMinorToMajorCategoryMap } from "@/config/schema";
 import { openAppDb } from "@/db/app/client";
 import { openQuestionBank } from "@/db/question-bank/client";
 import { listQuestionBankKeywords } from "@/db/question-bank/queries";
@@ -21,8 +21,11 @@ async function start(): Promise<void> {
   const questionBankKeywords = listQuestionBankKeywords(questionDb);
   const openAiClient = createOpenAIScopeClient(env.openAiApiKey);
   const availableScope = {
-    categories: questionBankKeywords.categories,
-    standardTopics: getMajorCategories(appConfig.topics),
+    majorCategories: getMajorCategories(appConfig.topics),
+    minorCategories: Array.from(
+      getMinorToMajorCategoryMap(appConfig.topics),
+      ([minorCategory, majorCategory]) => ({ majorCategory, minorCategory })
+    ),
     topics: questionBankKeywords.topics,
   };
 

@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { AppConfig } from "@/config/schema";
 import {
   parseLocalScope,
+  type ScopeCandidate,
   type QuestionBankKeywordIndex,
   type ScopeParseResult,
 } from "@/quiz/scope-match";
@@ -31,9 +32,14 @@ export interface OpenAIScopeClient {
 }
 
 export interface AvailableScopeForAI {
-  standardTopics: string[];
-  categories: string[];
-  topics: string[];
+  majorCategories?: string[];
+  minorCategories?: Array<{
+    majorCategory: string;
+    minorCategory: string;
+  }>;
+  standardTopics?: string[];
+  categories?: string[];
+  topics?: string[];
 }
 
 export interface ParseScopeWithOpenAIInput {
@@ -56,20 +62,40 @@ const openAIScopeParseResultSchema = z.strictObject({
   status: z.union([z.literal("matched"), z.literal("no_match")]),
 });
 
+const openAIScopeCandidateResultSchema = z.strictObject({
+  candidates: z.array(
+    z.strictObject({
+      scopeType: z.union([
+        z.literal("major_category"),
+        z.literal("minor_category"),
+      ]),
+      name: z.string(),
+    })
+  ),
+  method: z.literal("openai"),
+  status: z.union([z.literal("matched"), z.literal("no_match")]),
+});
+
 const scopeParseJsonSchema = {
   type: "object",
   additionalProperties: false,
-  required: [
-    "matchedTopics",
-    "matchedCategories",
-    "suggestions",
-    "method",
-    "status",
-  ],
+  required: ["candidates", "method", "status"],
   properties: {
-    matchedTopics: { type: "array", items: { type: "string" } },
-    matchedCategories: { type: "array", items: { type: "string" } },
-    suggestions: { type: "array", items: { type: "string" } },
+    candidates: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["scopeType", "name"],
+        properties: {
+          scopeType: {
+            type: "string",
+            enum: ["major_category", "minor_category"],
+          },
+          name: { type: "string" },
+        },
+      },
+    },
     method: { type: "string", enum: ["openai"] },
     status: { type: "string", enum: ["matched", "no_match"] },
   },
@@ -119,6 +145,7 @@ export async function parseScopeWithOpenAI({
   aiConfig,
   availableScope,
 }: ParseScopeWithOpenAIInput): Promise<ScopeParseResult> {
+  const normalizedAvailableScope = normalizeAvailableScope(availableScope);
   const response = await client.responses.create({
     model: aiConfig.model,
     temperature: aiConfig.temperature,
@@ -131,13 +158,16 @@ export async function parseScopeWithOpenAI({
       {
         role: "user",
         content: JSON.stringify({
-          input,
-          allowed: availableScope,
+          rawInput: input,
+          majorCategories: normalizedAvailableScope.majorCategories,
+          minorCategories: normalizedAvailableScope.minorCategories,
           rules: [
-            "Use only available topics or categories.",
+            "Return only existing major or minor categories from the provided lists.",
+            "Do not create new categories.",
             "Do not create questions.",
             "Do not rewrite question text.",
             "Do not answer or explain exam questions.",
+            "Return candidates as suggestions for Telegram buttons; do not mark them as final quiz creation decisions.",
           ],
         }),
       },
@@ -152,12 +182,12 @@ export async function parseScopeWithOpenAI({
     },
   });
 
-  return parseOpenAIOutput(response.output_text, availableScope);
+  return parseOpenAIOutput(response.output_text, normalizedAvailableScope);
 }
 
 function parseOpenAIOutput(
   outputText: string,
-  availableScope: AvailableScopeForAI
+  availableScope: NormalizedAvailableScopeForAI
 ): ScopeParseResult {
   let parsed: unknown;
 
@@ -165,6 +195,12 @@ function parseOpenAIOutput(
     parsed = JSON.parse(outputText) as unknown;
   } catch (error) {
     throw new Error("Invalid OpenAI scope parse JSON", { cause: error });
+  }
+
+  const candidateResult = openAIScopeCandidateResultSchema.safeParse(parsed);
+
+  if (candidateResult.success) {
+    return parseOpenAICandidates(candidateResult.data, availableScope);
   }
 
   const result = openAIScopeParseResultSchema.safeParse(parsed);
@@ -205,17 +241,19 @@ function deriveOpenAIScopeType(
 
 function restrictToAvailableScope(
   result: ScopeParseResult,
-  availableScope: AvailableScopeForAI
+  availableScope: NormalizedAvailableScopeForAI
 ): ScopeParseResult {
   const allowedTopics = new Set([
-    ...availableScope.standardTopics,
+    ...availableScope.majorCategories,
     ...availableScope.topics,
   ]);
-  const allowedCategories = new Set(availableScope.categories);
+  const allowedCategories = new Set(
+    availableScope.minorCategories.map((category) => category.minorCategory)
+  );
   const allowedSuggestions = new Set([
-    ...availableScope.standardTopics,
+    ...availableScope.majorCategories,
     ...availableScope.topics,
-    ...availableScope.categories,
+    ...availableScope.minorCategories.map((category) => category.minorCategory),
   ]);
 
   const matchedTopics = result.matchedTopics.filter((topic) =>
@@ -242,4 +280,93 @@ function restrictToAvailableScope(
         : "no_match",
     suggestions,
   };
+}
+
+interface NormalizedAvailableScopeForAI {
+  majorCategories: string[];
+  minorCategories: Array<{
+    majorCategory: string;
+    minorCategory: string;
+  }>;
+  topics: string[];
+}
+
+function normalizeAvailableScope(
+  availableScope: AvailableScopeForAI
+): NormalizedAvailableScopeForAI {
+  const majorCategories =
+    availableScope.majorCategories ??
+    availableScope.standardTopics ??
+    availableScope.topics ??
+    [];
+
+  return {
+    majorCategories,
+    minorCategories:
+      availableScope.minorCategories ??
+      (availableScope.categories ?? []).map((minorCategory) => ({
+        majorCategory: "",
+        minorCategory,
+      })),
+    topics: availableScope.topics ?? [],
+  };
+}
+
+function parseOpenAICandidates(
+  result: z.infer<typeof openAIScopeCandidateResultSchema>,
+  availableScope: NormalizedAvailableScopeForAI
+): ScopeParseResult {
+  const candidateScopes = filterOpenAICandidates(result.candidates, availableScope);
+
+  return {
+    candidateMinorCategories: [],
+    candidateScopes,
+    majorCategory: undefined,
+    matchedCategories: [],
+    matchedTopics: [],
+    method: "openai",
+    minorCategory: undefined,
+    scopeType: "no_match",
+    status: "no_match",
+    suggestions: candidateScopes.map((candidate) => candidate.name),
+  };
+}
+
+function filterOpenAICandidates(
+  candidates: z.infer<typeof openAIScopeCandidateResultSchema>["candidates"],
+  availableScope: NormalizedAvailableScopeForAI
+): ScopeCandidate[] {
+  const majorCategories = new Set(availableScope.majorCategories);
+  const minorToMajorCategory = new Map(
+    availableScope.minorCategories.map(({ majorCategory, minorCategory }) => [
+      minorCategory,
+      majorCategory,
+    ])
+  );
+  const filtered: ScopeCandidate[] = [];
+  const seen = new Set<string>();
+
+  for (const candidate of candidates) {
+    const majorCategory =
+      candidate.scopeType === "major_category"
+        ? candidate.name
+        : minorToMajorCategory.get(candidate.name);
+
+    if (
+      majorCategory === undefined ||
+      !majorCategories.has(majorCategory) ||
+      seen.has(`${candidate.scopeType}:${candidate.name}`)
+    ) {
+      continue;
+    }
+
+    filtered.push({
+      majorCategory,
+      name: candidate.name,
+      scopeType: candidate.scopeType,
+    });
+    seen.add(`${candidate.scopeType}:${candidate.name}`);
+  }
+
+  return filtered;
 }

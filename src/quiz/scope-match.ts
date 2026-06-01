@@ -71,12 +71,19 @@ export interface ScopeParseResult {
   scopeType: ScopeType;
   majorCategory?: string;
   minorCategory?: string;
+  candidateScopes?: ScopeCandidate[];
   candidateMinorCategories: string[];
   matchedTopics: string[];
   matchedCategories: string[];
   suggestions: string[];
   method: ScopeParseMethod;
   status: ScopeParseStatus;
+}
+
+export interface ScopeCandidate {
+  scopeType: "major_category" | "minor_category";
+  name: string;
+  majorCategory: string;
 }
 
 export type ScopeNoMatchAction =
