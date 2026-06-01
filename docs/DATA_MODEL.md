@@ -197,9 +197,10 @@ MVP 只使用 `exam_part = '科目A'`。
 统计粒度：
 
 - 底层同时记录题库原始 `category` 与 `topic`。
-- 如果题目能映射到 YAML 标准主题，同时更新 `configured_topic` 统计。
+- 如果题目的 `category` 能通过 `topics.category_tree` 反推出大分类，同时更新 `configured_topic` 统计。
 - 选题和弱项判断优先使用 `configured_topic`。
-- 无法映射到标准主题时，保留原始 `category` / `topic` 统计。
+- 无法映射到大分类时，保留原始 `category` / `topic` 统计。
+- `questions.topic` 表示题目级要点，不作为用户练习范围匹配主入口。
 
 ## 4. 实体关系
 

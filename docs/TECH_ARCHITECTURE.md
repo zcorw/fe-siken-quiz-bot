@@ -173,15 +173,16 @@ AI 不负责：
 
 解析顺序：
 
-1. YAML 主题别名表。
-2. `questions.category`。
-3. `questions.topic`。
+1. `topics.category_tree` 顶层大分类。
+2. `topics.category_tree` 下的小分类。
+3. YAML 主题别名表。
 4. AI 兜底解析。
 
 相近主题建议来源：
 
-1. 优先从 YAML 标准主题和别名表中选择。
-2. 不足 2-3 个时，从题库 `category` / `topic` 中补充。
+1. 优先从 `topics.category_tree` 的大分类和小分类中选择。
+2. 不足 2-3 个时，从别名表中补充。
+3. `questions.topic` 不作为用户范围匹配主入口，仅作为题目要点和统计参考。
 
 ## 7. 静态资源
 
