@@ -195,4 +195,28 @@ describe("handleScopeMessage", () => {
       "分野を特定できませんでした。練習したい分野を入力し直してください。"
     );
   });
+
+  it("asks the user to enter one scope when multiple scopes are detected", async () => {
+    const parseScope = vi.fn().mockResolvedValue({
+      candidateMinorCategories: [],
+      majorCategory: undefined,
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "local_multi_scope",
+      minorCategory: undefined,
+      scopeType: "no_match",
+      status: "needs_single_scope",
+      suggestions: [],
+    });
+    const reply = vi.fn().mockResolvedValue(undefined);
+
+    await handleScopeMessage({
+      ctx: { message: { text: "ネットワークとデータベース" }, reply },
+      parseScope,
+    });
+
+    expect(reply).toHaveBeenCalledWith(
+      "練習範囲は1つだけ入力してください。"
+    );
+  });
 });

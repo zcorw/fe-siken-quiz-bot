@@ -1,6 +1,6 @@
 import { InlineKeyboard } from "grammy";
 
-import type { ScopeParseResult } from "@/quiz/scope-match";
+import { resolveNoMatchAction, type ScopeParseResult } from "@/quiz/scope-match";
 import type { ReplyContext } from "./start";
 
 export interface ScopeMessageContext extends ReplyContext {
@@ -101,15 +101,19 @@ export async function handleScopeMessage({
     result.status === "needs_single_scope" ||
     result.status === "ai_unavailable"
   ) {
-    if (result.suggestions.length > 0) {
+    const action = resolveNoMatchAction(result);
+
+    if (action.type === "suggestions") {
       await ctx.reply(
-        `分野を特定できませんでした。近い候補: ${result.suggestions.join("、")}`
+        `分野を特定できませんでした。近い候補: ${action.suggestions.join("、")}`
       );
       return;
     }
 
     await ctx.reply(
-      "分野を特定できませんでした。練習したい分野を入力し直してください。"
+      result.status === "needs_single_scope"
+        ? action.message
+        : `分野を特定できませんでした。${action.message}`
     );
   }
 }
