@@ -15,5 +15,6 @@ describe("handleHelpCommand", () => {
     expect(HELP_MESSAGE).toContain("/start");
     expect(HELP_MESSAGE).toContain("/help");
     expect(HELP_MESSAGE).toContain("データベース");
+    expect(HELP_MESSAGE).toContain("一度に1つ");
   });
 });

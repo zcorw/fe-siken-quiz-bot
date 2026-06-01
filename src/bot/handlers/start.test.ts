@@ -14,5 +14,6 @@ describe("handleStartCommand", () => {
     expect(reply).toHaveBeenCalledWith(START_MESSAGE);
     expect(START_MESSAGE).toContain("基本情報技術者試験");
     expect(START_MESSAGE).toContain("練習したい分野");
+    expect(START_MESSAGE).toContain("一度に1つ");
   });
 });
