@@ -8,7 +8,7 @@ import { handleScopeMessage } from "./handlers/scope-message";
 import { loadRuntimeEnvFile } from "./load-runtime-env-file";
 import { createQuizSessionFromScopeMessage } from "./quiz-session-factory";
 import { createTelegramWebhookServer } from "./server";
-import { createTelegramBot } from "./telegram-bot";
+import { createTelegramBot, initializeTelegramBot } from "./telegram-bot";
 import { readBotRuntimeEnv } from "./runtime-env";
 
 async function start(): Promise<void> {
@@ -67,6 +67,8 @@ async function start(): Promise<void> {
     pathPrefix: env.pathPrefix,
     pathSecret: env.pathSecret,
   });
+
+  await initializeTelegramBot(bot);
 
   server.listen(env.port, env.host, () => {
     console.log(

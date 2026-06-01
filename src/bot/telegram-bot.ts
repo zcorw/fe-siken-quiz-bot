@@ -17,6 +17,7 @@ export interface RegisterTelegramBotHandlersOptions {
 }
 
 export type TelegramBotRegistrationTarget = Pick<Bot, "command" | "on">;
+export type TelegramBotInitializer = Pick<Bot, "init">;
 
 export function registerTelegramBotHandlers(
   bot: TelegramBotRegistrationTarget,
@@ -37,4 +38,10 @@ export function createTelegramBot({
   const bot = new Bot(token);
   registerTelegramBotHandlers(bot, { handleTextMessage });
   return bot;
+}
+
+export async function initializeTelegramBot(
+  bot: TelegramBotInitializer
+): Promise<void> {
+  await bot.init();
 }

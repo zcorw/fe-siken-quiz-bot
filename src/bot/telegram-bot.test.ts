@@ -4,6 +4,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  initializeTelegramBot,
   registerTelegramBotHandlers,
   type TelegramBotRegistrationTarget,
 } from "./telegram-bot";
@@ -24,5 +25,15 @@ describe("registerTelegramBotHandlers", () => {
     expect(target.command).toHaveBeenCalledWith("start", expect.any(Function));
     expect(target.command).toHaveBeenCalledWith("help", expect.any(Function));
     expect(target.on).toHaveBeenCalledWith("message:text", handleTextMessage);
+  });
+});
+
+describe("initializeTelegramBot", () => {
+  it("initializes the grammY bot before webhook updates are handled", async () => {
+    const bot = { init: vi.fn().mockResolvedValue(undefined) };
+
+    await initializeTelegramBot(bot);
+
+    expect(bot.init).toHaveBeenCalledTimes(1);
   });
 });
