@@ -245,15 +245,15 @@
 
 **依赖任务:** 任务 5、任务 6。
 
-- [ ] 小分类命中后先查询 `category = minorCategory`。
-- [ ] 如果该小分类题量足够满足用户指定范围题数，则不混入兄弟小分类。
-- [ ] 如果不足用户指定范围题数，从同父级大分类下其他小分类补足。
-- [ ] 补足时排除已经选中的题。
-- [ ] `selectionSummaryJson` 记录：
+- [x] 小分类命中后先查询 `category = minorCategory`。
+- [x] 如果该小分类题量足够满足用户指定范围题数，则不混入兄弟小分类。
+- [x] 如果不足用户指定范围题数，从同父级大分类下其他小分类补足。
+- [x] 补足时排除已经选中的题。
+- [x] `selectionSummaryJson` 记录：
   - primaryMinorCategory
   - siblingMinorCategoriesUsed
   - requestedScopeCount
-- [ ] 常错 / 弱项 / 高权重 5 题逻辑保持不变。
+- [x] 常错 / 弱项 / 高权重 5 题逻辑保持不变。
 
 **测试方式:**
 

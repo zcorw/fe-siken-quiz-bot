@@ -59,12 +59,15 @@ export async function createQuizSessionFromScopeMessage({
       : undefined;
   const matchedCategory =
     matchedScope.minorCategory ?? matchedScope.matchedCategories[0];
-  const candidates = resolveQuestionCandidates(questionDb, {
+  const selection = resolveQuestionSelection(questionDb, {
     candidateMinorCategories: matchedScope.candidateMinorCategories,
+    majorCategory: matchedScope.majorCategory,
     matchedCategory,
     matchedTopic,
+    minorCategory: matchedScope.minorCategory,
     topicsConfig,
-  }).slice(0, 20);
+  });
+  const candidates = selection.candidates;
 
   if (candidates.length !== 20) {
     throw new Error(
@@ -98,10 +101,12 @@ export async function createQuizSessionFromScopeMessage({
     rawScopeInput,
     selectionSummaryJson: {
       highWeightTopicCount: 5,
+      primaryMinorCategory: matchedScope.minorCategory ?? null,
       reinforcementCount: 5,
       requestedMajorCategory: matchedScope.majorCategory ?? null,
       requestedMinorCategories,
       requestedScopeCount: 15,
+      siblingMinorCategoriesUsed: selection.siblingMinorCategoriesUsed,
       weakTopicCount: 0,
       wrongQuestionCount: 0,
     },
@@ -122,27 +127,47 @@ export async function createQuizSessionFromScopeMessage({
   return { token };
 }
 
-function resolveQuestionCandidates(
+interface QuestionSelection {
+  candidates: QuestionCandidateRow[];
+  siblingMinorCategoriesUsed: string[];
+}
+
+function resolveQuestionSelection(
   questionDb: Database.Database,
   {
     matchedCategory,
     matchedTopic,
     candidateMinorCategories,
+    majorCategory,
+    minorCategory,
     topicsConfig,
   }: {
     candidateMinorCategories?: string[];
+    majorCategory?: string;
     matchedCategory?: string;
     matchedTopic?: string;
+    minorCategory?: string;
     topicsConfig?: AppConfig["topics"];
   }
-): QuestionCandidateRow[] {
+): QuestionSelection {
+  if (minorCategory !== undefined) {
+    return resolveMinorCategorySelection(questionDb, {
+      majorCategory,
+      minorCategory,
+      topicsConfig,
+    });
+  }
+
   if (
     candidateMinorCategories !== undefined &&
     candidateMinorCategories.length > 0
   ) {
-    return findQuestionCandidates(questionDb, {
-      categories: candidateMinorCategories,
-    });
+    return {
+      candidates: findQuestionCandidates(questionDb, {
+        categories: candidateMinorCategories,
+      }).slice(0, 20),
+      siblingMinorCategoriesUsed: [],
+    };
   }
 
   const directCandidates = findQuestionCandidates(questionDb, {
@@ -151,7 +176,10 @@ function resolveQuestionCandidates(
   });
 
   if (directCandidates.length >= 20 || matchedTopic === undefined) {
-    return directCandidates;
+    return {
+      candidates: directCandidates.slice(0, 20),
+      siblingMinorCategoriesUsed: [],
+    };
   }
 
   const mappedCandidates = findQuestionCandidates(questionDb).filter(
@@ -160,7 +188,78 @@ function resolveQuestionCandidates(
       mapsToStandardTopic(candidate.topic, matchedTopic, topicsConfig)
   );
 
-  return dedupeCandidates([...directCandidates, ...mappedCandidates]);
+  return {
+    candidates: dedupeCandidates([...directCandidates, ...mappedCandidates]).slice(
+      0,
+      20
+    ),
+    siblingMinorCategoriesUsed: [],
+  };
+}
+
+function resolveMinorCategorySelection(
+  questionDb: Database.Database,
+  {
+    majorCategory,
+    minorCategory,
+    topicsConfig,
+  }: {
+    majorCategory?: string;
+    minorCategory: string;
+    topicsConfig?: AppConfig["topics"];
+  }
+): QuestionSelection {
+  const primaryCandidates = findQuestionCandidates(questionDb, {
+    categories: [minorCategory],
+  });
+  const siblingMinorCategories =
+    majorCategory === undefined || topicsConfig === undefined
+      ? []
+      : (topicsConfig.category_tree[majorCategory] ?? []).filter(
+          (category) => category !== minorCategory
+        );
+
+  if (primaryCandidates.length >= 15) {
+    const requestedCandidates = primaryCandidates.slice(0, 15);
+    const remainingPrimaryCandidates = primaryCandidates.slice(15, 20);
+    const siblingReinforcementCandidates = findQuestionCandidates(questionDb, {
+      categories: siblingMinorCategories,
+    }).slice(0, 5 - remainingPrimaryCandidates.length);
+    const reinforcementCandidates = [
+      ...remainingPrimaryCandidates,
+      ...siblingReinforcementCandidates,
+    ];
+
+    return {
+      candidates: [...requestedCandidates, ...reinforcementCandidates],
+      siblingMinorCategoriesUsed: [],
+    };
+  }
+
+  const siblingCandidates = findQuestionCandidates(questionDb, {
+    categories: siblingMinorCategories,
+  });
+  const requestedCandidates = dedupeCandidates([
+    ...primaryCandidates,
+    ...siblingCandidates,
+  ]).slice(0, 15);
+  const requestedUrls = new Set(
+    requestedCandidates.map((candidate) => candidate.url)
+  );
+  const reinforcementCandidates = dedupeCandidates([
+    ...primaryCandidates,
+    ...siblingCandidates,
+  ])
+    .filter((candidate) => !requestedUrls.has(candidate.url))
+    .slice(0, 5);
+
+  return {
+    candidates: [...requestedCandidates, ...reinforcementCandidates],
+    siblingMinorCategoriesUsed: listSelectedMinorCategories(
+      requestedCandidates,
+      siblingMinorCategories
+    ),
+  };
 }
 
 function listSelectedMinorCategories(
