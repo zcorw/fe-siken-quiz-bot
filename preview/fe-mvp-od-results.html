@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>結果 | 基本情報技術者試験 科目A</title>
+  <style>
+    :root {
+      --bg: oklch(98% 0.004 240);
+      --surface: oklch(100% 0 0);
+      --fg: oklch(20% 0.02 240);
+      --muted: oklch(50% 0.018 240);
+      --border: oklch(90% 0.006 240);
+      --accent: oklch(56% 0.12 170);
+      --ok: oklch(56% 0.12 155);
+      --danger: oklch(58% 0.18 25);
+      --info: oklch(58% 0.13 245);
+      --font-display: 'Söhne', 'Avenir Next', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      line-height: 1.65;
+    }
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 22px 0 56px;
+      display: grid;
+      gap: 18px;
+    }
+    header, .card, details {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+    header {
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+    }
+    .lock {
+      display: inline-flex;
+      width: fit-content;
+      min-height: 30px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 3px 11px;
+      background: color-mix(in oklch, var(--info), white 88%);
+      color: oklch(42% 0.11 245);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    h1, h2, h3 { margin: 0; font-family: var(--font-display); line-height: 1.2; letter-spacing: 0; }
+    h1 { font-size: clamp(28px, 7vw, 48px); }
+    h2 { font-size: 20px; }
+    h3 { font-size: 17px; }
+    p { margin: 0; color: var(--muted); }
+    .summary {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 10px;
+    }
+    .metric {
+      background: oklch(97% 0.004 240);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .metric span { display: block; color: var(--muted); font-size: 13px; font-weight: 800; }
+    .metric strong { display: block; margin-top: 4px; font-size: 26px; line-height: 1; }
+    .metric.primary strong { font-size: clamp(34px, 9vw, 48px); }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .card { padding: 18px; }
+    .detail-card {
+      display: grid;
+      gap: 14px;
+    }
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+    }
+    .detail-toggle {
+      min-height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: white;
+      padding: 7px 12px;
+      color: var(--fg);
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .detail-body {
+      display: none;
+      gap: 14px;
+    }
+    .detail-card.is-open .detail-body {
+      display: grid;
+    }
+    .composition {
+      display: grid;
+      gap: 10px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .btn {
+      min-height: 44px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: white;
+      padding: 8px 14px;
+      color: var(--fg);
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+    .list {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    details { overflow: hidden; }
+    details.correct.soft { opacity: .74; }
+    details[open] { opacity: 1; }
+    summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 16px;
+      display: grid;
+      gap: 8px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    .result-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+    .status {
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .status.ok { background: color-mix(in oklch, var(--ok), white 85%); color: oklch(34% 0.1 155); }
+    .status.bad { background: color-mix(in oklch, var(--danger), white 87%); color: oklch(42% 0.15 25); }
+    .answer-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 0 16px 16px;
+    }
+    .answer {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: oklch(98% 0.004 240);
+    }
+    .answer span { display: block; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .answer strong { display: block; margin-top: 4px; }
+    .explanation {
+      margin: 0 16px 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+      display: grid;
+      gap: 12px;
+      color: oklch(25% 0.016 240);
+    }
+    .source {
+      word-break: break-all;
+      color: var(--info);
+      font-size: 14px;
+    }
+    .image-frame {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: oklch(99% 0.003 240);
+    }
+    .image-frame img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+      margin: 0 auto;
+    }
+    @media (max-width: 860px) {
+      .summary, .grid, .answer-grid { grid-template-columns: 1fr; }
+      .page { width: min(100% - 24px, 1120px); }
+    }
+    @media (min-width: 861px) {
+      .grid {
+        grid-template-columns: minmax(0, 1.45fr) minmax(300px, .85fr);
+      }
+      .result-list-card { order: 1; }
+      .detail-card {
+        order: 2;
+        position: sticky;
+        top: 18px;
+        max-height: calc(100vh - 36px);
+        overflow: auto;
+      }
+      .detail-body { display: grid; }
+      .detail-toggle { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <span class="lock">この演習はすでに提出済みです</span>
+      <h1>結果</h1>
+      <p>解答はロックされています。再提出はできません。</p>
+      <section class="summary" aria-label="成績概要">
+        <div class="metric primary"><span>正答率</span><strong>70%</strong></div>
+        <div class="metric"><span>正解数 / 総問題数</span><strong>14 / 20</strong></div>
+      </section>
+    </header>
+
+    <section class="grid">
+      <aside class="card detail-card" id="detailResult">
+        <div class="detail-head">
+          <div>
+            <h2>詳細結果</h2>
+            <p>構成と内訳を確認できます。</p>
+          </div>
+          <button class="detail-toggle" id="detailToggle" type="button">詳細を表示</button>
+        </div>
+        <div class="detail-body">
+          <div class="composition" aria-label="解答内訳">
+            <div class="row"><span>不正解数</span><strong>6問</strong></div>
+            <div class="row"><span>答案状態</span><strong>ロック済み</strong></div>
+          </div>
+          <div class="composition" aria-label="テスト構成">
+            <div class="row"><span>指定範囲</span><strong>15問</strong></div>
+            <div class="row"><span>補強問題</span><strong>5問</strong></div>
+            <div class="row"><span>誤答プール由来</span><strong>2問</strong></div>
+            <div class="row"><span>低正答率テーマ由来</span><strong>2問</strong></div>
+            <div class="row"><span>高重みテーマ由来</span><strong>1問</strong></div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="card result-list-card">
+        <div class="controls">
+          <div>
+            <h2>間違えた問題</h2>
+            <p id="modeText">初期状態では不正解の問題を開いて表示します。</p>
+          </div>
+          <button class="btn primary" id="toggleAll">すべての解説を表示</button>
+        </div>
+        <div class="list" id="resultsList">
+          <details open class="wrong">
+            <summary>
+              <div class="result-head"><h3>問題 3</h3><span class="status bad">不正解</span></div>
+              <p>画像を含む問題。問題図は切り抜かず、幅に合わせて表示します。</p>
+            </summary>
+            <div class="answer-grid">
+              <div class="answer"><span>あなたの解答</span><strong>イ</strong></div>
+              <div class="answer"><span>正解</span><strong>エ</strong></div>
+            </div>
+            <div class="explanation">
+              <div class="image-frame"><img src="/assets/fe-siken/29_haru/q8/08.png" alt="解説図"></div>
+              <p><strong>解説</strong><br>ここに問題データベースの日本語原文の解説が表示されます。長い解説は段落を分け、読み返しやすい行長で表示します。</p>
+              <a class="source" href="https://www.fe-siken.com/kakomon/29_haru/q8.html">出典 https://www.fe-siken.com/kakomon/29_haru/q8.html</a>
+            </div>
+          </details>
+          <details open class="wrong">
+            <summary>
+              <div class="result-head"><h3>問題 8</h3><span class="status bad">不正解</span></div>
+              <p>長い問題文の復習例。解説は初期表示されます。</p>
+            </summary>
+            <div class="answer-grid">
+              <div class="answer"><span>あなたの解答</span><strong>ア</strong></div>
+              <div class="answer"><span>正解</span><strong>ウ</strong></div>
+            </div>
+            <div class="explanation">
+              <p><strong>解説</strong><br>誤答の理由、正しい考え方、関連する用語を順に確認できる構成にします。</p>
+              <a class="source" href="#">出典 https://www.fe-siken.com/kakomon/example/q8.html</a>
+            </div>
+          </details>
+          <details class="correct soft">
+            <summary>
+              <div class="result-head"><h3>問題 1</h3><span class="status ok">正解</span></div>
+              <p>正解した問題は初期状態で折りたたみ、視覚的にも弱めます。</p>
+            </summary>
+            <div class="answer-grid">
+              <div class="answer"><span>あなたの解答</span><strong>ア</strong></div>
+              <div class="answer"><span>正解</span><strong>ア</strong></div>
+            </div>
+            <div class="explanation">
+              <p><strong>解説</strong><br>必要に応じて確認できるよう、正解した問題の解説も保持します。</p>
+              <a class="source" href="#">出典 https://www.fe-siken.com/kakomon/example/q1.html</a>
+            </div>
+          </details>
+        </div>
+      </section>
+    </section>
+  </main>
+  <script>
+    const toggle = document.getElementById('toggleAll');
+    const modeText = document.getElementById('modeText');
+    const detailResult = document.getElementById('detailResult');
+    const detailToggle = document.getElementById('detailToggle');
+    let allOpen = false;
+    detailToggle.addEventListener('click', () => {
+      const isOpen = detailResult.classList.toggle('is-open');
+      detailToggle.textContent = isOpen ? '詳細を隠す' : '詳細を表示';
+    });
+    toggle.addEventListener('click', () => {
+      allOpen = !allOpen;
+      document.querySelectorAll('#resultsList details').forEach((item) => {
+        item.open = allOpen || item.classList.contains('wrong');
+      });
+      toggle.textContent = allOpen ? '正解した問題を折りたたむ' : 'すべての解説を表示';
+      modeText.textContent = allOpen
+        ? '展開全部解析状態です。全問の解説と出典を確認できます。'
+        : '初期状態では不正解の問題を開いて表示します。';
+    });
+  </script>
+</body>
+</html>

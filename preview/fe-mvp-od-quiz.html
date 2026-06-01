@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>問題 | 基本情報技術者試験 科目A</title>
+  <style>
+    :root {
+      --bg: oklch(98% 0.004 240);
+      --surface: oklch(100% 0 0);
+      --fg: oklch(20% 0.02 240);
+      --muted: oklch(50% 0.018 240);
+      --border: oklch(90% 0.006 240);
+      --accent: oklch(56% 0.12 170);
+      --accent-soft: color-mix(in oklch, var(--accent), white 86%);
+      --info: oklch(58% 0.13 245);
+      --warn: oklch(70% 0.12 80);
+      --danger: oklch(58% 0.18 25);
+      --font-display: 'Söhne', 'Avenir Next', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      line-height: 1.65;
+    }
+    button { font: inherit; }
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: color-mix(in oklch, var(--bg), white 70%);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-inner {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 12px 16px 10px;
+      display: grid;
+      gap: 10px;
+    }
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .title {
+      display: grid;
+      gap: 2px;
+    }
+    .title strong {
+      font-family: var(--font-display);
+      font-size: 18px;
+      line-height: 1.2;
+    }
+    .title span, .answered {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .progress {
+      width: 100%;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--border);
+    }
+    .progress span {
+      display: block;
+      width: 5%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+      transition: width .2s ease;
+    }
+    .layout {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 18px 16px 96px;
+      display: grid;
+      gap: 16px;
+    }
+    .question-card, .actions, .side-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+    .question-card {
+      overflow: hidden;
+    }
+    .question-body {
+      padding: 18px;
+      display: grid;
+      gap: 18px;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .pill {
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 3px 10px;
+      background: oklch(96% 0.006 240);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .pill.current {
+      color: oklch(35% 0.1 170);
+      background: var(--accent-soft);
+      border-color: color-mix(in oklch, var(--accent), white 55%);
+    }
+    h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(22px, 5vw, 34px);
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+    .markdown {
+      display: grid;
+      gap: 14px;
+      color: oklch(24% 0.016 240);
+      font-size: 17px;
+      line-height: 1.75;
+    }
+    .image-frame {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: oklch(99% 0.003 240);
+      padding: 12px;
+      overflow: hidden;
+    }
+    .image-frame img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      object-fit: contain;
+    }
+    .image-error {
+      display: none;
+      min-height: 96px;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      background: oklch(97% 0.004 240);
+    }
+    .options {
+      display: grid;
+      gap: 10px;
+      padding: 0 18px 18px;
+    }
+    .option {
+      width: 100%;
+      min-height: 56px;
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: white;
+      color: var(--fg);
+      padding: 12px;
+      cursor: pointer;
+    }
+    .option .label {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: oklch(96% 0.006 240);
+      color: var(--muted);
+      font-weight: 900;
+    }
+    .option[aria-pressed="true"] {
+      border-color: color-mix(in oklch, var(--accent), white 30%);
+      background: var(--accent-soft);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent), transparent 84%);
+    }
+    .option[aria-pressed="true"] .label {
+      background: var(--accent);
+      color: white;
+    }
+    .actions {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 18;
+      border-radius: 18px 18px 0 0;
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      box-shadow: 0 -12px 34px color-mix(in oklch, var(--fg), transparent 92%);
+    }
+    .actions .wide { grid-column: span 2; }
+    .btn {
+      min-height: 48px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: white;
+      color: var(--fg);
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .btn:disabled {
+      cursor: not-allowed;
+      color: oklch(64% 0.012 240);
+      background: oklch(94% 0.004 240);
+      border-color: var(--border);
+    }
+    .hint {
+      min-height: 24px;
+      grid-column: span 2;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background: color-mix(in oklch, var(--fg), transparent 76%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+    .overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .sheet {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 31;
+      background: var(--surface);
+      border-radius: 22px 22px 0 0;
+      border: 1px solid var(--border);
+      padding: 16px;
+      transform: translateY(105%);
+      transition: transform .2s ease;
+      max-height: 78vh;
+      overflow: auto;
+    }
+    .sheet.open { transform: translateY(0); }
+    .sheet-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .sheet-head h2 { margin: 0; font-size: 18px; }
+    .number-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .qnum {
+      min-height: 48px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: white;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .qnum.answered {
+      background: var(--accent-soft);
+      border-color: color-mix(in oklch, var(--accent), white 50%);
+      color: oklch(34% 0.1 170);
+    }
+    .qnum.current {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .toast {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 122px;
+      z-index: 40;
+      display: none;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: oklch(24% 0.02 240);
+      color: white;
+      font-weight: 700;
+      text-align: center;
+    }
+    .toast.show { display: block; }
+    @media (min-width: 900px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr) 294px;
+        align-items: start;
+        padding-bottom: 32px;
+      }
+      .question-body { padding: 24px; }
+      .options { padding: 0 24px 24px; }
+      .actions {
+        position: static;
+        grid-column: 1;
+        border-radius: 18px;
+        box-shadow: none;
+        grid-template-columns: repeat(4, 1fr);
+      }
+      .actions .wide { grid-column: span 1; }
+      .hint {
+        grid-column: span 4;
+        text-align: left;
+      }
+      .side-panel {
+        display: grid;
+        gap: 14px;
+        padding: 16px;
+        position: sticky;
+        top: 92px;
+      }
+      .side-panel h2 { margin: 0; font-size: 17px; }
+      .side-panel .number-grid { grid-template-columns: repeat(4, 1fr); }
+      .drawer-only { display: none; }
+    }
+    @media (max-width: 899px) {
+      .side-panel { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="top-row">
+        <div class="title">
+          <strong>科目A 演習</strong>
+          <span id="questionTitle">問題 1 / 20</span>
+        </div>
+        <div class="answered" id="answeredLabel">解答済み 0 / 20</div>
+      </div>
+      <div class="progress" aria-label="進捗"><span id="progressBar"></span></div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="question-card" aria-live="polite">
+      <div class="question-body">
+        <h1 id="questionHeading">問題 1</h1>
+        <div class="markdown" id="questionText"></div>
+      </div>
+      <div class="options" id="options"></div>
+    </section>
+
+    <aside class="side-panel" aria-label="問題一覧">
+      <h2>問題一覧</h2>
+      <div class="number-grid" id="desktopNumbers"></div>
+      <div class="legend">
+        <span>● 現在</span>
+        <span>● 解答済み</span>
+        <span>○ 未解答</span>
+      </div>
+    </aside>
+
+    <section class="actions" aria-label="操作">
+      <button class="btn" id="prevBtn">前へ</button>
+      <button class="btn" id="nextBtn">次へ</button>
+      <button class="btn drawer-only wide" id="openNavBtn">問題一覧</button>
+      <button class="btn primary wide" id="submitBtn" disabled>提出する</button>
+      <div class="hint" id="submitHint">すべての問題に解答してから提出してください</div>
+    </section>
+  </main>
+
+  <div class="overlay" id="overlay"></div>
+  <section class="sheet" id="sheet" aria-label="問題一覧">
+    <div class="sheet-head">
+      <h2>問題一覧</h2>
+      <button class="btn" id="closeSheetBtn">閉じる</button>
+    </div>
+    <div class="number-grid" id="mobileNumbers"></div>
+    <div class="legend">
+      <span>● 現在</span>
+      <span>● 解答済み</span>
+      <span>○ 未解答</span>
+    </div>
+  </section>
+  <div class="toast" id="toast">提出中です。しばらくお待ちください。</div>
+
+  <script>
+    const questions = Array.from({ length: 20 }, (_, index) => {
+      const n = index + 1;
+      return {
+        title: `問題 ${n}`,
+        text: n === 3
+          ? `次の図を参照して、最も適切なものを選べ。<div class="image-frame"><img src="/assets/fe-siken/29_haru/q8/08.png" alt="問題図" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid'"><div class="image-error">画像を読み込めませんでした<br>/assets/fe-siken/... の表示を確認してください</div></div>`
+          : `ここに科目Aの問題文がMarkdownとして表示されます。長い問題文でも読みやすい行間を保ち、選択肢へ自然に進める余白を確保します。`,
+        options: [
+          ['ア', '選択肢アの本文'],
+          ['イ', '選択肢イの本文'],
+          ['ウ', '選択肢ウの本文'],
+          ['エ', '選択肢エの本文']
+        ],
+        hasImage: n === 3
+      };
+    });
+    const answers = Array(20).fill(null);
+    let current = 0;
+    let submitting = false;
+
+    const els = {
+      title: document.getElementById('questionTitle'),
+      answered: document.getElementById('answeredLabel'),
+      progress: document.getElementById('progressBar'),
+      heading: document.getElementById('questionHeading'),
+      text: document.getElementById('questionText'),
+      options: document.getElementById('options'),
+      prev: document.getElementById('prevBtn'),
+      next: document.getElementById('nextBtn'),
+      submit: document.getElementById('submitBtn'),
+      hint: document.getElementById('submitHint'),
+      mobileNumbers: document.getElementById('mobileNumbers'),
+      desktopNumbers: document.getElementById('desktopNumbers'),
+      sheet: document.getElementById('sheet'),
+      overlay: document.getElementById('overlay'),
+      toast: document.getElementById('toast')
+    };
+
+    function answeredCount() {
+      return answers.filter(Boolean).length;
+    }
+
+    function render() {
+      const q = questions[current];
+      const done = answeredCount();
+      els.title.textContent = `問題 ${current + 1} / 20`;
+      els.answered.textContent = `解答済み ${done} / 20`;
+      els.progress.style.width = `${Math.max(((current + 1) / 20) * 100, 5)}%`;
+      els.heading.textContent = q.title;
+      els.text.innerHTML = q.text;
+      els.options.innerHTML = q.options.map(([label, body]) => `
+        <button class="option" type="button" aria-pressed="${answers[current] === label}" data-choice="${label}">
+          <span class="label">${label}</span>
+          <span>${body}</span>
+        </button>
+      `).join('');
+      els.prev.disabled = current === 0;
+      els.next.disabled = current === 19;
+      els.submit.disabled = done < 20 || submitting;
+      els.submit.textContent = submitting ? '提出中' : '提出する';
+      els.hint.textContent = done < 20
+        ? `未解答 ${20 - done} 問。すべての問題に解答してから提出してください`
+        : '提出できます。提出後は解答を変更できません。';
+      renderNumbers();
+    }
+
+    function renderNumbers() {
+      const html = questions.map((_, i) => {
+        const classes = ['qnum'];
+        if (answers[i]) classes.push('answered');
+        if (i === current) classes.push('current');
+        return `<button class="${classes.join(' ')}" type="button" data-index="${i}" aria-label="問題 ${i + 1}">${i + 1}</button>`;
+      }).join('');
+      els.mobileNumbers.innerHTML = html;
+      els.desktopNumbers.innerHTML = html;
+    }
+
+    function go(index) {
+      current = Math.max(0, Math.min(19, index));
+      closeSheet();
+      render();
+    }
+
+    function openSheet() {
+      els.sheet.classList.add('open');
+      els.overlay.classList.add('open');
+    }
+
+    function closeSheet() {
+      els.sheet.classList.remove('open');
+      els.overlay.classList.remove('open');
+    }
+
+    document.addEventListener('click', (event) => {
+      const option = event.target.closest('.option');
+      const qnum = event.target.closest('.qnum');
+      if (option) {
+        answers[current] = option.dataset.choice;
+        render();
+      }
+      if (qnum) go(Number(qnum.dataset.index));
+    });
+    els.prev.addEventListener('click', () => go(current - 1));
+    els.next.addEventListener('click', () => go(current + 1));
+    document.getElementById('openNavBtn').addEventListener('click', openSheet);
+    document.getElementById('closeSheetBtn').addEventListener('click', closeSheet);
+    els.overlay.addEventListener('click', closeSheet);
+    els.submit.addEventListener('click', () => {
+      if (answeredCount() < 20 || submitting) return;
+      submitting = true;
+      els.toast.classList.add('show');
+      render();
+      setTimeout(() => { window.location.href = 'fe-mvp-od-results.html'; }, 900);
+    });
+    render();
+  </script>
+</body>
+</html>

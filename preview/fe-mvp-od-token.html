@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>リンクエラー | 基本情報技術者試験 科目A</title>
+  <style>
+    :root {
+      --bg: oklch(98% 0.004 240);
+      --surface: oklch(100% 0 0);
+      --fg: oklch(20% 0.02 240);
+      --muted: oklch(50% 0.018 240);
+      --border: oklch(90% 0.006 240);
+      --accent: oklch(56% 0.12 170);
+      --danger: oklch(58% 0.18 25);
+      --warn: oklch(70% 0.12 80);
+      --info: oklch(58% 0.13 245);
+      --font-display: 'Söhne', 'Avenir Next', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      line-height: 1.65;
+      padding: 24px;
+    }
+    main {
+      width: min(920px, 100%);
+      display: grid;
+      gap: 14px;
+    }
+    header, .state {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+    header {
+      padding: 22px;
+      display: grid;
+      gap: 10px;
+    }
+    h1, h2 { margin: 0; font-family: var(--font-display); line-height: 1.2; letter-spacing: 0; }
+    h1 { font-size: clamp(28px, 8vw, 46px); }
+    h2 { font-size: 19px; }
+    p { margin: 0; color: var(--muted); }
+    .states {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .state {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+    .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      color: white;
+    }
+    .danger { background: var(--danger); }
+    .warn { background: var(--warn); color: oklch(28% 0.05 80); }
+    .info { background: var(--info); }
+    .btn {
+      min-height: 46px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--accent);
+      border-radius: 14px;
+      background: var(--accent);
+      color: white;
+      text-decoration: none;
+      font-weight: 800;
+      padding: 8px 14px;
+    }
+    .secondary {
+      border-color: var(--border);
+      background: white;
+      color: var(--fg);
+    }
+    @media (max-width: 780px) {
+      body { place-items: start center; padding: 16px; }
+      .states { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>演習リンクを確認できません</h1>
+      <p>Telegramで新しい演習を作成してください。未提出のリンクは作成から7日で期限切れになります。</p>
+    </header>
+    <section class="states" aria-label="エラー状態">
+      <article class="state">
+        <div class="icon danger">!</div>
+        <h2>このリンクは存在しません</h2>
+        <p>URLが間違っているか、演習データが見つかりません。</p>
+        <a class="btn" href="#">Telegramに戻る</a>
+      </article>
+      <article class="state">
+        <div class="icon warn">7</div>
+        <h2>このリンクは期限切れです</h2>
+        <p>未提出の演習リンクは期限切れになりました。Telegramで新しい演習を作成してください。</p>
+        <a class="btn" href="#">新しい演習を作成</a>
+      </article>
+      <article class="state">
+        <div class="icon info">↻</div>
+        <h2>読み込みに失敗しました</h2>
+        <p>通信状態を確認して、もう一度読み込んでください。</p>
+        <a class="btn secondary" href="fe-mvp-od-token.html">再読み込み</a>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

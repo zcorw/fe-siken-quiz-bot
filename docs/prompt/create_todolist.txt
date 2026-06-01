@@ -1,0 +1,162 @@
+请使用 Superpowers 工作流，将当前项目拆分为可逐步执行的前端、后端、Bot、集成与 Docker 部署开发任务。
+
+## 必须使用的 Superpowers Skill
+
+请按顺序使用：
+
+1. `superpowers:using-superpowers`
+2. `docs-to-dev-todolist`
+3. `superpowers:writing-plans`
+
+如果开始执行开发任务，则后续使用：
+
+- 推荐：`superpowers:subagent-driven-development`
+- 或：`superpowers:executing-plans`
+- 任何功能实现必须遵循：`superpowers:test-driven-development`
+- 任何 bug / 测试失败必须遵循：`superpowers:systematic-debugging`
+- 完成前必须使用：`superpowers:verification-before-completion`
+
+## 输入范围
+
+请读取并分析：
+
+- `docs/PRD.md`
+- `docs/USER_FLOW.md`
+- `docs/PAGE_LIST.md`
+- `docs/TECH_ARCHITECTURE.md`
+- `docs/DATA_MODEL.md`
+- `docs/API_SPEC.md`
+- `docs/database-and-assets.md`
+- 当前 Figma 高保真设计稿对应的页面结构与交互要求
+
+如需要确认数据库结构，可以只读取 schema / 文档，不要开始实现代码。
+
+## 目标
+
+生成分阶段开发任务清单，将项目推进到：
+
+1. 项目基础工程搭建完成
+2. SQLite 题库读取完成
+3. `app.sqlite` 业务数据库与 migration 完成
+4. Telegram Bot 创建练习 token 完成
+5. Web 作答页完成
+6. Web 结果页完成
+7. 前后端 API 对接完成
+8. 用户答题记录与错题统计完成
+9. OpenAI API 用于范围解析与主题匹配完成
+10. Docker Compose 部署完成
+11. VPS 外部 Nginx 反代配置说明完成
+12. 自动化测试与验收流程完成
+
+## 输出要求
+
+请生成多个 TodoList 文件，而不是一个过大的文件。建议输出到：
+
+- `docs/todolist/00_PROJECT_OVERVIEW.md`
+- `docs/todolist/01_FOUNDATION.md`
+- `docs/todolist/02_DATABASE.md`
+- `docs/todolist/03_BACKEND_API.md`
+- `docs/todolist/04_TELEGRAM_BOT.md`
+- `docs/todolist/05_FRONTEND_QUIZ.md`
+- `docs/todolist/06_RESULT_AND_HISTORY.md`
+- `docs/todolist/07_AI_SCOPE_PARSING.md`
+- `docs/todolist/08_INTEGRATION_TESTING.md`
+- `docs/todolist/09_DOCKER_DEPLOYMENT.md`
+- `docs/todolist/10_RELEASE_CHECKLIST.md`
+
+每个 TodoList 文件都必须包含：
+
+- 目标
+- 依赖任务
+- 具体任务列表
+- 推荐使用的成熟工具 / 库
+- 不建议自行开发的部分
+- 可能涉及的文件或模块
+- 测试方式
+- 验收标准
+- 未确认问题 / AI 假设
+
+## 技术原则
+
+优先使用成熟工具，不要手写已有成熟方案：
+
+- Web 框架：Next.js + React + TypeScript
+- UI：基于 Figma 设计实现，可使用 Tailwind CSS / shadcn/ui / Radix UI 中成熟组件
+- 表单与校验：React Hook Form + Zod
+- API 校验：Zod
+- SQLite ORM / migration：Drizzle ORM + Drizzle Kit
+- Telegram Bot：grammY 或 Telegraf，优先选择更适合 webhook 部署的成熟库
+- OpenAI API：官方 OpenAI SDK
+- Markdown / HTML 安全渲染：成熟 parser / sanitizer，不要手写解析器
+- 测试：
+  - 单元测试：Vitest
+  - API 测试：Vitest / Supertest
+  - E2E：Playwright
+- Docker：
+  - `web` 容器
+  - `bot` 容器
+  - `edge` 内部 Nginx 容器
+  - 外部 VPS Nginx + Certbot 负责 HTTPS
+
+## 任务拆分规则
+
+请按依赖顺序拆分，不要直接进入实现代码。
+
+每个任务必须足够小，方便后续逐步执行：
+
+- 一个任务只解决一个清晰目标
+- 每个任务必须有验证方式
+- 涉及代码的任务必须先写测试或定义可验证行为
+- 后端 API 与前端页面要分开任务
+- 前后端对接要单独任务
+- Docker 部署要单独任务
+- 数据迁移和种子数据要单独任务
+- Telegram webhook 验证要单独任务
+- token 首次提交记录规则要单独任务
+
+## 必须覆盖的业务规则
+
+请确保 TodoList 覆盖以下规则：
+
+- 用户从 Telegram Bot 进入
+- Bot 根据用户输入创建 `/quiz/{token}` 链接
+- token 绑定 Telegram 用户
+- 用户在 Web 页面完成 20 题
+- 每次出题：
+  - 15 题来自用户指定范围
+  - 5 题来自错题 / 低正确率主题 / 高权重主题
+- 前 15 题也优先选择未做过或错得多的题
+- 提交前不显示答案、解析、来源 URL
+- 必须答完 20 题才能提交
+- token 首次提交才写入用户历史
+- 后续重复访问只读展示结果，不重复写历史
+- 未提交 token 有效期 7 天
+- 过期未提交 token 保留 30 天后清理
+- 已提交结果长期可访问
+- 移动端题号导航为 bottom sheet
+- PC 端题号导航为常驻右侧栏
+- 结果页必须展示：
+  - 正答率
+  - 正确数
+  - 错误数
+  - 出题构成
+  - 原题
+  - 全部选项
+  - 用户答案
+  - 正确答案
+  - 解説
+  - 出典 URL
+- PC 结果页左侧展示全部题号及正误状态，右侧展示当前选中题目详解
+- 移动端结果页为单列布局
+
+## 最终输出
+
+完成 TodoList 后，请在回复中简要说明：
+
+1. 生成了哪些 TodoList 文件
+2. 推荐的执行顺序
+3. 当前仍然不确定的问题
+4. 哪些地方是 AI 假设
+5. 哪些功能明确建议使用成熟工具而不是自行开发
+
+暂时不要开始写实现代码。

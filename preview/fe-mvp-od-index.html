@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FE 科目A Web 演習 MVP Open Design</title>
+  <style>
+    :root {
+      --bg: oklch(98% 0.004 240);
+      --surface: oklch(100% 0 0);
+      --fg: oklch(20% 0.02 240);
+      --muted: oklch(50% 0.018 240);
+      --border: oklch(90% 0.006 240);
+      --accent: oklch(56% 0.12 170);
+      --info: oklch(58% 0.13 245);
+      --warn: oklch(70% 0.12 80);
+      --danger: oklch(58% 0.18 25);
+      --ok: oklch(56% 0.12 155);
+      --font-display: 'Söhne', 'Avenir Next', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      line-height: 1.65;
+    }
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 56px;
+    }
+    header {
+      display: grid;
+      gap: 16px;
+      padding: 28px 0 22px;
+      border-bottom: 1px solid var(--border);
+    }
+    .kicker {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 {
+      margin: 0;
+      font-family: var(--font-display);
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+    h1 { font-size: clamp(32px, 6vw, 58px); max-width: 860px; }
+    h2 { font-size: clamp(24px, 4vw, 36px); margin-top: 38px; }
+    h3 { font-size: 20px; }
+    p { margin: 0; color: var(--muted); max-width: 780px; }
+    a { color: inherit; }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .nav a {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      background: var(--surface);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .nav a.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .table-wrap {
+      margin-top: 18px;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+    table {
+      width: 100%;
+      min-width: 880px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 16px;
+      vertical-align: top;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    th {
+      background: oklch(96% 0.006 240);
+      color: var(--fg);
+      font-size: 13px;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: color-mix(in oklch, var(--accent), white 86%);
+      color: oklch(36% 0.09 170);
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+    .swatches {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .swatch {
+      width: 42px;
+      height: 28px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .tokens {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .token {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+    }
+    .token strong { display: block; }
+    .token span { color: var(--muted); font-size: 14px; }
+    @media (max-width: 780px) {
+      .page { width: min(100% - 24px, 1120px); padding-top: 16px; }
+      .grid, .tokens { grid-template-columns: 1fr; }
+      table { min-width: 760px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div class="kicker">Open Design / MVP prototype</div>
+      <h1>基本情報技術者試験 科目A Web 演習体験</h1>
+      <p>移动端优先的中保真原型归档页。产品 UI 文案使用日文；本页作为设计说明入口，包含三种风格方向、推荐方向、页面链接和设计系统建议。</p>
+      <nav class="nav" aria-label="Preview files">
+        <a class="primary" href="fe-mvp-od-quiz.html">作答页 / quiz</a>
+        <a href="fe-mvp-od-results.html">结果页 / results</a>
+        <a href="fe-mvp-od-token.html">错误页 / token</a>
+      </nav>
+    </header>
+
+    <section>
+      <h2>1. 3 个风格方向对比</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>方向</th>
+              <th>关键词</th>
+              <th>色彩</th>
+              <th>适合原因</th>
+              <th>风险</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>考试模拟风格</strong></td>
+              <td>严肃、低干扰、强结构、接近正式考试系统</td>
+              <td>白底、冷灰边界、深蓝或青绿作为单一操作色，错误/正确状态克制显示</td>
+              <td>最容易建立“这是一次测试”的心理模型；提交前不会诱导用户找解析，适合一题一屏和严格进度。</td>
+              <td>日常练习时可能显得紧张；若只做灰白，会缺少学习工具的亲和力。</td>
+            </tr>
+            <tr>
+              <td><strong>现代学习工具风格</strong> <span class="badge">推荐</span></td>
+              <td>轻量、清晰、友好、状态明确、适合反复练习</td>
+              <td>中性浅底、白色阅读卡片、青绿色主操作、蓝色信息、红/绿结果状态</td>
+              <td>在阅读效率和亲和力之间平衡最好；移动端选项、题号导航、提交禁用和结果复盘都能用清晰状态表达。</td>
+              <td>如果圆角和色块过多，会弱化考试感；需要限制装饰，只让颜色服务于状态。</td>
+            </tr>
+            <tr>
+              <td><strong>技术文档 / 知识库风格</strong></td>
+              <td>长文阅读、解析层级、证据感、可扫描</td>
+              <td>纸白背景、墨色正文、浅蓝信息块、细边框、少量代码/来源样式</td>
+              <td>非常适合长题干、图片题、详细解説和来源 URL；结果页复盘效率高。</td>
+              <td>作答阶段可能像阅读文档而不像测试；移动端操作的情绪反馈偏弱。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. 推荐方向</h2>
+      <div class="card">
+        <h3>默认采用“现代学习工具风格”，局部吸收考试模拟的结构感和知识库的解析排版。</h3>
+        <p>理由：MVP 的核心不是营销展示，而是高频练习。这个方向能让作答页保持专注、让未答/已答/当前题状态清楚，同时在结果页承载长解析和图片题，不会过度正式或游戏化。</p>
+        <div class="swatches" aria-label="Palette">
+          <span class="swatch" style="background: oklch(98% 0.004 240)"></span>
+          <span class="swatch" style="background: oklch(100% 0 0)"></span>
+          <span class="swatch" style="background: oklch(56% 0.12 170)"></span>
+          <span class="swatch" style="background: oklch(58% 0.13 245)"></span>
+          <span class="swatch" style="background: oklch(58% 0.18 25)"></span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>3-7. 页面设计入口</h2>
+      <div class="grid">
+        <article class="card">
+          <h3>移动端 / 桌面端作答页</h3>
+          <p>一题一屏、顶部进度、选项状态、提交禁用、提交中、移动 bottom sheet、桌面 drawer。</p>
+          <p><a href="fe-mvp-od-quiz.html">打开作答页</a></p>
+        </article>
+        <article class="card">
+          <h3>结果页</h3>
+          <p>成绩摘要、测试构成、默认错题解析、答对题弱化、展开全部解析、答案锁定状态。</p>
+          <p><a href="fe-mvp-od-results.html">打开结果页</a></p>
+        </article>
+        <article class="card">
+          <h3>错误页</h3>
+          <p>token 不存在、token 过期、加载失败三种状态，提示返回 Telegram 重新创建演習。</p>
+          <p><a href="fe-mvp-od-token.html">打开错误页</a></p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>8. 组件与设计系统建议</h2>
+      <div class="tokens">
+        <div class="token"><strong>颜色</strong><span>浅色模式；背景 oklch(98% 0.004 240)，卡片白色，主操作青绿，信息蓝，正解绿，不正解红，警告琥珀。</span></div>
+        <div class="token"><strong>字体层级</strong><span>系统 sans。移动端题干 18px/1.75，解析 16px/1.75，按钮 15px/700；桌面题干 20px。</span></div>
+        <div class="token"><strong>按钮</strong><span>主按钮 48px 以上；禁用态降低对比并显示原因；提交中替换为処理中。</span></div>
+        <div class="token"><strong>选项卡片</strong><span>整行可点，最小 52px；选中态使用青绿色边框和浅底，不显示正误直到提交后。</span></div>
+        <div class="token"><strong>状态标识</strong><span>当前题用实心主色；已答用浅主色；未答白底细边；结果页用 正解 / 不正解 pill。</span></div>
+        <div class="token"><strong>间距规则</strong><span>移动端 16px page gutter，卡片内 16-20px；桌面 max-width 1180px，题干和解析限制行长。</span></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,106 @@
+请使用 Superpowers 工作流，根据 docs/todolist/ 中的任务清单逐项推进项目开发，直到所有任务完成，或遇到无法自行解决的 blocker。
+
+必须先读取：
+
+- docs/todolist/00_PROJECT_OVERVIEW.md
+- docs/todolist/01_FOUNDATION.md
+- docs/todolist/02_DATABASE.md
+- docs/todolist/03_BACKEND_API.md
+- docs/todolist/04_TELEGRAM_BOT.md
+- docs/todolist/05_FRONTEND_QUIZ.md
+- docs/todolist/06_RESULT_AND_HISTORY.md
+- docs/todolist/07_AI_SCOPE_PARSING.md
+- docs/todolist/08_INTEGRATION_TESTING.md
+- docs/todolist/09_DOCKER_DEPLOYMENT.md
+- docs/todolist/10_RELEASE_CHECKLIST.md
+
+必要时参考：
+
+- docs/PRD.md
+- docs/USER_FLOW.md
+- docs/PAGE_LIST.md
+- docs/TECH_ARCHITECTURE.md
+- docs/DATA_MODEL.md
+- docs/API_SPEC.md
+- docs/database-and-assets.md
+
+必须使用的 Superpowers Skill：
+
+- superpowers:using-superpowers
+- superpowers:using-git-worktrees
+- superpowers:subagent-driven-development
+
+如果当前环境不支持 subagent，则使用：
+
+- superpowers:executing-plans
+
+每个实现任务必须使用：
+
+- superpowers:test-driven-development
+
+遇到 bug、测试失败、构建失败或行为异常时必须使用：
+
+- superpowers:systematic-debugging
+
+每次声称任务完成、测试通过、准备提交前必须使用：
+
+- superpowers:verification-before-completion
+
+全部任务完成后必须使用：
+
+- superpowers:finishing-a-development-branch
+
+执行顺序：
+
+1. docs/todolist/01_FOUNDATION.md
+2. docs/todolist/02_DATABASE.md
+3. docs/todolist/07_AI_SCOPE_PARSING.md
+4. docs/todolist/03_BACKEND_API.md
+5. docs/todolist/04_TELEGRAM_BOT.md
+6. docs/todolist/05_FRONTEND_QUIZ.md
+7. docs/todolist/06_RESULT_AND_HISTORY.md
+8. docs/todolist/08_INTEGRATION_TESTING.md
+9. docs/todolist/09_DOCKER_DEPLOYMENT.md
+10. docs/todolist/10_RELEASE_CHECKLIST.md
+
+执行规则：
+
+1. 一次只处理一个 TodoList item。
+2. 开始前检查 git 状态，避免覆盖用户改动。
+3. 如果任务涉及实现，先写测试，并确认测试因目标功能缺失而失败。
+4. 编写最小实现。
+5. 运行该任务指定验证命令。
+6. 运行必要的 pnpm typecheck、pnpm lint、pnpm test。
+7. 如果任务影响前端页面，运行相关 Playwright 测试。
+8. 验证通过后，更新对应 docs/todolist/*.md checkbox。
+9. 每完成一个 TodoList item 就提交一次代码。
+10. commit 使用 Conventional Commits。
+11. 提交后继续下一个 item，不要询问是否继续。
+12. 只有完成全部任务或遇到 blocker 才停下。
+
+提交规则：
+
+- 一个 TodoList item 一个 commit。
+- 如果 item 过大，先拆分子任务并更新对应 TodoList。
+- 不要提交数据库文件、缓存图片、preview 线稿或无关生成物，除非任务明确要求。
+- 不要使用 git reset --hard、git checkout -- 或其他会丢弃用户改动的命令。
+- 不要回滚非本任务产生的改动。
+
+暂停询问用户的条件：
+
+1. 文档之间存在冲突，且无法通过已确认决策判断。
+2. 需要真实 secret、真实域名、真实 Telegram token 或真实 OpenAI key。
+3. 涉及生产数据安全或部署安全。
+4. 同一 blocker 连续三次无法解决。
+5. 需要删除或覆盖用户未授权的文件。
+
+最终完成标准：
+
+- 所有 docs/todolist/*.md 任务完成，或明确标记为非 MVP / blocked。
+- pnpm typecheck 通过。
+- pnpm lint 通过。
+- pnpm test 通过。
+- pnpm test:e2e 通过。
+- Docker Compose 验证通过。
+- docs/todolist/10_RELEASE_CHECKLIST.md 完成。
+- 最终输出完成摘要、验证结果、提交记录和仍然存在的风险。
