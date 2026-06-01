@@ -1,0 +1,53 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          BRANCH: main
+          DEPLOY_ROOT: ${{ secrets.VPS_DEPLOY_ROOT || '/opt/fe-quiz-bot' }}
+          PROJECT_DIR: ${{ secrets.VPS_DEPLOY_DIR || '' }}
+          REPO_URL: ${{ secrets.VPS_REPO_URL || format('git@github.com:{0}.git', github.repository) }}
+          SMOKE_BASE_URL: ${{ secrets.SMOKE_BASE_URL || 'http://127.0.0.1:3100' }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || 22 }}
+          envs: BRANCH,DEPLOY_ROOT,PROJECT_DIR,REPO_URL,SMOKE_BASE_URL
+          script_stop: true
+          script: |
+            set -eu
+            if [ -z "${PROJECT_DIR}" ]; then
+              PROJECT_DIR="${DEPLOY_ROOT}/app"
+            fi
+
+            if [ -f "${PROJECT_DIR}/deploy/scripts/deploy.sh" ]; then
+              sh "${PROJECT_DIR}/deploy/scripts/deploy.sh"
+            else
+              if [ ! -d "${PROJECT_DIR}/.git" ]; then
+                mkdir -p "$(dirname "${PROJECT_DIR}")"
+                git clone --branch "${BRANCH}" "${REPO_URL}" "${PROJECT_DIR}"
+              fi
+
+              cd "${PROJECT_DIR}"
+              git fetch origin "${BRANCH}"
+              git reset --hard "origin/${BRANCH}"
+              sh ./deploy/scripts/deploy.sh
+            fi
