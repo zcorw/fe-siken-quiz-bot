@@ -47,7 +47,7 @@ describe("handleScopeMessage", () => {
     });
   });
 
-  it("replies with a quiz URL after session creation", async () => {
+  it("replies with a Telegram URL button after session creation", async () => {
     const parseScope = vi.fn().mockResolvedValue({
       matchedCategories: [],
       matchedTopics: ["データベース"],
@@ -66,7 +66,19 @@ describe("handleScopeMessage", () => {
     });
 
     expect(reply).toHaveBeenCalledWith(
-      "演習を作成しました。\nhttps://example.test/quiz/token-1"
+      "演習を作成しました。",
+      expect.objectContaining({
+        reply_markup: expect.objectContaining({
+          inline_keyboard: [
+            [
+              {
+                text: "問題を開く",
+                url: "https://example.test/quiz/token-1",
+              },
+            ],
+          ],
+        }),
+      })
     );
   });
 

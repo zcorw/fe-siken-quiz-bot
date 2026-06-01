@@ -1,3 +1,5 @@
+import { InlineKeyboard } from "grammy";
+
 import type { ScopeParseResult } from "@/quiz/scope-match";
 import type { ReplyContext } from "./start";
 
@@ -85,9 +87,11 @@ export async function handleScopeMessage({
     });
 
     if (session !== undefined && publicBaseUrl !== undefined) {
-      await ctx.reply(
-        `演習を作成しました。\n${publicBaseUrl.replace(/\/$/, "")}/quiz/${session.token}`
-      );
+      const quizUrl = `${publicBaseUrl.replace(/\/$/, "")}/quiz/${session.token}`;
+
+      await ctx.reply("演習を作成しました。", {
+        reply_markup: new InlineKeyboard().url("問題を開く", quizUrl),
+      });
     }
     return;
   }

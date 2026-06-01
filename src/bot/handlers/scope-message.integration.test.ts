@@ -91,7 +91,19 @@ describe("scope message integration", () => {
     expect(questions[19]?.questionIndex).toBe(20);
 
     expect(reply).toHaveBeenCalledWith(
-      "\u6f14\u7fd2\u3092\u4f5c\u6210\u3057\u307e\u3057\u305f\u3002\nhttps://example.test/quiz/token-integration"
+      "\u6f14\u7fd2\u3092\u4f5c\u6210\u3057\u307e\u3057\u305f\u3002",
+      expect.objectContaining({
+        reply_markup: expect.objectContaining({
+          inline_keyboard: [
+            [
+              {
+                text: "\u554f\u984c\u3092\u958b\u304f",
+                url: "https://example.test/quiz/token-integration",
+              },
+            ],
+          ],
+        }),
+      })
     );
   });
 });
