@@ -4,8 +4,12 @@ import type Database from "better-sqlite3";
 import type { AppDrizzleDb } from "@/db/app/client";
 import { createQuizSession } from "@/db/app/repositories/quiz-sessions";
 import { upsertTelegramUser } from "@/db/app/repositories/users";
-import { findQuestionCandidates } from "@/db/question-bank/queries";
+import {
+  findQuestionCandidates,
+  type QuestionCandidateRow,
+} from "@/db/question-bank/queries";
 import type { ScopeParseResult } from "@/quiz/scope-match";
+import type { AppConfig } from "@/config/schema";
 
 export interface TelegramUserInput {
   id: number;
@@ -23,6 +27,7 @@ export interface CreateQuizSessionFromScopeMessageInput {
   nowIso: string;
   sessionIdFactory?: () => string;
   tokenFactory?: () => string;
+  topicsConfig?: AppConfig["topics"];
 }
 
 export async function createQuizSessionFromScopeMessage({
@@ -34,6 +39,7 @@ export async function createQuizSessionFromScopeMessage({
   sessionIdFactory = randomUUID,
   telegramUser,
   tokenFactory = randomUUID,
+  topicsConfig,
 }: CreateQuizSessionFromScopeMessageInput): Promise<{ token: string }> {
   if (telegramUser === undefined) {
     throw new Error("Telegram user is required to create a quiz session.");
@@ -49,9 +55,10 @@ export async function createQuizSessionFromScopeMessage({
 
   const matchedTopic = matchedScope.matchedTopics[0];
   const matchedCategory = matchedScope.matchedCategories[0];
-  const candidates = findQuestionCandidates(questionDb, {
-    category: matchedCategory,
-    topic: matchedTopic,
+  const candidates = resolveQuestionCandidates(questionDb, {
+    matchedCategory,
+    matchedTopic,
+    topicsConfig,
   }).slice(0, 20);
 
   if (candidates.length !== 20) {
@@ -98,6 +105,66 @@ export async function createQuizSessionFromScopeMessage({
   });
 
   return { token };
+}
+
+function resolveQuestionCandidates(
+  questionDb: Database.Database,
+  {
+    matchedCategory,
+    matchedTopic,
+    topicsConfig,
+  }: {
+    matchedCategory?: string;
+    matchedTopic?: string;
+    topicsConfig?: AppConfig["topics"];
+  }
+): QuestionCandidateRow[] {
+  const directCandidates = findQuestionCandidates(questionDb, {
+    category: matchedCategory,
+    topic: matchedTopic,
+  });
+
+  if (directCandidates.length >= 20 || matchedTopic === undefined) {
+    return directCandidates;
+  }
+
+  const mappedCandidates = findQuestionCandidates(questionDb).filter(
+    (candidate) =>
+      mapsToStandardTopic(candidate.category, matchedTopic, topicsConfig) ||
+      mapsToStandardTopic(candidate.topic, matchedTopic, topicsConfig)
+  );
+
+  return dedupeCandidates([...directCandidates, ...mappedCandidates]);
+}
+
+function mapsToStandardTopic(
+  sourceValue: string | null,
+  standardTopic: string,
+  topicsConfig?: AppConfig["topics"]
+): boolean {
+  if (sourceValue === null || topicsConfig === undefined) {
+    return false;
+  }
+
+  return topicsConfig.standard_topic_mappings[sourceValue] === standardTopic;
+}
+
+function dedupeCandidates(
+  candidates: QuestionCandidateRow[]
+): QuestionCandidateRow[] {
+  const seenUrls = new Set<string>();
+  const deduped: QuestionCandidateRow[] = [];
+
+  for (const candidate of candidates) {
+    if (seenUrls.has(candidate.url)) {
+      continue;
+    }
+
+    seenUrls.add(candidate.url);
+    deduped.push(candidate);
+  }
+
+  return deduped;
 }
 
 function addDays(iso: string, days: number): string {

@@ -36,6 +36,7 @@ async function start(): Promise<void> {
             appDb: appDb.db,
             nowIso: new Date().toISOString(),
             questionDb,
+            topicsConfig: appConfig.topics,
           }),
         logScopeParse: async ({ rawScopeInput, result }) => {
           console.log(

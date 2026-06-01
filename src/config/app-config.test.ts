@@ -15,6 +15,9 @@ describe("loadAppConfig", () => {
     expect(config.topics.standard_topics).toContain("データベース");
     expect(config.topics.standard_topics.length).toBeGreaterThanOrEqual(20);
     expect(config.topics.high_weight_topics).toContain("情報セキュリティ");
+    expect(config.topics.standard_topic_mappings["データ操作"]).toBe(
+      "データベース"
+    );
     expect(config.ai).toMatchObject({
       provider: "openai",
       model: "gpt-4.1-mini",
