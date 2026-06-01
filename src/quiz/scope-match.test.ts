@@ -91,11 +91,47 @@ describe("parseLocalScope", () => {
     topics: ["ネットワーク", "データベース", "プロジェクトマネジメント"],
   };
 
-  it("returns a matched alias parse result before question bank keywords", () => {
-    expect(parseLocalScope("DB", topicsConfig, questionBankKeywords)).toEqual({
+  it("returns a major category result for direct major category input", () => {
+    expect(
+      parseLocalScope("ネットワーク", topicsConfig, questionBankKeywords)
+    ).toEqual({
+      candidateMinorCategories: ["通信プロトコル"],
+      majorCategory: "ネットワーク",
       matchedCategories: [],
-      matchedTopics: ["データベース"],
-      method: "alias",
+      matchedTopics: [],
+      method: "local_exact",
+      minorCategory: undefined,
+      scopeType: "major_category",
+      status: "matched",
+      suggestions: [],
+    });
+  });
+
+  it("returns a minor category result for direct minor category input", () => {
+    expect(
+      parseLocalScope("通信プロトコル", topicsConfig, questionBankKeywords)
+    ).toEqual({
+      candidateMinorCategories: ["通信プロトコル"],
+      majorCategory: "ネットワーク",
+      matchedCategories: ["通信プロトコル"],
+      matchedTopics: [],
+      method: "local_exact",
+      minorCategory: "通信プロトコル",
+      scopeType: "minor_category",
+      status: "matched",
+      suggestions: [],
+    });
+  });
+
+  it("returns a major category result for alias input", () => {
+    expect(parseLocalScope("网络", topicsConfig, questionBankKeywords)).toEqual({
+      candidateMinorCategories: ["通信プロトコル"],
+      majorCategory: "ネットワーク",
+      matchedCategories: [],
+      matchedTopics: [],
+      method: "local_alias",
+      minorCategory: undefined,
+      scopeType: "major_category",
       status: "matched",
       suggestions: [],
     });
@@ -109,9 +145,13 @@ describe("parseLocalScope", () => {
         questionBankKeywords
       )
     ).toEqual({
+      candidateMinorCategories: [],
+      majorCategory: undefined,
       matchedCategories: [],
       matchedTopics: ["プロジェクトマネジメント"],
       method: "question_bank_keyword",
+      minorCategory: undefined,
+      scopeType: "topic_keyword",
       status: "matched",
       suggestions: [],
     });
@@ -120,9 +160,13 @@ describe("parseLocalScope", () => {
   it("returns no_match with the complete result shape when local matching fails", () => {
     expect(parseLocalScope("法務", topicsConfig, questionBankKeywords)).toEqual(
       {
+        candidateMinorCategories: [],
+        majorCategory: undefined,
         matchedCategories: [],
         matchedTopics: [],
         method: "none",
+        minorCategory: undefined,
+        scopeType: "no_match",
         status: "no_match",
         suggestions: [],
       }
@@ -133,9 +177,13 @@ describe("parseLocalScope", () => {
     expect(
       parseLocalScope("データベス", topicsConfig, questionBankKeywords, 3)
     ).toEqual({
+      candidateMinorCategories: [],
+      majorCategory: undefined,
       matchedCategories: [],
       matchedTopics: [],
       method: "none",
+      minorCategory: undefined,
+      scopeType: "no_match",
       status: "no_match",
       suggestions: ["データベース"],
     });
@@ -162,9 +210,13 @@ describe("resolveNoMatchAction", () => {
   it("returns suggestions when a no_match result has suggestions", () => {
     expect(
       resolveNoMatchAction({
+        candidateMinorCategories: [],
+        majorCategory: undefined,
         matchedCategories: [],
         matchedTopics: [],
         method: "none",
+        minorCategory: undefined,
+        scopeType: "no_match",
         status: "no_match",
         suggestions: ["データベース", "ネットワーク"],
       })
@@ -177,9 +229,13 @@ describe("resolveNoMatchAction", () => {
   it("returns a retry input prompt when there are no suggestions", () => {
     expect(
       resolveNoMatchAction({
+        candidateMinorCategories: [],
+        majorCategory: undefined,
         matchedCategories: [],
         matchedTopics: [],
         method: "none",
+        minorCategory: undefined,
+        scopeType: "no_match",
         status: "no_match",
         suggestions: [],
       })

@@ -43,10 +43,14 @@ describe("parseScopeWithOpenAI", () => {
     });
 
     expect(result).toEqual({
+      candidateMinorCategories: [],
+      majorCategory: undefined,
       matchedTopics: ["データベース"],
       matchedCategories: [],
       suggestions: [],
       method: "openai",
+      minorCategory: undefined,
+      scopeType: "topic_keyword",
       status: "matched",
     });
     expect(create).toHaveBeenCalledWith(
@@ -100,10 +104,14 @@ describe("parseScopeWithOpenAI", () => {
     });
 
     expect(result).toEqual({
+      candidateMinorCategories: [],
+      majorCategory: undefined,
       matchedTopics: [],
       matchedCategories: [],
       suggestions: ["ネットワーク"],
       method: "openai",
+      minorCategory: undefined,
+      scopeType: "no_match",
       status: "no_match",
     });
   });
@@ -151,7 +159,7 @@ describe("parseScope", () => {
     });
 
     expect(result.status).toBe("matched");
-    expect(result.method).toBe("alias");
+    expect(result.method).toBe("local_alias");
     expect(create).not.toHaveBeenCalled();
   });
 
@@ -174,9 +182,13 @@ describe("parseScope", () => {
     });
 
     expect(result).toEqual({
+      candidateMinorCategories: [],
+      majorCategory: undefined,
       matchedCategories: [],
       matchedTopics: [],
       method: "openai_unavailable",
+      minorCategory: undefined,
+      scopeType: "ai_unavailable",
       status: "ai_unavailable",
       suggestions: [],
     });
@@ -205,9 +217,13 @@ describe("parseScope", () => {
     });
 
     expect(result).toEqual({
+      candidateMinorCategories: [],
+      majorCategory: undefined,
       matchedCategories: [],
       matchedTopics: [],
       method: "openai_unavailable",
+      minorCategory: undefined,
+      scopeType: "ai_unavailable",
       status: "ai_unavailable",
       suggestions: ["database"],
     });
@@ -228,8 +244,10 @@ describe("parseScope", () => {
     });
 
     expect(result).toMatchObject({
-      matchedTopics: ["データベース"],
-      method: "alias",
+      majorCategory: "データベース",
+      matchedTopics: [],
+      method: "local_alias",
+      scopeType: "major_category",
       status: "matched",
     });
   });

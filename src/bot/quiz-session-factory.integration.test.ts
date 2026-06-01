@@ -25,9 +25,13 @@ describe("createQuizSessionFromScopeMessage", () => {
     await createQuizSessionFromScopeMessage({
       appDb: appDb.db,
       matchedScope: {
+        candidateMinorCategories: ["データ操作"],
+        majorCategory: "データベース",
         matchedCategories: [],
-        matchedTopics: ["データベース"],
-        method: "alias",
+        matchedTopics: [],
+        method: "local_exact",
+        minorCategory: undefined,
+        scopeType: "major_category",
         status: "matched",
         suggestions: [],
       },

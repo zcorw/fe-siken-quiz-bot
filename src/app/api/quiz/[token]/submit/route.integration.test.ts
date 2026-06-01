@@ -34,9 +34,13 @@ describe("POST /api/quiz/[token]/submit integration", () => {
     await createQuizSessionFromScopeMessage({
       appDb: appDb.db,
       matchedScope: {
+        candidateMinorCategories: [],
+        majorCategory: undefined,
         matchedCategories: [],
         matchedTopics: ["\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9"],
         method: "alias",
+        minorCategory: undefined,
+        scopeType: "topic_keyword",
         status: "matched",
         suggestions: [],
       },
@@ -100,9 +104,13 @@ describe("POST /api/quiz/[token]/submit integration", () => {
     await createQuizSessionFromScopeMessage({
       appDb: appDb.db,
       matchedScope: {
+        candidateMinorCategories: [],
+        majorCategory: undefined,
         matchedCategories: [],
         matchedTopics: ["\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9"],
         method: "alias",
+        minorCategory: undefined,
+        scopeType: "topic_keyword",
         status: "matched",
         suggestions: [],
       },

@@ -97,9 +97,13 @@ export async function parseScope(
     return await parseScopeWithOpenAI(input);
   } catch {
     return {
+      candidateMinorCategories: [],
+      majorCategory: undefined,
       matchedCategories: [],
       matchedTopics: [],
       method: "openai_unavailable",
+      minorCategory: undefined,
+      scopeType: "ai_unavailable",
       status: "ai_unavailable",
       suggestions: localResult.suggestions,
     };
@@ -166,7 +170,34 @@ function parseOpenAIOutput(
     throw new Error("Invalid OpenAI scope parse result");
   }
 
-  return restrictToAvailableScope(result.data, availableScope);
+  return restrictToAvailableScope(
+    {
+      candidateMinorCategories: [],
+      majorCategory: undefined,
+      minorCategory: undefined,
+      scopeType: deriveOpenAIScopeType(result.data),
+      ...result.data,
+    },
+    availableScope
+  );
+}
+
+function deriveOpenAIScopeType(
+  result: z.infer<typeof openAIScopeParseResultSchema>
+): ScopeParseResult["scopeType"] {
+  if (result.status === "no_match") {
+    return "no_match";
+  }
+
+  if (result.matchedCategories.length > 0) {
+    return "category_keyword";
+  }
+
+  if (result.matchedTopics.length > 0) {
+    return "topic_keyword";
+  }
+
+  return "no_match";
 }
 
 function restrictToAvailableScope(
@@ -198,6 +229,10 @@ function restrictToAvailableScope(
     ...result,
     matchedCategories,
     matchedTopics,
+    scopeType:
+      matchedTopics.length > 0 || matchedCategories.length > 0
+        ? result.scopeType
+        : "no_match",
     status:
       matchedTopics.length > 0 || matchedCategories.length > 0
         ? "matched"

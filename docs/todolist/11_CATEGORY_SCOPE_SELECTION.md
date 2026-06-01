@@ -113,14 +113,14 @@
 
 **依赖任务:** 任务 1。
 
-- [ ] 设计新的匹配结果结构，例如：
+- [x] 设计新的匹配结果结构，例如：
   - `scopeType: "major_category" | "minor_category" | "no_match" | "ai_unavailable"`
   - `majorCategory`
   - `minorCategory`
   - `candidateMinorCategories`
   - `method: "local_exact" | "local_alias" | "local_fuzzy" | "openai"`
-- [ ] 保留兼容字段或一次性迁移现有 `matchedTopics` / `matchedCategories` 使用点。
-- [ ] 在测试中覆盖：
+- [x] 保留兼容字段或一次性迁移现有 `matchedTopics` / `matchedCategories` 使用点。
+- [x] 在测试中覆盖：
   - 输入大分类 `ネットワーク`。
   - 输入小分类 `通信プロトコル`。
   - 输入 alias `网络`。

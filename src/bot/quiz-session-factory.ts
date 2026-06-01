@@ -53,8 +53,9 @@ export async function createQuizSessionFromScopeMessage({
     telegramUsername: telegramUser.username ?? null,
   });
 
-  const matchedTopic = matchedScope.matchedTopics[0];
-  const matchedCategory = matchedScope.matchedCategories[0];
+  const matchedTopic = matchedScope.majorCategory ?? matchedScope.matchedTopics[0];
+  const matchedCategory =
+    matchedScope.minorCategory ?? matchedScope.matchedCategories[0];
   const candidates = resolveQuestionCandidates(questionDb, {
     matchedCategory,
     matchedTopic,
@@ -75,9 +76,13 @@ export async function createQuizSessionFromScopeMessage({
     expiresAt: addDays(nowIso, 7),
     id: sessionId,
     matchedScopeJson: {
+      candidateMinorCategories: matchedScope.candidateMinorCategories,
+      majorCategory: matchedScope.majorCategory ?? null,
       matchedCategories: matchedScope.matchedCategories,
       matchedTopics: matchedScope.matchedTopics,
       method: matchedScope.method,
+      minorCategory: matchedScope.minorCategory ?? null,
+      scopeType: matchedScope.scopeType,
       status: matchedScope.status,
       suggestions: matchedScope.suggestions,
     },
