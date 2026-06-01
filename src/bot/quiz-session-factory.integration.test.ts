@@ -160,4 +160,91 @@ describe("createQuizSessionFromScopeMessage", () => {
       true
     );
   });
+
+  it("records the matched major category and expanded minor categories", async () => {
+    const appDb = await createMigratedAppDbFixture({ seedUser: false });
+    const questionDb = await createQuestionBankFixture({
+      questionCount: 0,
+    });
+    const insertQuestion = questionDb.prepare(`
+      INSERT INTO questions (
+        id,
+        source_page_label,
+        source_page_url,
+        exam_part,
+        question_no,
+        topic,
+        category,
+        url,
+        scraped_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (let index = 1; index <= 20; index += 1) {
+      const category = index <= 10 ? "通信プロトコル" : "ネットワーク方式";
+      insertQuestion.run(
+        index,
+        "令和6年春",
+        "https://example.test/source.html",
+        "科目A",
+        `問${index}`,
+        "DNS",
+        category,
+        `https://example.test/major-category-q${index}.html`,
+        "2026-05-31T00:00:00.000Z"
+      );
+    }
+
+    await createQuizSessionFromScopeMessage({
+      appDb: appDb.db,
+      matchedScope: {
+        candidateMinorCategories: ["通信プロトコル", "ネットワーク方式"],
+        majorCategory: "ネットワーク",
+        matchedCategories: [],
+        matchedTopics: [],
+        method: "local_exact",
+        minorCategory: undefined,
+        scopeType: "major_category",
+        status: "matched",
+        suggestions: [],
+      },
+      nowIso: "2026-05-31T00:00:00.000Z",
+      questionDb,
+      rawScopeInput: "ネットワーク",
+      sessionIdFactory: () => "session-major-summary",
+      telegramUser: { id: 12345 },
+      tokenFactory: () => "token-major-summary",
+      topicsConfig: {
+        aliases: {},
+        category_tree: {
+          ネットワーク: ["通信プロトコル", "ネットワーク方式"],
+        },
+        high_weight_topics: ["ネットワーク"],
+      },
+    });
+
+    const questionRows = appDb.sqlite
+      .prepare(
+        "SELECT DISTINCT source_category FROM quiz_session_questions ORDER BY source_category"
+      )
+      .all() as Array<{ source_category: string }>;
+    const sessionRow = appDb.sqlite
+      .prepare(
+        "SELECT selection_summary_json FROM quiz_sessions WHERE id = ?"
+      )
+      .get("session-major-summary") as {
+      selection_summary_json: string;
+    };
+
+    expect(questionRows.map((row) => row.source_category)).toEqual([
+      "ネットワーク方式",
+      "通信プロトコル",
+    ]);
+    expect(JSON.parse(sessionRow.selection_summary_json)).toEqual(
+      expect.objectContaining({
+        requestedMajorCategory: "ネットワーク",
+        requestedMinorCategories: ["通信プロトコル", "ネットワーク方式"],
+      })
+    );
+  });
 });

@@ -74,6 +74,10 @@ export async function createQuizSessionFromScopeMessage({
 
   const sessionId = sessionIdFactory();
   const token = tokenFactory();
+  const requestedMinorCategories = listSelectedMinorCategories(
+    candidates,
+    matchedScope.candidateMinorCategories ?? []
+  );
 
   await createQuizSession(appDb, {
     createdAt: nowIso,
@@ -95,6 +99,8 @@ export async function createQuizSessionFromScopeMessage({
     selectionSummaryJson: {
       highWeightTopicCount: 5,
       reinforcementCount: 5,
+      requestedMajorCategory: matchedScope.majorCategory ?? null,
+      requestedMinorCategories,
       requestedScopeCount: 15,
       weakTopicCount: 0,
       wrongQuestionCount: 0,
@@ -130,11 +136,13 @@ function resolveQuestionCandidates(
     topicsConfig?: AppConfig["topics"];
   }
 ): QuestionCandidateRow[] {
-  if (candidateMinorCategories !== undefined && candidateMinorCategories.length > 0) {
-    const allowedCategories = new Set(candidateMinorCategories);
-    return findQuestionCandidates(questionDb).filter((candidate) =>
-      allowedCategories.has(candidate.category ?? "")
-    );
+  if (
+    candidateMinorCategories !== undefined &&
+    candidateMinorCategories.length > 0
+  ) {
+    return findQuestionCandidates(questionDb, {
+      categories: candidateMinorCategories,
+    });
   }
 
   const directCandidates = findQuestionCandidates(questionDb, {
@@ -153,6 +161,21 @@ function resolveQuestionCandidates(
   );
 
   return dedupeCandidates([...directCandidates, ...mappedCandidates]);
+}
+
+function listSelectedMinorCategories(
+  candidates: QuestionCandidateRow[],
+  configuredMinorCategories: string[]
+): string[] {
+  const selectedCategories = new Set(
+    candidates
+      .map((candidate) => candidate.category)
+      .filter((category): category is string => category !== null)
+  );
+
+  return configuredMinorCategories.filter((category) =>
+    selectedCategories.has(category)
+  );
 }
 
 function mapsToStandardTopic(
