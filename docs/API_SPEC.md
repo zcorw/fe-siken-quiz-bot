@@ -27,10 +27,12 @@
 6. 读取用户消息文本。
 7. 处理 `/start` 或 `/help`。
 8. 普通文本按练习主题处理。
-9. 解析练习范围。
-10. 若无匹配，发送相近主题建议。
-11. 若匹配成功，创建 session/token。
-12. 发送 Web 测试链接。
+9. 解析练习范围：优先匹配 `topics.category_tree` 大分类 / 小分类和别名。
+10. 若本地无匹配，AI 只能从现有大分类 / 小分类中推荐候选。
+11. 若有 AI 候选，发送 Telegram inline buttons，等待用户点击候选。
+12. 用户点击候选按钮后，按该候选分类创建 session/token。
+13. 若匹配成功，创建 session/token。
+14. 发送 Web 测试链接按钮。
 
 成功响应：
 
@@ -103,6 +105,10 @@
   "selectionSummary": {
     "requestedScopeCount": 15,
     "reinforcementCount": 5,
+    "requestedMajorCategory": "ネットワーク",
+    "requestedMinorCategories": ["通信プロトコル"],
+    "primaryMinorCategory": "通信プロトコル",
+    "siblingMinorCategoriesUsed": [],
     "wrongQuestionCount": 2,
     "weakTopicCount": 2,
     "highWeightTopicCount": 1
@@ -174,9 +180,13 @@
 ```json
 {
   "status": "matched",
-  "method": "alias",
-  "matchedTopics": ["データベース"],
-  "matchedCategories": ["データベース"],
+  "method": "local_exact",
+  "scopeType": "minor_category",
+  "majorCategory": "ネットワーク",
+  "minorCategory": "通信プロトコル",
+  "candidateMinorCategories": ["通信プロトコル"],
+  "matchedTopics": [],
+  "matchedCategories": ["通信プロトコル"],
   "suggestions": []
 }
 ```

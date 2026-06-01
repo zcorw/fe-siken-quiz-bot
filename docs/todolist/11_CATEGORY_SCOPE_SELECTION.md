@@ -321,12 +321,12 @@
 
 **依赖任务:** 任务 1-9。
 
-- [ ] 更新 `docs/PRD.md` 的业务规则。
-- [ ] 更新 `docs/USER_FLOW.md` 的 Bot 关键词处理流程。
-- [ ] 更新 `docs/DATA_MODEL.md` 中 `questions.topic` 和 `questions.category` 的职责说明。
-- [ ] 更新 `docs/API_SPEC.md` 中 Telegram webhook 处理步骤。
-- [ ] 更新相关 TodoList checkbox。
-- [ ] 运行完整验证。
+- [x] 更新 `docs/PRD.md` 的业务规则。
+- [x] 更新 `docs/USER_FLOW.md` 的 Bot 关键词处理流程。
+- [x] 更新 `docs/DATA_MODEL.md` 中 `questions.topic` 和 `questions.category` 的职责说明。
+- [x] 更新 `docs/API_SPEC.md` 中 Telegram webhook 处理步骤。
+- [x] 更新相关 TodoList checkbox。
+- [x] 运行完整验证。
 
 **测试方式:**
 

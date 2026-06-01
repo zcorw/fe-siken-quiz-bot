@@ -20,8 +20,8 @@
 | `source_page_url` | TEXT | 来源页 URL |
 | `exam_part` | TEXT | `科目A` 或 `科目B` |
 | `question_no` | TEXT | 题号 |
-| `topic` | TEXT | 题目主题 |
-| `category` | TEXT | 分类 |
+| `topic` | TEXT | 题目级要点总结，用于统计和弱项分析参考 |
+| `category` | TEXT | 题库小分类，是用户范围匹配后的主要抽题字段 |
 | `url` | TEXT UNIQUE | 原题 URL |
 | `scraped_at` | TEXT | 抓取时间 |
 
@@ -84,7 +84,7 @@ MVP 只使用 `exam_part = '科目A'`。
 | `user_id` | TEXT NOT NULL | 创建 token 的用户 |
 | `raw_scope_input` | TEXT NOT NULL | 用户原始输入 |
 | `matched_scope_json` | TEXT | 关键词/AI 匹配结果 |
-| `selection_summary_json` | TEXT | 选题构成摘要 |
+| `selection_summary_json` | TEXT | 选题构成摘要，包含命中的大分类、实际使用的小分类、补强题计数 |
 | `status` | TEXT NOT NULL | `created` / `submitted` / `error` |
 | `total_questions` | INTEGER NOT NULL | 固定 20 |
 | `correct_count` | INTEGER | 首次提交正确数 |
@@ -197,10 +197,11 @@ MVP 只使用 `exam_part = '科目A'`。
 统计粒度：
 
 - 底层同时记录题库原始 `category` 与 `topic`。
-- 如果题目的 `category` 能通过 `topics.category_tree` 反推出大分类，同时更新 `configured_topic` 统计。
+- 如果 session 的 `matched_scope_json.majorCategory` 存在，首次提交时同时更新 `configured_topic` 统计。
 - 选题和弱项判断优先使用 `configured_topic`。
 - 无法映射到大分类时，保留原始 `category` / `topic` 统计。
 - `questions.topic` 表示题目级要点，不作为用户练习范围匹配主入口。
+- 常错题与弱项题仍来自 `answer_records`、`user_question_stats`、`user_topic_stats`，分类匹配改造不改变首次提交和重复提交规则。
 
 ## 4. 实体关系
 
