@@ -26,6 +26,24 @@ describe("registerTelegramBotHandlers", () => {
     expect(target.command).toHaveBeenCalledWith("help", expect.any(Function));
     expect(target.on).toHaveBeenCalledWith("message:text", handleTextMessage);
   });
+
+  it("registers candidate callback handling", () => {
+    const target = {
+      command: vi.fn(),
+      on: vi.fn(),
+    };
+    const handleCandidateCallback = vi.fn();
+
+    registerTelegramBotHandlers(
+      target as unknown as TelegramBotRegistrationTarget,
+      { handleCandidateCallback }
+    );
+
+    expect(target.on).toHaveBeenCalledWith(
+      "callback_query:data",
+      handleCandidateCallback
+    );
+  });
 });
 
 describe("initializeTelegramBot", () => {

@@ -5,7 +5,10 @@ import { openAppDb } from "@/db/app/client";
 import { openQuestionBank } from "@/db/question-bank/client";
 import { listQuestionBankKeywords } from "@/db/question-bank/queries";
 
-import { handleScopeMessage } from "./handlers/scope-message";
+import {
+  handleScopeCandidateCallback,
+  handleScopeMessage,
+} from "./handlers/scope-message";
 import { loadRuntimeEnvFile } from "./load-runtime-env-file";
 import { createQuizSessionFromScopeMessage } from "./quiz-session-factory";
 import { createTelegramWebhookServer } from "./server";
@@ -31,6 +34,20 @@ async function start(): Promise<void> {
 
   const bot = createTelegramBot({
     token: env.botToken,
+    handleCandidateCallback: (ctx) =>
+      handleScopeCandidateCallback({
+        ctx,
+        createQuizSession: (input) =>
+          createQuizSessionFromScopeMessage({
+            ...input,
+            appDb: appDb.db,
+            nowIso: new Date().toISOString(),
+            questionDb,
+            topicsConfig: appConfig.topics,
+          }),
+        publicBaseUrl: env.publicBaseUrl,
+        topicsConfig: appConfig.topics,
+      }),
     handleTextMessage: (ctx) =>
       handleScopeMessage({
         ctx,
@@ -62,6 +79,7 @@ async function start(): Promise<void> {
             topicsConfig: appConfig.topics,
           }),
         publicBaseUrl: env.publicBaseUrl,
+        topicsConfig: appConfig.topics,
       }),
   });
 

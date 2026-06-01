@@ -3,7 +3,20 @@
  */
 import { describe, expect, it, vi } from "vitest";
 
-import { handleScopeMessage } from "./scope-message";
+import {
+  buildCandidateScopeCallbackData,
+  handleScopeCandidateCallback,
+  handleScopeMessage,
+} from "./scope-message";
+
+const topicsConfig = {
+  aliases: {},
+  category_tree: {
+    "マルチメディア・組込みシステム": ["ユーザーインタフェース技術"],
+    ネットワーク: ["通信プロトコル"],
+  },
+  high_weight_topics: ["ネットワーク"],
+};
 
 describe("handleScopeMessage", () => {
   it("calls scope parsing for regular text messages", async () => {
@@ -197,19 +210,80 @@ describe("handleScopeMessage", () => {
           inline_keyboard: [
             [
               {
-                callback_data: "scope_candidate:major_category:database",
+                callback_data: "scope_candidate:M:database",
                 text: "database",
               },
             ],
             [
               {
-                callback_data: "scope_candidate:minor_category:tcp%2Fip",
+                callback_data: "scope_candidate:m:tcp%2Fip",
                 text: "tcp/ip",
               },
             ],
           ],
         }),
       })
+    );
+  });
+
+  it("builds short candidate callback data for configured Japanese categories", () => {
+    const callbackData = buildCandidateScopeCallbackData(
+      {
+        name: "ユーザーインタフェース技術",
+        scopeType: "minor_category",
+      },
+      topicsConfig
+    );
+
+    expect(Buffer.byteLength(callbackData, "utf8")).toBeLessThanOrEqual(64);
+    expect(callbackData).toBe("scope_candidate:m:0");
+  });
+
+  it("creates a quiz from a selected candidate callback", async () => {
+    const createQuizSession = vi.fn().mockResolvedValue({ token: "token-1" });
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const answerCallbackQuery = vi.fn().mockResolvedValue(undefined);
+
+    await handleScopeCandidateCallback({
+      createQuizSession,
+      ctx: {
+        answerCallbackQuery,
+        callbackQuery: {
+          data: "scope_candidate:m:0",
+        },
+        from: {
+          id: 123,
+          first_name: "Taro",
+          last_name: "Yamada",
+          username: "taro",
+        },
+        reply,
+      },
+      publicBaseUrl: "https://example.test",
+      topicsConfig,
+    });
+
+    expect(createQuizSession).toHaveBeenCalledWith({
+      matchedScope: expect.objectContaining({
+        candidateMinorCategories: ["ユーザーインタフェース技術"],
+        majorCategory: "マルチメディア・組込みシステム",
+        matchedCategories: ["ユーザーインタフェース技術"],
+        minorCategory: "ユーザーインタフェース技術",
+        scopeType: "minor_category",
+        status: "matched",
+      }),
+      rawScopeInput: "ユーザーインタフェース技術",
+      telegramUser: {
+        firstName: "Taro",
+        id: 123,
+        lastName: "Yamada",
+        username: "taro",
+      },
+    });
+    expect(answerCallbackQuery).toHaveBeenCalled();
+    expect(reply).toHaveBeenCalledWith(
+      "演習を作成しました。",
+      expect.any(Object)
     );
   });
 
