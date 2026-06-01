@@ -1,6 +1,6 @@
 import Fuse from "fuse.js";
 
-import type { AppConfig } from "@/config/schema";
+import { getMajorCategories, type AppConfig } from "@/config/schema";
 
 export function normalizeScopeText(value: string): string {
   return value.normalize("NFKC").toLocaleLowerCase("ja-JP").replace(/\s+/g, "");
@@ -13,7 +13,7 @@ export function matchTopicAlias(
   const normalizedInput = normalizeScopeText(input);
   const matches = new Set<string>();
 
-  for (const standardTopic of topicsConfig.standard_topics) {
+  for (const standardTopic of getMajorCategories(topicsConfig)) {
     if (normalizeScopeText(standardTopic) === normalizedInput) {
       matches.add(standardTopic);
     }
@@ -188,7 +188,7 @@ function buildSuggestionCandidates(
 ): SuggestionCandidate[] {
   const candidates: SuggestionCandidate[] = [];
 
-  for (const topic of topicsConfig.standard_topics) {
+  for (const topic of getMajorCategories(topicsConfig)) {
     candidates.push({
       normalizedText: normalizeScopeText(topic),
       suggestion: topic,

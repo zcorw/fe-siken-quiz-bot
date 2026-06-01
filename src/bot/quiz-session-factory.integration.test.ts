@@ -15,7 +15,7 @@ describe("createQuizSessionFromScopeMessage", () => {
     await cleanupIntegrationFixtures();
   });
 
-  it("selects questions through standard topic mappings when the bank uses finer categories", async () => {
+  it("selects questions through category tree minors when the bank uses finer categories", async () => {
     const appDb = await createMigratedAppDbFixture({ seedUser: false });
     const questionDb = await createQuestionBankFixture({
       category: "データ操作",
@@ -39,12 +39,10 @@ describe("createQuizSessionFromScopeMessage", () => {
       tokenFactory: () => "token-mapped-topic",
       topicsConfig: {
         aliases: {},
-        high_weight_topics: ["データベース"],
-        standard_topic_mappings: {
-          SQL文: "データベース",
-          データ操作: "データベース",
+        category_tree: {
+          データベース: ["データ操作"],
         },
-        standard_topics: ["データベース"],
+        high_weight_topics: ["データベース"],
       },
     });
 

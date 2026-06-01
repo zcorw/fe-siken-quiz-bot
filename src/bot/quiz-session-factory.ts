@@ -9,7 +9,7 @@ import {
   type QuestionCandidateRow,
 } from "@/db/question-bank/queries";
 import type { ScopeParseResult } from "@/quiz/scope-match";
-import type { AppConfig } from "@/config/schema";
+import { getMinorToMajorCategoryMap, type AppConfig } from "@/config/schema";
 
 export interface TelegramUserInput {
   id: number;
@@ -146,7 +146,9 @@ function mapsToStandardTopic(
     return false;
   }
 
-  return topicsConfig.standard_topic_mappings[sourceValue] === standardTopic;
+  return (
+    getMinorToMajorCategoryMap(topicsConfig).get(sourceValue) === standardTopic
+  );
 }
 
 function dedupeCandidates(

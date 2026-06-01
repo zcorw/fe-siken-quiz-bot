@@ -5,49 +5,77 @@ const nonEmptyStringSchema = z.string().min(1);
 
 const topicsConfigSchema = z
   .strictObject({
-    standard_topics: z.array(nonEmptyStringSchema).min(1),
+    category_tree: z.record(
+      nonEmptyStringSchema,
+      z.array(nonEmptyStringSchema).min(1)
+    ),
     high_weight_topics: z.array(nonEmptyStringSchema).min(1),
     aliases: z.record(nonEmptyStringSchema, z.array(nonEmptyStringSchema)),
-    standard_topic_mappings: z.record(
-      nonEmptyStringSchema,
-      nonEmptyStringSchema
-    ),
   })
   .superRefine((topics, ctx) => {
-    const standardTopics = new Set(topics.standard_topics);
+    const majorCategories = new Set(Object.keys(topics.category_tree));
 
     for (const [index, topic] of topics.high_weight_topics.entries()) {
-      if (!standardTopics.has(topic)) {
+      if (!majorCategories.has(topic)) {
         ctx.addIssue({
           code: "custom",
-          message: "high_weight_topics must be standard topics",
+          message: "high_weight_topics must be category_tree top-level keys",
           path: ["high_weight_topics", index],
         });
       }
     }
 
     for (const topic of Object.keys(topics.aliases)) {
-      if (!standardTopics.has(topic)) {
+      if (!majorCategories.has(topic)) {
         ctx.addIssue({
           code: "custom",
-          message: "aliases keys must be standard topics",
+          message: "aliases keys must be category_tree top-level keys",
           path: ["aliases", topic],
         });
       }
     }
 
-    for (const [sourceTopic, standardTopic] of Object.entries(
-      topics.standard_topic_mappings
+    const minorToMajor = new Map<string, string>();
+    for (const [majorCategory, minorCategories] of Object.entries(
+      topics.category_tree
     )) {
-      if (!standardTopics.has(standardTopic)) {
-        ctx.addIssue({
-          code: "custom",
-          message: "standard_topic_mappings values must be standard topics",
-          path: ["standard_topic_mappings", sourceTopic],
-        });
+      for (const [index, minorCategory] of minorCategories.entries()) {
+        const previousMajorCategory = minorToMajor.get(minorCategory);
+        if (previousMajorCategory !== undefined) {
+          ctx.addIssue({
+            code: "custom",
+            message: "minor categories cannot be duplicated",
+            path: ["category_tree", majorCategory, index],
+          });
+          continue;
+        }
+
+        minorToMajor.set(minorCategory, majorCategory);
       }
     }
   });
+
+export type TopicsConfig = z.infer<typeof topicsConfigSchema>;
+
+export function getMajorCategories(topics: TopicsConfig): string[] {
+  return Object.keys(topics.category_tree);
+}
+
+export function getMinorToMajorCategoryMap(
+  topics: TopicsConfig
+): Map<string, string> {
+  const minorToMajor = new Map<string, string>();
+
+  for (const [majorCategory, minorCategories] of Object.entries(
+    topics.category_tree
+  )) {
+    for (const minorCategory of minorCategories) {
+      minorToMajor.set(minorCategory, majorCategory);
+    }
+  }
+
+  return minorToMajor;
+}
 
 export const appConfigSchema = z
   .object({

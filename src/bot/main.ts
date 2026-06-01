@@ -1,5 +1,6 @@
 import { createOpenAIScopeClient, parseScope } from "@/ai/scope-parser";
 import { loadAppConfig } from "@/config/app-config";
+import { getMajorCategories } from "@/config/schema";
 import { openAppDb } from "@/db/app/client";
 import { openQuestionBank } from "@/db/question-bank/client";
 import { listQuestionBankKeywords } from "@/db/question-bank/queries";
@@ -21,7 +22,7 @@ async function start(): Promise<void> {
   const openAiClient = createOpenAIScopeClient(env.openAiApiKey);
   const availableScope = {
     categories: questionBankKeywords.categories,
-    standardTopics: appConfig.topics.standard_topics,
+    standardTopics: getMajorCategories(appConfig.topics),
     topics: questionBankKeywords.topics,
   };
 

@@ -115,7 +115,7 @@ Telegram webhook HTTP server。
 
 - 高权重主题清单。
 - 主题别名表。
-- 标准主题映射。
+- 分类树：`topics.category_tree` 的顶层 key 是大分类，每个数组项是对应的小分类。
 - 低正确率主题阈值。
 - 最近题目避重天数。
 - 每次测试题量结构：15 指定范围题 + 5 补强题。
@@ -140,9 +140,11 @@ quiz:
     remove_after_consecutive_correct: 2
 
 topics:
+  category_tree:
+    データベース:
+      - データ操作
   high_weight_topics: []
   aliases: {}
-  standard_topic_mappings: {}
 
 ai:
   provider: openai

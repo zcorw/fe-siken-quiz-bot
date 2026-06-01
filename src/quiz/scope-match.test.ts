@@ -11,14 +11,17 @@ import {
 } from "./scope-match";
 
 const topicsConfig: AppConfig["topics"] = {
-  standard_topics: ["データベース", "ネットワーク", "情報セキュリティ"],
+  category_tree: {
+    データベース: ["データ操作"],
+    ネットワーク: ["通信プロトコル"],
+    情報セキュリティ: ["情報セキュリティ"],
+  },
   high_weight_topics: ["情報セキュリティ"],
   aliases: {
     データベース: ["DB", "数据库"],
     ネットワーク: ["网络", "通信ネットワーク"],
     情報セキュリティ: ["セキュリティ", "信息安全"],
   },
-  standard_topic_mappings: {},
 };
 
 describe("normalizeScopeText", () => {

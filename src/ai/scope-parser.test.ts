@@ -140,10 +140,9 @@ describe("parseScope", () => {
     const result = await parseScope({
       input: "DB",
       topicsConfig: {
-        standard_topics: ["データベース"],
+        category_tree: { データベース: ["データ操作"] },
         high_weight_topics: ["データベース"],
         aliases: { データベース: ["DB"] },
-        standard_topic_mappings: {},
       },
       questionBankKeywords: { categories: [], topics: ["データベース"] },
       aiConfig,
@@ -160,10 +159,9 @@ describe("parseScope", () => {
     const result = await parseScope({
       input: "unknown",
       topicsConfig: {
-        standard_topics: ["データベース"],
+        category_tree: { データベース: ["データ操作"] },
         high_weight_topics: ["データベース"],
         aliases: { データベース: ["DB"] },
-        standard_topic_mappings: {},
       },
       questionBankKeywords: { categories: [], topics: ["データベース"] },
       aiConfig,
@@ -188,10 +186,9 @@ describe("parseScope", () => {
     const result = await parseScope({
       input: "databese",
       topicsConfig: {
-        standard_topics: ["database"],
+        category_tree: { database: ["database design"] },
         high_weight_topics: ["database"],
         aliases: { database: [] },
-        standard_topic_mappings: {},
       },
       questionBankKeywords: { categories: [], topics: ["database"] },
       aiConfig,
@@ -220,10 +217,9 @@ describe("parseScope", () => {
     const result = await parseScope({
       input: "数据库",
       topicsConfig: {
-        standard_topics: ["データベース"],
+        category_tree: { データベース: ["データ操作"] },
         high_weight_topics: ["データベース"],
         aliases: { データベース: ["数据库"] },
-        standard_topic_mappings: {},
       },
       questionBankKeywords: { categories: [], topics: ["データベース"] },
       aiConfig,
@@ -242,10 +238,9 @@ describe("parseScope", () => {
     const result = await parseScope({
       input: "ネットワークを練習したい",
       topicsConfig: {
-        standard_topics: ["ネットワーク"],
+        category_tree: { ネットワーク: ["通信プロトコル"] },
         high_weight_topics: ["ネットワーク"],
         aliases: { ネットワーク: ["网络"] },
-        standard_topic_mappings: {},
       },
       questionBankKeywords: { categories: [], topics: ["ネットワーク"] },
       aiConfig,

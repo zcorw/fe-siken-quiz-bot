@@ -4,6 +4,45 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadAppConfig } from "./app-config";
 
+const validConfigYaml = (topicsYaml: string): string => `
+quiz:
+  total_questions: 20
+  requested_scope_questions: 15
+  reinforcement_questions: 5
+  recent_question_avoid_days: 7
+  unsubmitted_token_ttl_days: 7
+  unsubmitted_session_purge_days: 30
+  weak_topic:
+    accuracy_threshold: 0.6
+    min_answered: 3
+  wrong_question:
+    remove_after_consecutive_correct: 2
+  rate_limit:
+    get_quiz_per_ip_per_minute: 60
+    submit_per_ip_per_minute: 10
+    submit_per_token_per_minute: 3
+topics:
+${topicsYaml}
+ai:
+  provider: openai
+  model: gpt-4.1-mini
+  temperature: 0
+  max_suggestions: 3
+telegram:
+  webhook_path_prefix: /telegram/webhook
+  path_secret_env: TELEGRAM_WEBHOOK_PATH_SECRET
+  header_secret_env: TELEGRAM_WEBHOOK_SECRET_TOKEN
+  bot_token_env: TELEGRAM_BOT_TOKEN
+deployment:
+  public_base_url_env: PUBLIC_BASE_URL
+  edge_host_env: EDGE_HOST
+  edge_port_env: EDGE_PORT
+  data_dir: /opt/fe-quiz-bot/data
+  config_dir: /opt/fe-quiz-bot/config
+  assets_dir: /opt/fe-quiz-bot/assets
+  backups_dir: /opt/fe-quiz-bot/backups
+`;
+
 describe("loadAppConfig", () => {
   it("loads and validates the sample app config", async () => {
     const config = await loadAppConfig(
@@ -12,17 +51,14 @@ describe("loadAppConfig", () => {
 
     expect(config.quiz.total_questions).toBe(20);
     expect(config.quiz.weak_topic.accuracy_threshold).toBe(0.6);
-    expect(config.topics.standard_topics).toContain("データベース");
-    expect(config.topics.standard_topics.length).toBeGreaterThanOrEqual(20);
+    expect(Object.keys(config.topics.category_tree)).toContain("データベース");
+    expect(
+      Object.keys(config.topics.category_tree).length
+    ).toBeGreaterThanOrEqual(20);
     expect(config.topics.high_weight_topics).toContain("情報セキュリティ");
-    expect(config.topics.standard_topic_mappings["データ操作"]).toBe(
-      "データベース"
-    );
-    expect(config.topics.standard_topic_mappings["通信プロトコル"]).toBe(
-      "ネットワーク"
-    );
-    expect(config.topics.standard_topic_mappings["データ通信と制御"]).toBe(
-      "ネットワーク"
+    expect(config.topics.category_tree["データベース"]).toContain("データ操作");
+    expect(config.topics.category_tree["ネットワーク"]).toEqual(
+      expect.arrayContaining(["通信プロトコル", "データ通信と制御"])
     );
     expect(config.ai).toMatchObject({
       provider: "openai",
@@ -42,9 +78,9 @@ describe("loadAppConfig", () => {
 quiz:
   total_questions: 20
 topics:
+  category_tree: {}
   high_weight_topics: []
   aliases: {}
-  standard_topic_mappings: {}
 ai:
   provider: openai
   temperature: 0
@@ -94,9 +130,9 @@ quiz:
     submit_per_ip_per_minute: 10
     submit_per_token_per_minute: 3
 topics:
+  category_tree: {}
   high_weight_topics: []
   aliases: {}
-  standard_topic_mappings: {}
 ai:
   provider: openai
   model: ""
@@ -148,9 +184,9 @@ quiz:
     submit_per_ip_per_minute: 10
     submit_per_token_per_minute: 3
 topics:
+  category_tree: {}
   high_weight_topics: []
   aliases: {}
-  standard_topic_mappings: {}
 ai:
   provider: openai
   model: gpt-4.1-mini
@@ -178,61 +214,66 @@ deployment:
     );
   });
 
-  it("rejects high weight topics that are not standard topics", async () => {
+  it("rejects high weight topics that are not category tree major categories", async () => {
     const configDir = await mkdtemp(path.join(tmpdir(), "fe-quiz-config-"));
     const invalidConfigPath = path.join(configDir, "app.yaml");
     await writeFile(
       invalidConfigPath,
-      `
-quiz:
-  total_questions: 20
-  requested_scope_questions: 15
-  reinforcement_questions: 5
-  recent_question_avoid_days: 7
-  unsubmitted_token_ttl_days: 7
-  unsubmitted_session_purge_days: 30
-  weak_topic:
-    accuracy_threshold: 0.6
-    min_answered: 3
-  wrong_question:
-    remove_after_consecutive_correct: 2
-  rate_limit:
-    get_quiz_per_ip_per_minute: 60
-    submit_per_ip_per_minute: 10
-    submit_per_token_per_minute: 3
-topics:
-  standard_topics:
-    - データベース
+      validConfigYaml(`  category_tree:
+    データベース:
+      - データ操作
   high_weight_topics:
     - 存在しないテーマ
   aliases:
     データベース:
       - DB
-  standard_topic_mappings: {}
-ai:
-  provider: openai
-  model: gpt-4.1-mini
-  temperature: 0
-  max_suggestions: 3
-telegram:
-  webhook_path_prefix: /telegram/webhook
-  path_secret_env: TELEGRAM_WEBHOOK_PATH_SECRET
-  header_secret_env: TELEGRAM_WEBHOOK_SECRET_TOKEN
-  bot_token_env: TELEGRAM_BOT_TOKEN
-deployment:
-  public_base_url_env: PUBLIC_BASE_URL
-  edge_host_env: EDGE_HOST
-  edge_port_env: EDGE_PORT
-  data_dir: /opt/fe-quiz-bot/data
-  config_dir: /opt/fe-quiz-bot/config
-  assets_dir: /opt/fe-quiz-bot/assets
-  backups_dir: /opt/fe-quiz-bot/backups
-`,
+`),
       "utf8"
     );
 
     await expect(loadAppConfig(invalidConfigPath)).rejects.toThrow(
-      /Invalid app config[\s\S]*high_weight_topics must be standard topics/
+      /Invalid app config[\s\S]*high_weight_topics must be category_tree top-level keys/
+    );
+  });
+
+  it("rejects duplicate minor categories across category tree majors", async () => {
+    const configDir = await mkdtemp(path.join(tmpdir(), "fe-quiz-config-"));
+    const invalidConfigPath = path.join(configDir, "app.yaml");
+    await writeFile(
+      invalidConfigPath,
+      validConfigYaml(`  category_tree:
+    データベース:
+      - 共通カテゴリ
+    ネットワーク:
+      - 共通カテゴリ
+  high_weight_topics:
+    - データベース
+  aliases: {}
+`),
+      "utf8"
+    );
+
+    await expect(loadAppConfig(invalidConfigPath)).rejects.toThrow(
+      /Invalid app config[\s\S]*minor categories cannot be duplicated/
+    );
+  });
+
+  it("rejects empty minor category arrays", async () => {
+    const configDir = await mkdtemp(path.join(tmpdir(), "fe-quiz-config-"));
+    const invalidConfigPath = path.join(configDir, "app.yaml");
+    await writeFile(
+      invalidConfigPath,
+      validConfigYaml(`  category_tree:
+    データベース: []
+  high_weight_topics:
+    - データベース
+  aliases: {}
+`),
+      "utf8"
+    );
+
+    await expect(loadAppConfig(invalidConfigPath)).rejects.toThrow(
+      /Invalid app config[\s\S]*category_tree[\s\S]*Too small/
     );
   });
 });
