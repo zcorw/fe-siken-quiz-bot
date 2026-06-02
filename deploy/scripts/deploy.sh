@@ -12,6 +12,8 @@ BRANCH="${BRANCH:-main}"
 REPO_URL="${REPO_URL:-}"
 COMPOSE_FILE="${COMPOSE_FILE:-deploy/docker-compose.yml}"
 SMOKE_BASE_URL="${SMOKE_BASE_URL:-http://127.0.0.1:${EDGE_PORT:-3100}}"
+APP_RUN_UID="${APP_RUN_UID:-$(id -u)}"
+APP_RUN_GID="${APP_RUN_GID:-$(id -g)}"
 
 log() {
   printf '[deploy.sh] %s\n' "$*"
@@ -42,6 +44,7 @@ log "config dir=${HOST_CONFIG_DIR}"
 log "data dir=${HOST_DATA_DIR}"
 log "assets dir=${HOST_ASSETS_DIR}"
 log "deploy dir=${HOST_DEPLOY_DIR}"
+log "app run uid/gid=${APP_RUN_UID}:${APP_RUN_GID}"
 
 if [ ! -d "${PROJECT_DIR}/.git" ]; then
   if [ -z "${REPO_URL}" ]; then
@@ -78,6 +81,8 @@ export HOST_CONFIG_DIR
 export HOST_DATA_DIR
 export HOST_ASSETS_DIR
 export HOST_DEPLOY_DIR
+export APP_RUN_UID
+export APP_RUN_GID
 
 log "loading env file"
 set -a

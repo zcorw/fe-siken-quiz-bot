@@ -14,6 +14,7 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile.web
+    user: "${APP_RUN_UID:-1000}:${APP_RUN_GID:-1000}"
     env_file:
       - path: ${HOST_ENV_FILE:-.env}
         required: false
@@ -31,6 +32,7 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile.bot
+    user: "${APP_RUN_UID:-1000}:${APP_RUN_GID:-1000}"
     env_file:
       - path: ${HOST_ENV_FILE:-.env}
         required: false
@@ -58,6 +60,7 @@ services:
       context: ..
       dockerfile: Dockerfile.web
       target: builder
+    user: "${APP_RUN_UID:-1000}:${APP_RUN_GID:-1000}"
     env_file:
       - path: ${HOST_ENV_FILE:-.env}
         required: false

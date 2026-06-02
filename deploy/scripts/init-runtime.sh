@@ -50,4 +50,23 @@ if [ ! -f "${HOST_DATA_DIR}/app.sqlite" ]; then
   touch "${HOST_DATA_DIR}/app.sqlite"
 fi
 
+log "ensuring app sqlite path is writable by the deployment user"
+chmod u+rwx "${HOST_DATA_DIR}"
+for sqlite_file in \
+  "${HOST_DATA_DIR}/app.sqlite" \
+  "${HOST_DATA_DIR}/app.sqlite-wal" \
+  "${HOST_DATA_DIR}/app.sqlite-shm"
+do
+  if [ -f "${sqlite_file}" ]; then
+    chmod u+rw "${sqlite_file}"
+  fi
+done
+
+write_test_file="${HOST_DATA_DIR}/.write-test"
+if ! touch "${write_test_file}" 2>/dev/null; then
+  echo "Data directory is not writable by the deployment user: ${HOST_DATA_DIR}" >&2
+  exit 1
+fi
+rm -f "${write_test_file}"
+
 log "runtime files are present"

@@ -21,4 +21,4 @@ COPY tsconfig.json ./
 
 EXPOSE 3001
 
-CMD ["pnpm", "bot:start"]
+CMD ["node", "--import", "tsx", "src/bot/main.ts"]
