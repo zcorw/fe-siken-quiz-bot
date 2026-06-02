@@ -140,22 +140,22 @@
 
 **依赖任务:** 任务 2。
 
-- [ ] 梳理 app.sqlite 中已有统计表：
+- [x] 梳理 app.sqlite 中已有统计表：
   - `answer_records`
   - `user_question_stats`
   - `user_topic_stats`
-- [ ] 设计 `QuestionSelectionScore` 输入结构：
+- [x] 设计 `QuestionSelectionScore` 输入结构：
   - question URL。
   - topic。
   - category。
   - attempt count。
   - incorrect count。
   - accuracy。
-- [ ] 先写失败测试，覆盖未做过题优先于做过且正确率高的题。
-- [ ] 先写失败测试，覆盖错得多的题在已做过题中优先级更高。
-- [ ] 先写失败测试，覆盖历史错题优先级高于未做过题。
-- [ ] 先写失败测试，覆盖同权重题通过 seed 随机排序。
-- [ ] 实现权重排序：
+- [x] 先写失败测试，覆盖未做过题优先于做过且正确率高的题。
+- [x] 先写失败测试，覆盖错得多的题在已做过题中优先级更高。
+- [x] 先写失败测试，覆盖历史错题优先级高于未做过题。
+- [x] 先写失败测试，覆盖同权重题通过 seed 随机排序。
+- [x] 实现权重排序：
   - 先按权重分组。
   - 每个权重组内 seeded shuffle。
   - 最后合并并截取需要数量。

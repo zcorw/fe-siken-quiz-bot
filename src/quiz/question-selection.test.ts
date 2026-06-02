@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { selectSeededUniqueCandidates } from "./question-selection";
+import {
+  selectSeededUniqueCandidates,
+  selectWeightedSeededCandidates,
+} from "./question-selection";
 
 type Candidate = {
   id: number;
@@ -63,5 +66,72 @@ describe("selectSeededUniqueCandidates", () => {
       "size",
       10
     );
+  });
+});
+
+describe("selectWeightedSeededCandidates", () => {
+  it("prioritizes unseen candidates over high-accuracy seen candidates", () => {
+    const candidates = createCandidates(4);
+
+    const selected = selectWeightedSeededCandidates(candidates, {
+      count: 2,
+      seed: "seed-a",
+      statsByUrl: new Map([
+        [
+          "https://example.test/q1.html",
+          { attemptCount: 3, correctCount: 3, incorrectCount: 0 },
+        ],
+        [
+          "https://example.test/q2.html",
+          { attemptCount: 2, correctCount: 2, incorrectCount: 0 },
+        ],
+      ]),
+    });
+
+    expect(selected.map((candidate) => candidate.url).sort()).toEqual([
+      "https://example.test/q3.html",
+      "https://example.test/q4.html",
+    ]);
+  });
+
+  it("prioritizes incorrect candidates over unseen candidates", () => {
+    const candidates = createCandidates(4);
+
+    const selected = selectWeightedSeededCandidates(candidates, {
+      count: 2,
+      seed: "seed-a",
+      statsByUrl: new Map([
+        [
+          "https://example.test/q1.html",
+          { attemptCount: 3, correctCount: 1, incorrectCount: 2 },
+        ],
+      ]),
+    });
+
+    expect(selected[0]?.url).toBe("https://example.test/q1.html");
+    expect(selected).toHaveLength(2);
+  });
+
+  it("randomizes candidates with the same weight by seed", () => {
+    const candidates = createCandidates(20);
+    const statsByUrl = new Map(
+      candidates.map((candidate) => [
+        candidate.url,
+        { attemptCount: 1, correctCount: 0, incorrectCount: 1 },
+      ])
+    );
+
+    const first = selectWeightedSeededCandidates(candidates, {
+      count: 10,
+      seed: "seed-a",
+      statsByUrl,
+    }).map((candidate) => candidate.url);
+    const second = selectWeightedSeededCandidates(candidates, {
+      count: 10,
+      seed: "seed-b",
+      statsByUrl,
+    }).map((candidate) => candidate.url);
+
+    expect(second).not.toEqual(first);
   });
 });
