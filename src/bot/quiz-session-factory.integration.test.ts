@@ -609,4 +609,88 @@ describe("createQuizSessionFromScopeMessage", () => {
       "https://example.test/category-q30.html"
     );
   });
+
+  it("randomizes reinforcement questions and keeps them distinct from requested questions", async () => {
+    const appDb = await createMigratedAppDbFixture({ seedUser: false });
+    const questionDb = await createQuestionBankFixture({
+      questionCount: 0,
+    });
+
+    for (let index = 1; index <= 30; index += 1) {
+      insertQuestionBankQuestion(questionDb, {
+        category: "minor-a",
+        id: index,
+      });
+    }
+
+    for (const [sessionId, token, seed] of [
+      ["session-reinforcement-a", "token-reinforcement-a", "seed-a"],
+      ["session-reinforcement-b", "token-reinforcement-b", "seed-b"],
+    ] as const) {
+      await createQuizSessionFromScopeMessage({
+        appDb: appDb.db,
+        matchedScope: {
+          candidateMinorCategories: ["minor-a"],
+          majorCategory: "major-a",
+          matchedCategories: [],
+          matchedTopics: [],
+          method: "local_exact",
+          minorCategory: undefined,
+          scopeType: "major_category",
+          status: "matched",
+          suggestions: [],
+        },
+        nowIso: "2026-05-31T00:00:00.000Z",
+        questionDb,
+        rawScopeInput: "major-a",
+        selectionSeedFactory: () => seed,
+        sessionIdFactory: () => sessionId,
+        telegramUser: { id: 12345 },
+        tokenFactory: () => token,
+        topicsConfig: {
+          aliases: {},
+          category_tree: {
+            "major-a": ["minor-a"],
+          },
+          high_weight_topics: ["major-a"],
+        },
+      });
+    }
+
+    const firstRows = appDb.sqlite
+      .prepare(
+        "SELECT question_url, source_type FROM quiz_session_questions WHERE quiz_session_id = ?"
+      )
+      .all("session-reinforcement-a") as Array<{
+      question_url: string;
+      source_type: string;
+    }>;
+    const secondRows = appDb.sqlite
+      .prepare(
+        "SELECT question_url, source_type FROM quiz_session_questions WHERE quiz_session_id = ?"
+      )
+      .all("session-reinforcement-b") as Array<{
+      question_url: string;
+      source_type: string;
+    }>;
+
+    const requestedUrls = new Set(
+      firstRows
+        .filter((row) => row.source_type === "requested")
+        .map((row) => row.question_url)
+    );
+    const reinforcementUrls = firstRows
+      .filter((row) => row.source_type === "reinforcement")
+      .map((row) => row.question_url);
+
+    expect(reinforcementUrls).toHaveLength(5);
+    expect(reinforcementUrls.every((url) => !requestedUrls.has(url))).toBe(
+      true
+    );
+    expect(
+      secondRows
+        .filter((row) => row.source_type === "reinforcement")
+        .map((row) => row.question_url)
+    ).not.toEqual(reinforcementUrls);
+  });
 });
