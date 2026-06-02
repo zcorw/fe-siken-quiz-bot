@@ -182,14 +182,14 @@
 
 **依赖任务:** 任务 3。
 
-- [ ] 检查 `createQuizSessionFromScopeMessage` 中已取得的 `user.id`。
-- [ ] 新增 repository 查询函数，按 `userId` 和候选题 URL 列表读取 `user_question_stats`。
-- [ ] 如需要主题弱项，新增按 `userId` 和 topic/category 读取 `user_topic_stats` 的查询。
-- [ ] 先写 repository 失败测试：
+- [x] 检查 `createQuizSessionFromScopeMessage` 中已取得的 `user.id`。
+- [x] 新增 repository 查询函数，按 `userId` 和候选题 URL 列表读取 `user_question_stats`。
+- [x] 如需要主题弱项，新增按 `userId` 和 topic/category 读取 `user_topic_stats` 的查询。
+- [x] 先写 repository 失败测试：
   - 无历史时返回空 map。
   - 有历史时按 URL 返回统计。
   - 未传候选 URL 时不执行无意义查询或返回空结果。
-- [ ] 实现 repository 查询。
+- [x] 实现 repository 查询。
 
 **测试方式:**
 

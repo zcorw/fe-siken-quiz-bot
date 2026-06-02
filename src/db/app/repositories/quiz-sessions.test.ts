@@ -21,6 +21,7 @@ import {
   createQuizSession,
   deletePurgeableUnsubmittedSessions,
   findExpiredUnsubmittedSessions,
+  findUserQuestionStatsByUrls,
   findWeakTopicStats,
   submitQuizSession,
   type CreateQuizSessionInput,
@@ -856,6 +857,95 @@ describe("findWeakTopicStats", () => {
         "database",
         "network",
       ]);
+    } finally {
+      appDb.close();
+    }
+  });
+});
+
+describe("findUserQuestionStatsByUrls", () => {
+  afterEach(async () => {
+    await Promise.all(
+      tempDirs
+        .splice(0)
+        .map((tempDir) => rm(tempDir, { recursive: true, force: true }))
+    );
+  });
+
+  it("returns an empty map for an empty URL list", async () => {
+    const appDb = await createMigratedAppDb();
+
+    try {
+      const stats = await findUserQuestionStatsByUrls(appDb.db, {
+        questionUrls: [],
+        userId: "user-1",
+      });
+
+      expect(stats.size).toBe(0);
+    } finally {
+      appDb.close();
+    }
+  });
+
+  it("returns stats keyed by URL for the requested user and URLs", async () => {
+    const appDb = await createMigratedAppDb();
+
+    try {
+      await appDb.db.insert(users).values({
+        id: "user-2",
+        telegramUserId: "telegram-2",
+      });
+      await appDb.db.insert(userQuestionStats).values([
+        {
+          userId: "user-1",
+          questionUrl: "https://example.test/questions/1",
+          attemptCount: 3,
+          correctCount: 1,
+          incorrectCount: 2,
+          lastAnsweredAt: "2026-05-31T01:00:00.000Z",
+          lastIsCorrect: 0,
+          activeWrong: 1,
+          consecutiveCorrectAfterWrong: 0,
+        },
+        {
+          userId: "user-1",
+          questionUrl: "https://example.test/questions/2",
+          attemptCount: 1,
+          correctCount: 1,
+          incorrectCount: 0,
+          lastAnsweredAt: "2026-05-31T01:01:00.000Z",
+          lastIsCorrect: 1,
+          activeWrong: 0,
+          consecutiveCorrectAfterWrong: 0,
+        },
+        {
+          userId: "user-2",
+          questionUrl: "https://example.test/questions/1",
+          attemptCount: 10,
+          correctCount: 0,
+          incorrectCount: 10,
+          lastAnsweredAt: "2026-05-31T01:02:00.000Z",
+          lastIsCorrect: 0,
+          activeWrong: 1,
+          consecutiveCorrectAfterWrong: 0,
+        },
+      ]);
+
+      const stats = await findUserQuestionStatsByUrls(appDb.db, {
+        questionUrls: [
+          "https://example.test/questions/1",
+          "https://example.test/questions/3",
+        ],
+        userId: "user-1",
+      });
+
+      expect([...stats.keys()]).toEqual(["https://example.test/questions/1"]);
+      expect(stats.get("https://example.test/questions/1")).toMatchObject({
+        attemptCount: 3,
+        correctCount: 1,
+        incorrectCount: 2,
+        userId: "user-1",
+      });
     } finally {
       appDb.close();
     }

@@ -57,6 +57,7 @@ export interface SubmitQuizSessionSummary {
 
 export type QuizSession = typeof quizSessions.$inferSelect;
 export type UserTopicStat = typeof userTopicStats.$inferSelect;
+export type UserQuestionStat = typeof userQuestionStats.$inferSelect;
 
 function serializeJson(value: JsonValue): string {
   return JSON.stringify(value);
@@ -198,6 +199,34 @@ export async function findWeakTopicStats(
       asc(userTopicStats.topicKey)
     )
     .all();
+}
+
+export async function findUserQuestionStatsByUrls(
+  appDb: AppDrizzleDb,
+  {
+    questionUrls,
+    userId,
+  }: {
+    questionUrls: string[];
+    userId: string;
+  }
+): Promise<Map<string, UserQuestionStat>> {
+  if (questionUrls.length === 0) {
+    return new Map();
+  }
+
+  const rows = appDb
+    .select()
+    .from(userQuestionStats)
+    .where(
+      and(
+        eq(userQuestionStats.userId, userId),
+        inArray(userQuestionStats.questionUrl, questionUrls)
+      )
+    )
+    .all();
+
+  return new Map(rows.map((row) => [row.questionUrl, row]));
 }
 
 function validateSubmitAnswers(answers: SubmitQuizSessionAnswerInput[]): void {
