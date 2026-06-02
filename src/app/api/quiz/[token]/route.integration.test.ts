@@ -66,8 +66,11 @@ describe("GET /api/quiz/[token] integration", () => {
         { label: "\u30a4", text: "\u9078\u629e\u80a2B" },
       ],
       index: 1,
-      questionText: "\u554f\u984c\u6587 1",
     });
+    expect(body.questions[0].questionText).toMatch(/^問題文 \d+$/);
+    expect(body.questions.map((question: { index: number }) => question.index)).toEqual(
+      Array.from({ length: 20 }, (_, index) => index + 1)
+    );
     expect(body.questions[0]).not.toHaveProperty("correctAnswer");
     expect(body.questions[0]).not.toHaveProperty("explanation");
     expect(body.questions[0]).not.toHaveProperty("sourceUrl");

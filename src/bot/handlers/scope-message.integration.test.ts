@@ -83,12 +83,17 @@ describe("scope message integration", () => {
       .where(eq(quizSessionQuestions.quizSessionId, "session-integration"))
       .orderBy(quizSessionQuestions.questionIndex);
     expect(questions).toHaveLength(20);
-    expect(questions[0]).toMatchObject({
-      questionIndex: 1,
-      questionUrl: "https://example.test/q1.html",
-      sourceTopic: "\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9",
-    });
-    expect(questions[19]?.questionIndex).toBe(20);
+    expect(questions.map((question) => question.questionIndex)).toEqual(
+      Array.from({ length: 20 }, (_, index) => index + 1)
+    );
+    expect(new Set(questions.map((question) => question.questionUrl)).size).toBe(
+      20
+    );
+    expect(
+      questions.every(
+        (question) => question.sourceTopic === "\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9"
+      )
+    ).toBe(true);
 
     expect(reply).toHaveBeenCalledWith(
       "\u6f14\u7fd2\u3092\u4f5c\u6210\u3057\u307e\u3057\u305f\u3002",

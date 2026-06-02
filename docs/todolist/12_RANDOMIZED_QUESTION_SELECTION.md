@@ -335,13 +335,13 @@
 
 **依赖任务:** 任务 1-9。
 
-- [ ] 运行 `pnpm test src/quiz/question-selection.test.ts`。
-- [ ] 运行 `pnpm vitest run src/bot/quiz-session-factory.integration.test.ts`。
-- [ ] 运行 `pnpm vitest run src/quiz/quiz-service.test.ts`。
-- [ ] 运行 `pnpm test`。
-- [ ] 运行 `pnpm typecheck`。
-- [ ] 运行 `pnpm lint`。
-- [ ] 如果页面 DTO 或展示顺序变化，运行 `pnpm test:e2e`。
+- [x] 运行 `pnpm test src/quiz/question-selection.test.ts`。
+- [x] 运行 `pnpm vitest run src/bot/quiz-session-factory.integration.test.ts`。
+- [x] 运行 `pnpm vitest run src/quiz/quiz-service.test.ts`。
+- [x] 运行 `pnpm test`。
+- [x] 运行 `pnpm typecheck`。
+- [x] 运行 `pnpm lint`。
+- [x] 如果页面 DTO 或展示顺序变化，运行 `pnpm test:e2e`。
 
 **验收标准:**
 
