@@ -25,6 +25,13 @@ run_step() {
   log "done: ${name}"
 }
 
+normalize_env_file() {
+  source_file="$1"
+  target_file="$2"
+  # Strip CR from CRLF uploads so POSIX sh and docker compose read the same values.
+  tr -d '\r' < "${source_file}" > "${target_file}"
+}
+
 log "starting deployment"
 log "deploy root=${DEPLOY_ROOT}"
 log "project dir=${PROJECT_DIR}"
@@ -62,7 +69,11 @@ run_step "reset to origin branch" git reset --hard "origin/${BRANCH}"
 
 run_step "check runtime files" sh ./deploy/scripts/init-runtime.sh
 
-export HOST_ENV_FILE="${ENV_FILE}"
+NORMALIZED_ENV_FILE="$(mktemp)"
+trap 'rm -f "${NORMALIZED_ENV_FILE}"' EXIT
+run_step "normalize env file line endings" normalize_env_file "${ENV_FILE}" "${NORMALIZED_ENV_FILE}"
+
+export HOST_ENV_FILE="${NORMALIZED_ENV_FILE}"
 export HOST_CONFIG_DIR
 export HOST_DATA_DIR
 export HOST_ASSETS_DIR
@@ -70,15 +81,15 @@ export HOST_DEPLOY_DIR
 
 log "loading env file"
 set -a
-. "${ENV_FILE}"
+. "${NORMALIZED_ENV_FILE}"
 set +a
 log "env file loaded"
 
-run_step "build migrate service" docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" build migrate
-run_step "run app database migrations" docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" run --rm migrate
-run_step "build and start app services" docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --build edge web bot
+run_step "build migrate service" docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" build migrate
+run_step "run app database migrations" docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" run --rm migrate
+run_step "build and start app services" docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" up -d --build edge web bot
 
 log "running smoke test with BASE_URL=${SMOKE_BASE_URL}"
 BASE_URL="${SMOKE_BASE_URL}" run_step "deployment smoke test" sh ./deploy/scripts/smoke-test.sh
 
-run_step "show compose status" docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps
+run_step "show compose status" docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" ps

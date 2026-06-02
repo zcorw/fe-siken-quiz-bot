@@ -79,6 +79,8 @@ EDGE_PORT=3100
 
 The Docker Compose file sets container paths for `APP_CONFIG_PATH`, `APP_DB_PATH`, and `QUESTION_DB_PATH`.
 
+The deployment script normalizes `.env` line endings before loading it, so files uploaded from Windows with CRLF line endings are accepted.
+
 The deploy script exports these host paths for Docker Compose:
 
 ```env
