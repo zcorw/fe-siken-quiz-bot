@@ -84,7 +84,7 @@ MVP 只使用 `exam_part = '科目A'`。
 | `user_id` | TEXT NOT NULL | 创建 token 的用户 |
 | `raw_scope_input` | TEXT NOT NULL | 用户原始输入 |
 | `matched_scope_json` | TEXT | 关键词/AI 匹配结果 |
-| `selection_summary_json` | TEXT | 选题构成摘要，包含命中的大分类、实际使用的小分类、补强题计数 |
+| `selection_summary_json` | TEXT | 选题构成摘要，包含命中的大分类、实际使用的小分类、补强题计数和随机化追踪信息 |
 | `status` | TEXT NOT NULL | `created` / `submitted` / `error` |
 | `total_questions` | INTEGER NOT NULL | 固定 20 |
 | `correct_count` | INTEGER | 首次提交正确数 |
@@ -98,6 +98,8 @@ MVP 只使用 `exam_part = '科目A'`。
 
 - `total_questions = 20`。
 - `token` 必须足够随机。
+- `selection_summary_json` 可包含 `selectionSeed`、`randomizationVersion`、`randomizedRequestedScope`、`randomizedReinforcement` 等后台追踪字段。
+- `selectionSeed` 只用于排查本次选题，不通过 Web API DTO 暴露给前端。
 - 首次提交后 `status = submitted`。
 - 未提交且超过 `expires_at` 后不可提交。
 - 已提交 session 不受 `expires_at` 限制，结果永久可看。

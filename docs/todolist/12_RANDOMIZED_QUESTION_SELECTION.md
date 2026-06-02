@@ -309,16 +309,16 @@
 
 **依赖任务:** 任务 1-8。
 
-- [ ] 更新 `docs/PRD.md`：
+- [x] 更新 `docs/PRD.md`：
   - 相同范围多次练习应尽量覆盖不同题。
   - 同权重候选题随机。
-- [ ] 更新 `docs/USER_FLOW.md`：
+- [x] 更新 `docs/USER_FLOW.md`：
   - Bot 创建 token 时进行一次选题并固化到 session。
-- [ ] 更新 `docs/DATA_MODEL.md`：
+- [x] 更新 `docs/DATA_MODEL.md`：
   - `selection_summary_json` 可包含 selection seed 和随机化版本。
-- [ ] 更新 `docs/todolist/00_PROJECT_OVERVIEW.md`：
+- [x] 更新 `docs/todolist/00_PROJECT_OVERVIEW.md`：
   - 将“同等优先级选题内随机”补充为已确认规则。
-- [ ] 更新本 TodoList checkbox。
+- [x] 更新本 TodoList checkbox。
 
 **测试方式:**
 

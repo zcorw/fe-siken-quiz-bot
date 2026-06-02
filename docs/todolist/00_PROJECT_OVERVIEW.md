@@ -35,6 +35,10 @@
 - 移动端结果页默认展示错题，提供 `すべての解説を表示`。
 - PC 结果页左侧按 1-20 原顺序展示全部题号和正误状态。
 - 同等优先级选题内随机。
+- 题目最终展示顺序也随机，并在创建 token 时保存为固定的 `question_index`。
+- 同一 token 再次打开时不重新随机选题。
+- 历史错题选题权重高于未做过题。
+- selection seed 只写入后台摘要用于排查，不在前端页面展示。
 - token 使用 `nanoid` 默认安全随机字符串。
 - API 限流默认值：GET 每 IP 60/min，POST 每 IP 10/min + 每 token 3/min。
 - Telegram webhook path secret 错误返回 404，header secret 错误返回 403。
