@@ -92,4 +92,44 @@ describe("quiz API route error responses", () => {
       });
     }
   );
+
+  it("includes the underlying reason for unexpected POST 500 errors", async () => {
+    vi.resetModules();
+    const close = vi.fn();
+
+    vi.doMock("@/db/app/client", () => ({
+      openAppDb: () => ({ db: {}, close }),
+    }));
+    vi.doMock("@/db/question-bank/client", () => ({
+      openQuestionBank: () => ({ close }),
+    }));
+    vi.doMock("@/lib/rate-limit", () => ({
+      consumeRateLimit: vi.fn(),
+      createMemoryRateLimiter: () => ({}),
+      getClientIp: () => "127.0.0.1",
+    }));
+    vi.doMock("@/quiz/submit-service", () => ({
+      submitQuizByToken: vi
+        .fn()
+        .mockRejectedValue(new Error("Question result not found.")),
+    }));
+
+    const { POST } = await import("./submit/route");
+
+    const response = await POST(
+      new Request("https://example.test", {
+        method: "POST",
+        body: JSON.stringify({ answers: [] }),
+      }),
+      { params: { token: "token-1" } }
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({
+      error: {
+        code: "SUBMIT_FAILED",
+        message: "Failed to submit: Question result not found.",
+      },
+    });
+  });
 });

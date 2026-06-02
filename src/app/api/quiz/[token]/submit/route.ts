@@ -50,9 +50,27 @@ export async function POST(
       return jsonError(error);
     }
 
-    return jsonError(new ApiError("SUBMIT_FAILED", 500, "Failed to submit."));
+    return jsonError(
+      new ApiError(
+        "SUBMIT_FAILED",
+        500,
+        `Failed to submit: ${formatUnexpectedErrorReason(error)}`
+      )
+    );
   } finally {
     appDb.close();
     questionDb.close();
   }
+}
+
+function formatUnexpectedErrorReason(error: unknown): string {
+  if (error instanceof Error && error.message.trim() !== "") {
+    return error.message;
+  }
+
+  if (typeof error === "string" && error.trim() !== "") {
+    return error;
+  }
+
+  return "Unknown error.";
 }
