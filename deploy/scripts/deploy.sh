@@ -42,9 +42,12 @@ if [ ! -d "${PROJECT_DIR}/.git" ]; then
     exit 1
   fi
   if [ -e "${PROJECT_DIR}" ]; then
-    echo "PROJECT_DIR exists but is not a git checkout: ${PROJECT_DIR}" >&2
-    echo "Move it away or remove it before first automated deployment." >&2
-    exit 1
+    if [ -n "$(find "${PROJECT_DIR}" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+      echo "PROJECT_DIR exists but is not an empty directory or git checkout: ${PROJECT_DIR}" >&2
+      echo "Move it away or remove it before first automated deployment." >&2
+      exit 1
+    fi
+    log "project dir exists and is empty; cloning into it"
   fi
   log "git checkout not found; cloning repository"
   run_step "create project parent directory" mkdir -p "$(dirname "${PROJECT_DIR}")"

@@ -112,9 +112,12 @@ jobs:
               echo "[deploy] deploy script not found; preparing initial checkout."
               if [ ! -d "${PROJECT_DIR}/.git" ]; then
                 if [ -e "${PROJECT_DIR}" ]; then
-                  echo "[deploy] project dir exists but is not a git checkout: ${PROJECT_DIR}" >&2
-                  echo "[deploy] move it away or remove it before first automated deployment." >&2
-                  exit 1
+                  if [ -n "$(find "${PROJECT_DIR}" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+                    echo "[deploy] project dir exists but is not an empty directory or git checkout: ${PROJECT_DIR}" >&2
+                    echo "[deploy] move it away or remove it before first automated deployment." >&2
+                    exit 1
+                  fi
+                  echo "[deploy] project dir exists and is empty; cloning into it."
                 fi
                 echo "[deploy] cloning repository."
                 mkdir -p "$(dirname "${PROJECT_DIR}")"
