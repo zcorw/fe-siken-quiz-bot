@@ -693,4 +693,64 @@ describe("createQuizSessionFromScopeMessage", () => {
         .map((row) => row.question_url)
     ).not.toEqual(reinforcementUrls);
   });
+
+  it("records the randomization seed and version in the selection summary", async () => {
+    const appDb = await createMigratedAppDbFixture({ seedUser: false });
+    const questionDb = await createQuestionBankFixture({
+      questionCount: 0,
+    });
+
+    for (let index = 1; index <= 30; index += 1) {
+      insertQuestionBankQuestion(questionDb, {
+        category: "minor-a",
+        id: index,
+      });
+    }
+
+    await createQuizSessionFromScopeMessage({
+      appDb: appDb.db,
+      matchedScope: {
+        candidateMinorCategories: ["minor-a"],
+        majorCategory: "major-a",
+        matchedCategories: [],
+        matchedTopics: [],
+        method: "local_exact",
+        minorCategory: undefined,
+        scopeType: "major_category",
+        status: "matched",
+        suggestions: [],
+      },
+      nowIso: "2026-05-31T00:00:00.000Z",
+      questionDb,
+      rawScopeInput: "major-a",
+      selectionSeedFactory: () => "traceable-seed",
+      sessionIdFactory: () => "session-randomization-summary",
+      telegramUser: { id: 12345 },
+      tokenFactory: () => "token-randomization-summary",
+      topicsConfig: {
+        aliases: {},
+        category_tree: {
+          "major-a": ["minor-a"],
+        },
+        high_weight_topics: ["major-a"],
+      },
+    });
+
+    const sessionRow = appDb.sqlite
+      .prepare(
+        "SELECT selection_summary_json FROM quiz_sessions WHERE id = ?"
+      )
+      .get("session-randomization-summary") as {
+      selection_summary_json: string;
+    };
+
+    expect(JSON.parse(sessionRow.selection_summary_json)).toEqual(
+      expect.objectContaining({
+        randomizedReinforcement: true,
+        randomizedRequestedScope: true,
+        randomizationVersion: 1,
+        selectionSeed: "traceable-seed",
+      })
+    );
+  });
 });

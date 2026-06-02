@@ -181,6 +181,10 @@ describe("loadQuizByToken", () => {
           wrongQuestionCount: 1,
           weakTopicCount: 2,
           highWeightTopicCount: 2,
+          selectionSeed: "internal-seed",
+          randomizationVersion: 1,
+          randomizedRequestedScope: true,
+          randomizedReinforcement: true,
         },
         createdAt: "2026-05-31T01:00:00.000Z",
         expiresAt: "2026-06-07T01:00:00.000Z",
@@ -229,6 +233,16 @@ describe("loadQuizByToken", () => {
         weakTopicCount: 2,
         highWeightTopicCount: 2,
       });
+      expect(response.selectionSummary).not.toHaveProperty("selectionSeed");
+      expect(response.selectionSummary).not.toHaveProperty(
+        "randomizationVersion"
+      );
+      expect(response.selectionSummary).not.toHaveProperty(
+        "randomizedRequestedScope"
+      );
+      expect(response.selectionSummary).not.toHaveProperty(
+        "randomizedReinforcement"
+      );
       expect(response.questions[0]).toMatchObject({
         index: 1,
         questionUrl: "https://example.test/q1.html",

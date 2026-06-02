@@ -261,14 +261,14 @@
 
 **依赖任务:** 任务 5、任务 6。
 
-- [ ] 在 `selectionSummaryJson` 中增加：
+- [x] 在 `selectionSummaryJson` 中增加：
   - `selectionSeed`
   - `randomizationVersion`
   - `randomizedRequestedScope`
   - `randomizedReinforcement`
-- [ ] 先写失败测试，读取 `quiz_sessions.selection_summary_json` 并断言包含 seed。
-- [ ] 确认 API 返回给前端的 `selectionSummary` 是否需要隐藏 seed。
-- [ ] 默认不在 Web 结果页展示 seed。
+- [x] 先写失败测试，读取 `quiz_sessions.selection_summary_json` 并断言包含 seed。
+- [x] 确认 API 返回给前端的 `selectionSummary` 是否需要隐藏 seed。
+- [x] 默认不在 Web 结果页展示 seed。
 
 **测试方式:**
 
