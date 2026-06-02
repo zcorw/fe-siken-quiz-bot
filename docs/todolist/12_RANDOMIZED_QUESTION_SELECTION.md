@@ -103,20 +103,20 @@
 
 **依赖任务:** 任务 1。
 
-- [ ] 新建或选择一个聚合位置，例如 `src/quiz/question-selection.ts`。
-- [ ] 先写失败测试，覆盖相同 seed 结果稳定：
+- [x] 新建或选择一个聚合位置，例如 `src/quiz/question-selection.ts`。
+- [x] 先写失败测试，覆盖相同 seed 结果稳定：
   - 输入 30 道候选题。
   - 使用 seed `seed-a` 选 20 道。
   - 连续调用两次结果完全一致。
-- [ ] 先写失败测试，覆盖不同 seed 结果有差异：
+- [x] 先写失败测试，覆盖不同 seed 结果有差异：
   - 输入 30 道候选题。
   - 使用 seed `seed-a` 和 `seed-b`。
   - 两次结果至少有一个题目或顺序不同。
-- [ ] 先写失败测试，覆盖不重复：
+- [x] 先写失败测试，覆盖不重复：
   - 输入中包含重复 URL。
   - 输出不包含重复 URL。
-- [ ] 实现稳定 seed shuffle。
-- [ ] 不依赖 `Math.random()` 直接产生不可测试结果；生产 seed 可随机生成，但 shuffle 函数应接收 seed。
+- [x] 实现稳定 seed shuffle。
+- [x] 不依赖 `Math.random()` 直接产生不可测试结果；生产 seed 可随机生成，但 shuffle 函数应接收 seed。
 
 **推荐使用的成熟工具 / 库:**
 
