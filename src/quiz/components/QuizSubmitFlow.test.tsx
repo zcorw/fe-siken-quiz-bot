@@ -69,9 +69,10 @@ describe("quiz submit flow", () => {
     answerAllQuestions();
     fireEvent.click(screen.getByRole("button", { name: "提出する" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Failed to submit: invalid answer"
-    );
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Failed to submit: invalid answer");
+    expect(alert).toHaveClass("fixed");
+    expect(alert).toHaveClass("top-4");
   });
 
   it("renders the result view after successful submit", async () => {

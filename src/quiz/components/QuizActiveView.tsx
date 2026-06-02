@@ -71,6 +71,15 @@ export function QuizActiveView({ onSubmitAnswers, quiz }: QuizActiveViewProps) {
           currentQuestionIndex={currentQuestionIndex}
           totalQuestions={quiz.totalQuestions}
         />
+        {submitError ? (
+          <div
+            aria-live="assertive"
+            className="fixed inset-x-4 top-4 z-50 mx-auto max-w-3xl rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-lg"
+            role="alert"
+          >
+            {submitError}
+          </div>
+        ) : null}
         <QuestionContent
           category={null}
           questionText={currentQuestion?.questionText ?? null}
@@ -108,14 +117,6 @@ export function QuizActiveView({ onSubmitAnswers, quiz }: QuizActiveViewProps) {
           submitting={submitting}
           totalQuestions={quiz.totalQuestions}
         />
-        {submitError ? (
-          <p
-            className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-            role="alert"
-          >
-            {submitError}
-          </p>
-        ) : null}
       </section>
       <DesktopQuestionSidebar
         answeredQuestionIndexes={answeredQuestionIndexes}
