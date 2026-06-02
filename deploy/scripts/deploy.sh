@@ -41,6 +41,11 @@ if [ ! -d "${PROJECT_DIR}/.git" ]; then
     echo "PROJECT_DIR is not a git checkout and REPO_URL is not set." >&2
     exit 1
   fi
+  if [ -e "${PROJECT_DIR}" ]; then
+    echo "PROJECT_DIR exists but is not a git checkout: ${PROJECT_DIR}" >&2
+    echo "Move it away or remove it before first automated deployment." >&2
+    exit 1
+  fi
   log "git checkout not found; cloning repository"
   run_step "create project parent directory" mkdir -p "$(dirname "${PROJECT_DIR}")"
   run_step "clone repository" git clone --branch "${BRANCH}" "${REPO_URL}" "${PROJECT_DIR}"

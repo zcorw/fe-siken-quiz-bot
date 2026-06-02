@@ -73,6 +73,16 @@ jobs:
           script_stop: true
           script: |
             set -eu
+            safe_list() {
+              path="$1"
+              if [ -e "${path}" ]; then
+                ls -ld "${path}" || true
+                ls -la "${path}" || echo "[deploy] unable to list ${path}"
+              else
+                echo "[deploy] ${path} does not exist yet."
+              fi
+            }
+
             echo "[deploy] SSH connected."
             echo "[deploy] user=$(whoami)"
             echo "[deploy] host=$(hostname)"
@@ -89,17 +99,9 @@ jobs:
             fi
             echo "[deploy] project dir=${PROJECT_DIR}"
             echo "[deploy] deploy root listing:"
-            if [ -d "${DEPLOY_ROOT}" ]; then
-              ls -la "${DEPLOY_ROOT}"
-            else
-              echo "[deploy] deploy root does not exist yet."
-            fi
+            safe_list "${DEPLOY_ROOT}"
             echo "[deploy] project dir listing:"
-            if [ -d "${PROJECT_DIR}" ]; then
-              ls -la "${PROJECT_DIR}"
-            else
-              echo "[deploy] project dir does not exist yet."
-            fi
+            safe_list "${PROJECT_DIR}"
             echo "[deploy] deploy script exists?"
             if [ -f "${PROJECT_DIR}/deploy/scripts/deploy.sh" ]; then
               echo "[deploy] yes: ${PROJECT_DIR}/deploy/scripts/deploy.sh"
@@ -113,6 +115,11 @@ jobs:
             else
               echo "[deploy] deploy script not found; preparing initial checkout."
               if [ ! -d "${PROJECT_DIR}/.git" ]; then
+                if [ -e "${PROJECT_DIR}" ]; then
+                  echo "[deploy] project dir exists but is not a git checkout: ${PROJECT_DIR}" >&2
+                  echo "[deploy] move it away or remove it before first automated deployment." >&2
+                  exit 1
+                fi
                 echo "[deploy] cloning repository."
                 mkdir -p "$(dirname "${PROJECT_DIR}")"
                 git clone --branch "${BRANCH}" "${REPO_URL}" "${PROJECT_DIR}"
