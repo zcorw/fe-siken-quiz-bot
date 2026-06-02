@@ -69,6 +69,7 @@ export function QuizPageClient({
   async function handleSubmitAnswers(request: SubmitQuizRequestDto) {
     const submittedQuiz = await submitAnswers(token, request);
     setState(createQuizPageReadyState(submittedQuiz));
+    globalThis.scrollTo?.({ top: 0, behavior: "smooth" });
   }
 
   return <QuizPageShell onSubmitAnswers={handleSubmitAnswers} state={state} />;

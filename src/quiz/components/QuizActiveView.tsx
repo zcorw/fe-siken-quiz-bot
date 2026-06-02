@@ -20,6 +20,7 @@ type QuizActiveViewProps = {
 
 export function QuizActiveView({ onSubmitAnswers, quiz }: QuizActiveViewProps) {
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const { answers, answeredCount, clearAnswers, selectAnswer } = useQuizAnswers(
     quiz.token
   );
@@ -39,6 +40,7 @@ export function QuizActiveView({ onSubmitAnswers, quiz }: QuizActiveViewProps) {
     }
 
     setSubmitting(true);
+    setSubmitError(null);
     try {
       await onSubmitAnswers({
         answers: quiz.questions.map((question) => ({
@@ -47,6 +49,12 @@ export function QuizActiveView({ onSubmitAnswers, quiz }: QuizActiveViewProps) {
         })),
       });
       clearAnswers();
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "\u63d0\u51fa\u306b\u5931\u6557\u3057\u307e\u3057\u305f"
+      );
     } finally {
       setSubmitting(false);
     }
@@ -100,6 +108,14 @@ export function QuizActiveView({ onSubmitAnswers, quiz }: QuizActiveViewProps) {
           submitting={submitting}
           totalQuestions={quiz.totalQuestions}
         />
+        {submitError ? (
+          <p
+            className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            role="alert"
+          >
+            {submitError}
+          </p>
+        ) : null}
       </section>
       <DesktopQuestionSidebar
         answeredQuestionIndexes={answeredQuestionIndexes}

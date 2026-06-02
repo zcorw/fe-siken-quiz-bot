@@ -1,5 +1,7 @@
 "use client";
 
+import { MarkdownContent } from "./MarkdownContent";
+
 type OptionButtonResultState = "correct" | "incorrect";
 
 type OptionButtonProps = {
@@ -41,7 +43,10 @@ export function OptionButton({
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-current text-sm font-semibold">
         {label}
       </span>
-      <span className="pt-1 leading-6">{text}</span>
+      <MarkdownContent
+        className="min-w-0 flex-1 pt-1 leading-6 [&_img]:max-w-full [&_p]:m-0"
+        markdown={text}
+      />
     </button>
   );
 }

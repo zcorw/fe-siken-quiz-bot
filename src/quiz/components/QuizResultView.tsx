@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { SubmittedQuizResponseDto } from "../api-schemas";
+import { MarkdownContent } from "./MarkdownContent";
 import { OptionButton } from "./OptionButton";
 
 type QuizResultViewProps = {
@@ -177,9 +178,10 @@ function ExplanationDetail({ question }: { question: SubmittedQuestion }) {
         {question.index}
       </h2>
       {question.questionText ? (
-        <p className="text-sm leading-6 text-slate-700">
-          {question.questionText}
-        </p>
+        <MarkdownContent
+          className="prose prose-slate max-w-none text-sm leading-6 text-slate-700"
+          markdown={question.questionText}
+        />
       ) : null}
       <div className="space-y-2">
         {question.choices.map((choice) => {
@@ -213,7 +215,12 @@ function ExplanationDetail({ question }: { question: SubmittedQuestion }) {
           {question.correctAnswer}
         </p>
       </div>
-      <p className="text-sm leading-6 text-slate-700">{question.explanation}</p>
+      {question.explanation ? (
+        <MarkdownContent
+          className="prose prose-slate max-w-none text-sm leading-6 text-slate-700"
+          markdown={question.explanation}
+        />
+      ) : null}
       <a className="break-all text-sm text-blue-600" href={question.sourceUrl}>
         {question.sourceUrl}
       </a>
