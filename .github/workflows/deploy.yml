@@ -73,16 +73,6 @@ jobs:
           script_stop: true
           script: |
             set -eu
-            safe_list() {
-              path="$1"
-              if [ -e "${path}" ]; then
-                ls -ld "${path}" || true
-                ls -la "${path}" || echo "[deploy] unable to list ${path}"
-              else
-                echo "[deploy] ${path} does not exist yet."
-              fi
-            }
-
             echo "[deploy] SSH connected."
             echo "[deploy] user=$(whoami)"
             echo "[deploy] host=$(hostname)"
@@ -99,9 +89,15 @@ jobs:
             fi
             echo "[deploy] project dir=${PROJECT_DIR}"
             echo "[deploy] deploy root listing:"
-            safe_list "${DEPLOY_ROOT}"
+            ls -ld "${DEPLOY_ROOT}" || true
+            ls -la "${DEPLOY_ROOT}" || true
             echo "[deploy] project dir listing:"
-            safe_list "${PROJECT_DIR}"
+            if [ -d "${PROJECT_DIR}" ]; then
+              ls -ld "${PROJECT_DIR}" || true
+              ls -la "${PROJECT_DIR}" || true
+            else
+              echo "[deploy] project dir does not exist yet; it will be created by git clone."
+            fi
             echo "[deploy] deploy script exists?"
             if [ -f "${PROJECT_DIR}/deploy/scripts/deploy.sh" ]; then
               echo "[deploy] yes: ${PROJECT_DIR}/deploy/scripts/deploy.sh"
