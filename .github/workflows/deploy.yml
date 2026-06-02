@@ -88,6 +88,24 @@ jobs:
               PROJECT_DIR="${DEPLOY_ROOT}/app"
             fi
             echo "[deploy] project dir=${PROJECT_DIR}"
+            echo "[deploy] deploy root listing:"
+            if [ -d "${DEPLOY_ROOT}" ]; then
+              ls -la "${DEPLOY_ROOT}"
+            else
+              echo "[deploy] deploy root does not exist yet."
+            fi
+            echo "[deploy] project dir listing:"
+            if [ -d "${PROJECT_DIR}" ]; then
+              ls -la "${PROJECT_DIR}"
+            else
+              echo "[deploy] project dir does not exist yet."
+            fi
+            echo "[deploy] deploy script exists?"
+            if [ -f "${PROJECT_DIR}/deploy/scripts/deploy.sh" ]; then
+              echo "[deploy] yes: ${PROJECT_DIR}/deploy/scripts/deploy.sh"
+            else
+              echo "[deploy] no: ${PROJECT_DIR}/deploy/scripts/deploy.sh"
+            fi
 
             if [ -f "${PROJECT_DIR}/deploy/scripts/deploy.sh" ]; then
               echo "[deploy] existing checkout found; running deploy script."

@@ -8,8 +8,19 @@ HOST_CONFIG_DIR="${HOST_CONFIG_DIR:-${DEPLOY_ROOT}/config}"
 HOST_DATA_DIR="${HOST_DATA_DIR:-${DEPLOY_ROOT}/data}"
 HOST_ASSETS_DIR="${HOST_ASSETS_DIR:-${DEPLOY_ROOT}/assets}"
 
+log() {
+  printf '[init-runtime] %s\n' "$*"
+}
+
+log "project dir=${PROJECT_DIR}"
+log "env file=${ENV_FILE}"
+log "config dir=${HOST_CONFIG_DIR}"
+log "data dir=${HOST_DATA_DIR}"
+log "assets dir=${HOST_ASSETS_DIR}"
+
 cd "${PROJECT_DIR}"
 
+log "creating runtime directories if missing"
 mkdir -p "${HOST_DATA_DIR}" "${HOST_ASSETS_DIR}" "${DEPLOY_ROOT}/backups" "${HOST_CONFIG_DIR}"
 
 missing=""
@@ -35,7 +46,8 @@ if [ -n "${missing}" ]; then
 fi
 
 if [ ! -f "${HOST_DATA_DIR}/app.sqlite" ]; then
+  log "creating empty app sqlite file at ${HOST_DATA_DIR}/app.sqlite"
   touch "${HOST_DATA_DIR}/app.sqlite"
 fi
 
-echo "Runtime files are present."
+log "runtime files are present"
