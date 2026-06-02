@@ -90,6 +90,11 @@ run_step "run app database migrations" docker compose --env-file "${NORMALIZED_E
 run_step "build and start app services" docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" up -d --build edge web bot
 
 log "running smoke test with BASE_URL=${SMOKE_BASE_URL}"
-BASE_URL="${SMOKE_BASE_URL}" run_step "deployment smoke test" sh ./deploy/scripts/smoke-test.sh
+if ! BASE_URL="${SMOKE_BASE_URL}" run_step "deployment smoke test" sh ./deploy/scripts/smoke-test.sh; then
+  log "smoke test failed; showing compose status and recent logs"
+  docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" ps || true
+  docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" logs --tail=120 edge web bot || true
+  exit 1
+fi
 
 run_step "show compose status" docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" ps
