@@ -17,6 +17,45 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      - name: Check deployment secrets
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT || '22' }}
+          VPS_DEPLOY_ROOT: ${{ secrets.VPS_DEPLOY_ROOT || '/opt/fe-quiz-bot' }}
+          VPS_DEPLOY_DIR: ${{ secrets.VPS_DEPLOY_DIR || '' }}
+          VPS_REPO_URL: ${{ secrets.VPS_REPO_URL || format('git@github.com:{0}.git', github.repository) }}
+          SMOKE_BASE_URL: ${{ secrets.SMOKE_BASE_URL || 'http://127.0.0.1:3100' }}
+        run: |
+          set -eu
+
+          missing=0
+          for name in VPS_HOST VPS_USER VPS_SSH_KEY; do
+            if [ -z "$(eval "printf '%s' \"\${${name}:-}\"")" ]; then
+              echo "::error::Missing required GitHub secret: ${name}"
+              missing=1
+            fi
+          done
+
+          if [ "${missing}" -ne 0 ]; then
+            exit 1
+          fi
+
+          echo "Deployment preflight:"
+          echo "- VPS_HOST is set"
+          echo "- VPS_USER is set"
+          echo "- VPS_SSH_KEY is set"
+          echo "- VPS_SSH_PORT=${VPS_SSH_PORT}"
+          echo "- VPS_DEPLOY_ROOT=${VPS_DEPLOY_ROOT}"
+          if [ -n "${VPS_DEPLOY_DIR}" ]; then
+            echo "- VPS_DEPLOY_DIR=${VPS_DEPLOY_DIR}"
+          else
+            echo "- VPS_DEPLOY_DIR=<default: ${VPS_DEPLOY_ROOT}/app>"
+          fi
+          echo "- VPS_REPO_URL is set"
+          echo "- SMOKE_BASE_URL=${SMOKE_BASE_URL}"
+
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -34,20 +73,37 @@ jobs:
           script_stop: true
           script: |
             set -eu
+            echo "[deploy] SSH connected."
+            echo "[deploy] user=$(whoami)"
+            echo "[deploy] host=$(hostname)"
+            echo "[deploy] branch=${BRANCH}"
+            echo "[deploy] deploy root=${DEPLOY_ROOT}"
+            echo "[deploy] repo url is set"
+            echo "[deploy] checking required commands..."
+            command -v git
+            command -v docker
+            docker compose version
+
             if [ -z "${PROJECT_DIR}" ]; then
               PROJECT_DIR="${DEPLOY_ROOT}/app"
             fi
+            echo "[deploy] project dir=${PROJECT_DIR}"
 
             if [ -f "${PROJECT_DIR}/deploy/scripts/deploy.sh" ]; then
+              echo "[deploy] existing checkout found; running deploy script."
               sh "${PROJECT_DIR}/deploy/scripts/deploy.sh"
             else
+              echo "[deploy] deploy script not found; preparing initial checkout."
               if [ ! -d "${PROJECT_DIR}/.git" ]; then
+                echo "[deploy] cloning repository."
                 mkdir -p "$(dirname "${PROJECT_DIR}")"
                 git clone --branch "${BRANCH}" "${REPO_URL}" "${PROJECT_DIR}"
               fi
 
               cd "${PROJECT_DIR}"
+              echo "[deploy] fetching latest code."
               git fetch origin "${BRANCH}"
               git reset --hard "origin/${BRANCH}"
+              echo "[deploy] running deploy script from fresh checkout."
               sh ./deploy/scripts/deploy.sh
             fi
