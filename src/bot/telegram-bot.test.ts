@@ -44,6 +44,58 @@ describe("registerTelegramBotHandlers", () => {
       handleCandidateCallback
     );
   });
+
+  it("ignores commands in group chats when the bot is not mentioned", async () => {
+    const target = {
+      command: vi.fn(),
+      on: vi.fn(),
+    };
+
+    registerTelegramBotHandlers(
+      target as unknown as TelegramBotRegistrationTarget,
+      {}
+    );
+
+    const startHandler = target.command.mock.calls.find(
+      ([command]) => command === "start"
+    )?.[1] as (ctx: unknown) => Promise<void>;
+    const reply = vi.fn();
+
+    await startHandler({
+      chat: { type: "group" },
+      me: { username: "fe_quiz_bot" },
+      message: { text: "/start" },
+      reply,
+    });
+
+    expect(reply).not.toHaveBeenCalled();
+  });
+
+  it("handles commands in group chats when the bot is mentioned", async () => {
+    const target = {
+      command: vi.fn(),
+      on: vi.fn(),
+    };
+
+    registerTelegramBotHandlers(
+      target as unknown as TelegramBotRegistrationTarget,
+      {}
+    );
+
+    const helpHandler = target.command.mock.calls.find(
+      ([command]) => command === "help"
+    )?.[1] as (ctx: unknown) => Promise<void>;
+    const reply = vi.fn();
+
+    await helpHandler({
+      chat: { type: "supergroup" },
+      me: { username: "fe_quiz_bot" },
+      message: { text: "/help@fe_quiz_bot" },
+      reply,
+    });
+
+    expect(reply).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("initializeTelegramBot", () => {

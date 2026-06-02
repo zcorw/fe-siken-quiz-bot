@@ -7,6 +7,7 @@ import {
   buildCandidateScopeCallbackData,
   handleScopeCandidateCallback,
   handleScopeMessage,
+  resolveScopeMessageTriggerText,
 } from "./scope-message";
 
 const topicsConfig = {
@@ -19,6 +20,64 @@ const topicsConfig = {
 };
 
 describe("handleScopeMessage", () => {
+  it("ignores group text messages that do not mention the bot", async () => {
+    const parseScope = vi.fn();
+
+    await handleScopeMessage({
+      ctx: {
+        chat: { type: "group" },
+        me: { username: "fe_quiz_bot" },
+        message: { text: "データベース" },
+        reply: vi.fn(),
+      },
+      parseScope,
+    });
+
+    expect(parseScope).not.toHaveBeenCalled();
+  });
+
+  it("parses group text messages that mention the bot", async () => {
+    const parseScope = vi.fn().mockResolvedValue({
+      matchedCategories: [],
+      matchedTopics: ["データベース"],
+      method: "alias",
+      status: "matched",
+      suggestions: [],
+    });
+
+    await handleScopeMessage({
+      ctx: {
+        chat: { type: "supergroup" },
+        me: { username: "fe_quiz_bot" },
+        message: { text: "@fe_quiz_bot データベース" },
+        reply: vi.fn(),
+      },
+      parseScope,
+    });
+
+    expect(parseScope).toHaveBeenCalledWith("データベース");
+  });
+
+  it("keeps private text messages triggerable without mentioning the bot", async () => {
+    expect(
+      resolveScopeMessageTriggerText({
+        botUsername: "fe_quiz_bot",
+        chatType: "private",
+        text: "データベース",
+      })
+    ).toBe("データベース");
+  });
+
+  it("requires a mention in group text messages and strips it before parsing", async () => {
+    expect(
+      resolveScopeMessageTriggerText({
+        botUsername: "fe_quiz_bot",
+        chatType: "group",
+        text: "ネットワーク @fe_quiz_bot",
+      })
+    ).toBe("ネットワーク");
+  });
+
   it("calls scope parsing for regular text messages", async () => {
     const parseScope = vi.fn().mockResolvedValue({
       matchedCategories: [],

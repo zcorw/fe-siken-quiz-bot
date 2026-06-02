@@ -20,6 +20,12 @@ export interface ScopeMessageContext extends ReplyContext {
   message?: {
     text?: string;
   };
+  chat?: {
+    type?: string;
+  };
+  me?: {
+    username?: string;
+  };
 }
 
 export interface ScopeCandidateCallbackContext extends ReplyContext {
@@ -69,7 +75,11 @@ export async function handleScopeMessage({
   logger,
   topicsConfig,
 }: HandleScopeMessageOptions): Promise<void> {
-  const text = ctx.message?.text?.trim();
+  const text = resolveScopeMessageTriggerText({
+    botUsername: ctx.me?.username,
+    chatType: ctx.chat?.type,
+    text: ctx.message?.text,
+  });
 
   if (!text || text.startsWith("/")) {
     return;
@@ -149,6 +159,43 @@ export async function handleScopeMessage({
         : `分野を特定できませんでした。${action.message}`
     );
   }
+}
+
+export function resolveScopeMessageTriggerText({
+  botUsername,
+  chatType,
+  text,
+}: {
+  botUsername?: string;
+  chatType?: string;
+  text?: string;
+}): string | undefined {
+  const trimmedText = text?.trim();
+
+  if (!trimmedText) {
+    return undefined;
+  }
+
+  if (chatType === undefined || chatType === "private") {
+    return trimmedText;
+  }
+
+  if (botUsername === undefined || botUsername.trim() === "") {
+    return undefined;
+  }
+
+  const escapedUsername = escapeRegExp(botUsername.trim());
+  const mentionPattern = new RegExp(`@${escapedUsername}(?=\\s|$)`, "i");
+
+  if (!mentionPattern.test(trimmedText)) {
+    return undefined;
+  }
+
+  return trimmedText.replace(mentionPattern, " ").trim();
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export interface CandidateScopeButtonPayload {

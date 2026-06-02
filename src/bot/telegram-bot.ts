@@ -4,6 +4,7 @@ import type {
   ScopeCandidateCallbackContext,
   ScopeMessageContext,
 } from "./handlers/scope-message";
+import { resolveScopeMessageTriggerText } from "./handlers/scope-message";
 import { handleStartCommand } from "./handlers/start";
 
 export type TelegramTextMessageHandler = (
@@ -27,6 +28,8 @@ export interface RegisterTelegramBotHandlersOptions {
 export type TelegramBotRegistrationTarget = Pick<Bot, "command" | "on">;
 export type TelegramBotInitializer = Pick<Bot, "init">;
 
+type TelegramCommandContext = ScopeMessageContext;
+
 export function registerTelegramBotHandlers(
   bot: TelegramBotRegistrationTarget,
   {
@@ -34,8 +37,8 @@ export function registerTelegramBotHandlers(
     handleTextMessage,
   }: RegisterTelegramBotHandlersOptions = {}
 ): void {
-  bot.command("start", handleStartCommand);
-  bot.command("help", handleHelpCommand);
+  bot.command("start", onlyWhenAddressed(handleStartCommand));
+  bot.command("help", onlyWhenAddressed(handleHelpCommand));
 
   if (handleTextMessage !== undefined) {
     bot.on("message:text", handleTextMessage);
@@ -44,6 +47,24 @@ export function registerTelegramBotHandlers(
   if (handleCandidateCallback !== undefined) {
     bot.on("callback_query:data", handleCandidateCallback);
   }
+}
+
+function onlyWhenAddressed(
+  handler: (ctx: TelegramCommandContext) => Promise<void> | void
+): (ctx: TelegramCommandContext) => Promise<void> | void {
+  return (ctx) => {
+    const triggerText = resolveScopeMessageTriggerText({
+      botUsername: ctx.me?.username,
+      chatType: ctx.chat?.type,
+      text: ctx.message?.text,
+    });
+
+    if (triggerText === undefined) {
+      return;
+    }
+
+    return handler(ctx);
+  };
 }
 
 export function createTelegramBot({
