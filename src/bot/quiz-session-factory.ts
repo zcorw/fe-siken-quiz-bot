@@ -2,7 +2,10 @@ import { randomUUID } from "node:crypto";
 import type Database from "better-sqlite3";
 
 import type { AppDrizzleDb } from "@/db/app/client";
-import { createQuizSession } from "@/db/app/repositories/quiz-sessions";
+import {
+  createQuizSession,
+  findUserQuestionStatsByUrls,
+} from "@/db/app/repositories/quiz-sessions";
 import { upsertTelegramUser } from "@/db/app/repositories/users";
 import {
   findQuestionCandidates,
@@ -10,6 +13,10 @@ import {
 } from "@/db/question-bank/queries";
 import type { ScopeParseResult } from "@/quiz/scope-match";
 import { getMinorToMajorCategoryMap, type AppConfig } from "@/config/schema";
+import {
+  selectSeededUniqueCandidates,
+  selectWeightedSeededCandidates,
+} from "@/quiz/question-selection";
 
 export interface TelegramUserInput {
   id: number;
@@ -25,6 +32,7 @@ export interface CreateQuizSessionFromScopeMessageInput {
   matchedScope: ScopeParseResult;
   telegramUser?: TelegramUserInput;
   nowIso: string;
+  selectionSeedFactory?: () => string;
   sessionIdFactory?: () => string;
   tokenFactory?: () => string;
   topicsConfig?: AppConfig["topics"];
@@ -36,6 +44,7 @@ export async function createQuizSessionFromScopeMessage({
   nowIso,
   questionDb,
   rawScopeInput,
+  selectionSeedFactory = randomUUID,
   sessionIdFactory = randomUUID,
   telegramUser,
   tokenFactory = randomUUID,
@@ -59,13 +68,16 @@ export async function createQuizSessionFromScopeMessage({
       : undefined;
   const matchedCategory =
     matchedScope.minorCategory ?? matchedScope.matchedCategories[0];
-  const selection = resolveQuestionSelection(questionDb, {
+  const selectionSeed = selectionSeedFactory();
+  const selection = await resolveQuestionSelection(appDb, questionDb, {
     candidateMinorCategories: matchedScope.candidateMinorCategories,
     majorCategory: matchedScope.majorCategory,
     matchedCategory,
     matchedTopic,
     minorCategory: matchedScope.minorCategory,
+    selectionSeed,
     topicsConfig,
+    userId: user.id,
   });
   const candidates = selection.candidates;
 
@@ -77,6 +89,19 @@ export async function createQuizSessionFromScopeMessage({
 
   const sessionId = sessionIdFactory();
   const token = tokenFactory();
+  const selectedQuestions = selectSeededUniqueCandidates(
+    candidates.map((candidate, index) => ({
+      candidate,
+      sourceType: index < 15 ? "requested" : "reinforcement",
+      selectionReason:
+        index < 15 ? "requested_scope" : "high_weight_topic_fallback",
+      url: candidate.url,
+    })),
+    {
+      count: 20,
+      seed: `${selectionSeed}:display-order`,
+    }
+  );
   const requestedMinorCategories = listSelectedMinorCategories(
     candidates,
     matchedScope.candidateMinorCategories ?? []
@@ -112,15 +137,14 @@ export async function createQuizSessionFromScopeMessage({
     },
     token,
     userId: user.id,
-    questions: candidates.map((candidate, index) => ({
+    questions: selectedQuestions.map((selectedQuestion, index) => ({
       id: `${sessionId}-question-${index + 1}`,
       questionIndex: index + 1,
-      questionUrl: candidate.url,
-      selectionReason:
-        index < 15 ? "requested_scope" : "high_weight_topic_fallback",
-      sourceCategory: candidate.category,
-      sourceTopic: candidate.topic,
-      sourceType: index < 15 ? "requested" : "reinforcement",
+      questionUrl: selectedQuestion.candidate.url,
+      selectionReason: selectedQuestion.selectionReason,
+      sourceCategory: selectedQuestion.candidate.category,
+      sourceTopic: selectedQuestion.candidate.topic,
+      sourceType: selectedQuestion.sourceType,
     })),
   });
 
@@ -132,7 +156,8 @@ interface QuestionSelection {
   siblingMinorCategoriesUsed: string[];
 }
 
-function resolveQuestionSelection(
+async function resolveQuestionSelection(
+  appDb: AppDrizzleDb,
   questionDb: Database.Database,
   {
     matchedCategory,
@@ -140,21 +165,27 @@ function resolveQuestionSelection(
     candidateMinorCategories,
     majorCategory,
     minorCategory,
+    selectionSeed,
     topicsConfig,
+    userId,
   }: {
     candidateMinorCategories?: string[];
     majorCategory?: string;
     matchedCategory?: string;
     matchedTopic?: string;
     minorCategory?: string;
+    selectionSeed: string;
     topicsConfig?: AppConfig["topics"];
+    userId: string;
   }
-): QuestionSelection {
+): Promise<QuestionSelection> {
   if (minorCategory !== undefined) {
-    return resolveMinorCategorySelection(questionDb, {
+    return resolveMinorCategorySelection(appDb, questionDb, {
       majorCategory,
       minorCategory,
+      selectionSeed,
       topicsConfig,
+      userId,
     });
   }
 
@@ -163,9 +194,15 @@ function resolveQuestionSelection(
     candidateMinorCategories.length > 0
   ) {
     return {
-      candidates: findQuestionCandidates(questionDb, {
-        categories: candidateMinorCategories,
-      }).slice(0, 20),
+      candidates: await selectWeightedCandidates(
+        appDb,
+        userId,
+        findQuestionCandidates(questionDb, {
+          categories: candidateMinorCategories,
+        }),
+        20,
+        `${selectionSeed}:candidate-minors`
+      ),
       siblingMinorCategoriesUsed: [],
     };
   }
@@ -177,7 +214,13 @@ function resolveQuestionSelection(
 
   if (directCandidates.length >= 20 || matchedTopic === undefined) {
     return {
-      candidates: directCandidates.slice(0, 20),
+      candidates: await selectWeightedCandidates(
+        appDb,
+        userId,
+        directCandidates,
+        20,
+        `${selectionSeed}:direct`
+      ),
       siblingMinorCategoriesUsed: [],
     };
   }
@@ -189,26 +232,34 @@ function resolveQuestionSelection(
   );
 
   return {
-    candidates: dedupeCandidates([...directCandidates, ...mappedCandidates]).slice(
-      0,
-      20
+    candidates: await selectWeightedCandidates(
+      appDb,
+      userId,
+      dedupeCandidates([...directCandidates, ...mappedCandidates]),
+      20,
+      `${selectionSeed}:mapped`
     ),
     siblingMinorCategoriesUsed: [],
   };
 }
 
-function resolveMinorCategorySelection(
+async function resolveMinorCategorySelection(
+  appDb: AppDrizzleDb,
   questionDb: Database.Database,
   {
     majorCategory,
     minorCategory,
+    selectionSeed,
     topicsConfig,
+    userId,
   }: {
     majorCategory?: string;
     minorCategory: string;
+    selectionSeed: string;
     topicsConfig?: AppConfig["topics"];
+    userId: string;
   }
-): QuestionSelection {
+): Promise<QuestionSelection> {
   const primaryCandidates = findQuestionCandidates(questionDb, {
     categories: [minorCategory],
   });
@@ -220,15 +271,29 @@ function resolveMinorCategorySelection(
         );
 
   if (primaryCandidates.length >= 15) {
-    const requestedCandidates = primaryCandidates.slice(0, 15);
-    const remainingPrimaryCandidates = primaryCandidates.slice(15, 20);
+    const requestedCandidates = await selectWeightedCandidates(
+      appDb,
+      userId,
+      primaryCandidates,
+      15,
+      `${selectionSeed}:minor-requested`
+    );
+    const requestedUrls = new Set(
+      requestedCandidates.map((candidate) => candidate.url)
+    );
+    const remainingPrimaryCandidates = primaryCandidates.filter(
+      (candidate) => !requestedUrls.has(candidate.url)
+    );
     const siblingReinforcementCandidates = findQuestionCandidates(questionDb, {
       categories: siblingMinorCategories,
-    }).slice(0, 5 - remainingPrimaryCandidates.length);
-    const reinforcementCandidates = [
-      ...remainingPrimaryCandidates,
-      ...siblingReinforcementCandidates,
-    ];
+    });
+    const reinforcementCandidates = await selectWeightedCandidates(
+      appDb,
+      userId,
+      [...remainingPrimaryCandidates, ...siblingReinforcementCandidates],
+      5,
+      `${selectionSeed}:minor-reinforcement`
+    );
 
     return {
       candidates: [...requestedCandidates, ...reinforcementCandidates],
@@ -239,19 +304,36 @@ function resolveMinorCategorySelection(
   const siblingCandidates = findQuestionCandidates(questionDb, {
     categories: siblingMinorCategories,
   });
-  const requestedCandidates = dedupeCandidates([
-    ...primaryCandidates,
-    ...siblingCandidates,
-  ]).slice(0, 15);
+  const weightedPrimaryCandidates = await selectWeightedCandidates(
+    appDb,
+    userId,
+    primaryCandidates,
+    primaryCandidates.length,
+    `${selectionSeed}:minor-primary-requested`
+  );
+  const siblingRequestedCandidates = await selectWeightedCandidates(
+    appDb,
+    userId,
+    siblingCandidates,
+    15 - weightedPrimaryCandidates.length,
+    `${selectionSeed}:minor-sibling-requested`
+  );
+  const requestedCandidates = [
+    ...weightedPrimaryCandidates,
+    ...siblingRequestedCandidates,
+  ];
   const requestedUrls = new Set(
     requestedCandidates.map((candidate) => candidate.url)
   );
-  const reinforcementCandidates = dedupeCandidates([
-    ...primaryCandidates,
-    ...siblingCandidates,
-  ])
-    .filter((candidate) => !requestedUrls.has(candidate.url))
-    .slice(0, 5);
+  const reinforcementCandidates = await selectWeightedCandidates(
+    appDb,
+    userId,
+    dedupeCandidates([...primaryCandidates, ...siblingCandidates]).filter(
+      (candidate) => !requestedUrls.has(candidate.url)
+    ),
+    5,
+    `${selectionSeed}:minor-sibling-reinforcement`
+  );
 
   return {
     candidates: [...requestedCandidates, ...reinforcementCandidates],
@@ -260,6 +342,25 @@ function resolveMinorCategorySelection(
       siblingMinorCategories
     ),
   };
+}
+
+async function selectWeightedCandidates(
+  appDb: AppDrizzleDb,
+  userId: string,
+  candidates: QuestionCandidateRow[],
+  count: number,
+  seed: string
+): Promise<QuestionCandidateRow[]> {
+  const statsByUrl = await findUserQuestionStatsByUrls(appDb, {
+    questionUrls: candidates.map((candidate) => candidate.url),
+    userId,
+  });
+
+  return selectWeightedSeededCandidates(candidates, {
+    count,
+    seed,
+    statsByUrl,
+  });
 }
 
 function listSelectedMinorCategories(

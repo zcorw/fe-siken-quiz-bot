@@ -419,28 +419,194 @@ describe("createQuizSessionFromScopeMessage", () => {
       selection_summary_json: string;
     };
 
-    expect(requestedRows.map((row) => row.source_category)).toEqual([
-      "通信プロトコル",
-      "通信プロトコル",
-      "通信プロトコル",
-      "通信プロトコル",
-      "通信プロトコル",
-      "通信プロトコル",
-      "通信プロトコル",
-      "通信プロトコル",
-      "通信プロトコル",
-      "通信プロトコル",
-      "ネットワーク方式",
-      "ネットワーク方式",
-      "ネットワーク方式",
-      "ネットワーク方式",
-      "ネットワーク方式",
+    const requestedCategoryCounts = new Map<string, number>();
+    for (const row of requestedRows) {
+      requestedCategoryCounts.set(
+        row.source_category,
+        (requestedCategoryCounts.get(row.source_category) ?? 0) + 1
+      );
+    }
+
+    expect(requestedRows).toHaveLength(15);
+    expect([...requestedCategoryCounts.values()].sort((left, right) => left - right)).toEqual([
+      5,
+      10,
     ]);
     expect(JSON.parse(sessionRow.selection_summary_json)).toEqual(
       expect.objectContaining({
         primaryMinorCategory: "通信プロトコル",
         siblingMinorCategoriesUsed: ["ネットワーク方式"],
       })
+    );
+  });
+
+  it("selects different requested questions and display order for different seeds", async () => {
+    const appDb = await createMigratedAppDbFixture({ seedUser: false });
+    const questionDb = await createQuestionBankFixture({
+      questionCount: 0,
+    });
+
+    for (let index = 1; index <= 30; index += 1) {
+      insertQuestionBankQuestion(questionDb, {
+        category: "minor-a",
+        id: index,
+      });
+    }
+
+    for (const [sessionId, token, seed] of [
+      ["session-seed-a", "token-seed-a", "seed-a"],
+      ["session-seed-b", "token-seed-b", "seed-b"],
+    ] as const) {
+      await createQuizSessionFromScopeMessage({
+        appDb: appDb.db,
+        matchedScope: {
+          candidateMinorCategories: ["minor-a"],
+          majorCategory: "major-a",
+          matchedCategories: [],
+          matchedTopics: [],
+          method: "local_exact",
+          minorCategory: undefined,
+          scopeType: "major_category",
+          status: "matched",
+          suggestions: [],
+        },
+        nowIso: "2026-05-31T00:00:00.000Z",
+        questionDb,
+        rawScopeInput: "major-a",
+        selectionSeedFactory: () => seed,
+        sessionIdFactory: () => sessionId,
+        telegramUser: { id: 12345 },
+        tokenFactory: () => token,
+        topicsConfig: {
+          aliases: {},
+          category_tree: {
+            "major-a": ["minor-a"],
+          },
+          high_weight_topics: ["major-a"],
+        },
+      });
+    }
+
+    const firstRows = appDb.sqlite
+      .prepare(
+        "SELECT question_url FROM quiz_session_questions WHERE quiz_session_id = ? ORDER BY question_index"
+      )
+      .all("session-seed-a") as Array<{ question_url: string }>;
+    const secondRows = appDb.sqlite
+      .prepare(
+        "SELECT question_url FROM quiz_session_questions WHERE quiz_session_id = ? ORDER BY question_index"
+      )
+      .all("session-seed-b") as Array<{ question_url: string }>;
+
+    expect(firstRows).toHaveLength(20);
+    expect(secondRows).toHaveLength(20);
+    expect(secondRows.map((row) => row.question_url)).not.toEqual(
+      firstRows.map((row) => row.question_url)
+    );
+  });
+
+  it("prioritizes historical wrong questions over unseen requested candidates", async () => {
+    const appDb = await createMigratedAppDbFixture({ seedUser: false });
+    const questionDb = await createQuestionBankFixture({
+      questionCount: 0,
+    });
+
+    await appDb.sqlite
+      .prepare(
+        `
+          INSERT INTO users (
+            id,
+            telegram_user_id,
+            telegram_username,
+            telegram_first_name,
+            telegram_last_name,
+            created_at,
+            last_seen_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        `
+      )
+      .run(
+        "user-with-stats",
+        "98765",
+        null,
+        null,
+        null,
+        "2026-05-30T00:00:00.000Z",
+        "2026-05-30T00:00:00.000Z"
+      );
+
+    for (let index = 1; index <= 30; index += 1) {
+      insertQuestionBankQuestion(questionDb, {
+        category: "minor-a",
+        id: index,
+      });
+    }
+
+    appDb.sqlite
+      .prepare(
+        `
+          INSERT INTO user_question_stats (
+            user_id,
+            question_url,
+            attempt_count,
+            correct_count,
+            incorrect_count,
+            last_answered_at,
+            last_is_correct,
+            active_wrong,
+            consecutive_correct_after_wrong
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+      )
+      .run(
+        "user-with-stats",
+        "https://example.test/category-q30.html",
+        3,
+        1,
+        2,
+        "2026-05-30T01:00:00.000Z",
+        0,
+        1,
+        0
+      );
+
+    await createQuizSessionFromScopeMessage({
+      appDb: appDb.db,
+      matchedScope: {
+        candidateMinorCategories: ["minor-a"],
+        majorCategory: "major-a",
+        matchedCategories: [],
+        matchedTopics: [],
+        method: "local_exact",
+        minorCategory: undefined,
+        scopeType: "major_category",
+        status: "matched",
+        suggestions: [],
+      },
+      nowIso: "2026-05-31T00:00:00.000Z",
+      questionDb,
+      rawScopeInput: "major-a",
+      selectionSeedFactory: () => "seed-a",
+      sessionIdFactory: () => "session-wrong-priority",
+      telegramUser: { id: 98765 },
+      tokenFactory: () => "token-wrong-priority",
+      topicsConfig: {
+        aliases: {},
+        category_tree: {
+          "major-a": ["minor-a"],
+        },
+        high_weight_topics: ["major-a"],
+      },
+    });
+
+    const selectedUrls = appDb.sqlite
+      .prepare(
+        "SELECT question_url FROM quiz_session_questions WHERE quiz_session_id = ?"
+      )
+      .all("session-wrong-priority") as Array<{ question_url: string }>;
+
+    expect(selectedUrls.map((row) => row.question_url)).toContain(
+      "https://example.test/category-q30.html"
     );
   });
 });
