@@ -14,6 +14,12 @@ COMPOSE_FILE="${COMPOSE_FILE:-deploy/docker-compose.yml}"
 SMOKE_BASE_URL="${SMOKE_BASE_URL:-http://127.0.0.1:${EDGE_PORT:-3100}}"
 APP_RUN_UID="${APP_RUN_UID:-$(id -u)}"
 APP_RUN_GID="${APP_RUN_GID:-$(id -g)}"
+IMAGE_REGISTRY="${IMAGE_REGISTRY:-ghcr.io}"
+IMAGE_REPOSITORY="${IMAGE_REPOSITORY:-zcorw/fe-siken-quiz-bot}"
+IMAGE_TAG="${IMAGE_TAG:-latest}"
+WEB_IMAGE="${WEB_IMAGE:-${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}/web:${IMAGE_TAG}}"
+BOT_IMAGE="${BOT_IMAGE:-${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}/bot:${IMAGE_TAG}}"
+MIGRATE_IMAGE="${MIGRATE_IMAGE:-${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}/migrate:${IMAGE_TAG}}"
 
 log() {
   printf '[deploy.sh] %s\n' "$*"
@@ -45,6 +51,9 @@ log "data dir=${HOST_DATA_DIR}"
 log "assets dir=${HOST_ASSETS_DIR}"
 log "deploy dir=${HOST_DEPLOY_DIR}"
 log "app run uid/gid=${APP_RUN_UID}:${APP_RUN_GID}"
+log "web image=${WEB_IMAGE}"
+log "bot image=${BOT_IMAGE}"
+log "migrate image=${MIGRATE_IMAGE}"
 
 if [ ! -d "${PROJECT_DIR}/.git" ]; then
   if [ -z "${REPO_URL}" ]; then
@@ -83,6 +92,9 @@ export HOST_ASSETS_DIR
 export HOST_DEPLOY_DIR
 export APP_RUN_UID
 export APP_RUN_GID
+export WEB_IMAGE
+export BOT_IMAGE
+export MIGRATE_IMAGE
 
 log "loading env file"
 set -a
@@ -90,9 +102,9 @@ set -a
 set +a
 log "env file loaded"
 
-run_step "build migrate service" docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" build migrate
-run_step "run app database migrations" docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" run --rm migrate
-run_step "build and start app services" docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" up -d --build edge web bot
+run_step "pull app images" docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" --profile tools pull edge web bot migrate
+run_step "run app database migrations" docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" --profile tools run --rm migrate
+run_step "start app services" docker compose --env-file "${NORMALIZED_ENV_FILE}" -f "${COMPOSE_FILE}" up -d edge web bot
 
 log "running smoke test with BASE_URL=${SMOKE_BASE_URL}"
 if ! BASE_URL="${SMOKE_BASE_URL}" run_step "deployment smoke test" sh ./deploy/scripts/smoke-test.sh; then
