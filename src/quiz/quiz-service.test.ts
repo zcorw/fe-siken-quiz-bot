@@ -164,6 +164,83 @@ describe("loadQuizByToken", () => {
     }
   });
 
+  it("keeps question order stable when the same active token is loaded repeatedly", async () => {
+    const appDb = await createMigratedAppDb();
+    const questionDb = await createQuestionBankFixture();
+
+    try {
+      await createQuizSession(appDb.db, {
+        id: "session-stable-token",
+        token: "token-stable-token",
+        userId: "user-1",
+        rawScopeInput: "database",
+        matchedScopeJson: { matchedTopics: ["銉囥兗銈裤儥銉笺偣"] },
+        selectionSummaryJson: {
+          requestedScopeCount: 15,
+          selectionSeed: "stable-seed",
+          randomizationVersion: 1,
+        },
+        createdAt: "2026-05-31T01:00:00.000Z",
+        expiresAt: "2026-06-07T01:00:00.000Z",
+        purgeAfterAt: "2026-07-07T01:00:00.000Z",
+        questions: Array.from({ length: 20 }, (_, index) => {
+          const sourceQuestionNumber = 20 - index;
+
+          return {
+            id: `stable-session-question-${index + 1}`,
+            questionUrl: `https://example.test/q${sourceQuestionNumber}.html`,
+            questionIndex: index + 1,
+            sourceType: "requested",
+            sourceTopic: "銉囥兗銈裤儥銉笺偣",
+            sourceCategory: "銉嗐偗銉庛儹銈哥郴",
+            selectionReason: null,
+          };
+        }),
+      });
+
+      const firstResponse = await loadQuizByToken({
+        appDb: appDb.db,
+        questionDb,
+        token: "token-stable-token",
+        nowIso: "2026-05-31T01:30:00.000Z",
+      });
+      const secondResponse = await loadQuizByToken({
+        appDb: appDb.db,
+        questionDb,
+        token: "token-stable-token",
+        nowIso: "2026-05-31T01:31:00.000Z",
+      });
+
+      expect(firstResponse.status).toBe("active");
+      expect(secondResponse.status).toBe("active");
+      if (
+        firstResponse.status !== "active" ||
+        secondResponse.status !== "active"
+      ) {
+        throw new Error("Expected active responses.");
+      }
+
+      expect(
+        secondResponse.questions.map((question) => ({
+          index: question.index,
+          questionUrl: question.questionUrl,
+        }))
+      ).toEqual(
+        firstResponse.questions.map((question) => ({
+          index: question.index,
+          questionUrl: question.questionUrl,
+        }))
+      );
+      expect(firstResponse.questions[0]).toMatchObject({
+        index: 1,
+        questionUrl: "https://example.test/q20.html",
+      });
+    } finally {
+      appDb.close();
+      questionDb.close();
+    }
+  });
+
   it("loads submitted quiz data with summary, answers, explanations, and source URLs", async () => {
     const appDb = await createMigratedAppDb();
     const questionDb = await createQuestionBankFixture();
