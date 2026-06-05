@@ -346,6 +346,41 @@ describe("handleScopeMessage", () => {
     );
   });
 
+  it("answers candidate callbacks and replies with an error when quiz creation fails", async () => {
+    const error = new Error("Expected 20 question candidates, received 8.");
+    const createQuizSession = vi.fn().mockRejectedValue(error);
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const answerCallbackQuery = vi.fn().mockResolvedValue(undefined);
+    const logger = { error: vi.fn() };
+
+    await handleScopeCandidateCallback({
+      createQuizSession,
+      ctx: {
+        answerCallbackQuery,
+        callbackQuery: {
+          data: "scope_candidate:m:0",
+        },
+        from: {
+          id: 123,
+          first_name: "Taro",
+        },
+        reply,
+      },
+      logger,
+      publicBaseUrl: "https://example.test",
+      topicsConfig,
+    });
+
+    expect(answerCallbackQuery).toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(
+      { error },
+      "Bot candidate callback handling failed"
+    );
+    expect(reply).toHaveBeenCalledWith(
+      "演習の作成中にエラーが発生しました。別の候補を選ぶか、時間をおいて再度お試しください。"
+    );
+  });
+
   it("replies with suggestions when AI fallback is unavailable", async () => {
     const parseScope = vi.fn().mockResolvedValue({
       matchedCategories: [],

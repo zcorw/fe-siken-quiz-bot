@@ -45,6 +45,7 @@ async function start(): Promise<void> {
             questionDb,
             topicsConfig: appConfig.topics,
           }),
+        logger: console,
         publicBaseUrl: env.publicBaseUrl,
         topicsConfig: appConfig.topics,
       }),

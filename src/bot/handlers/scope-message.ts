@@ -206,6 +206,7 @@ export interface CandidateScopeButtonPayload {
 export interface HandleScopeCandidateCallbackOptions {
   ctx: ScopeCandidateCallbackContext;
   createQuizSession: CreateQuizSessionFunction;
+  logger?: BotLogger;
   publicBaseUrl?: string;
   topicsConfig: AppConfig["topics"];
 }
@@ -228,6 +229,7 @@ export function buildCandidateScopeCallbackData(
 export async function handleScopeCandidateCallback({
   ctx,
   createQuizSession,
+  logger,
   publicBaseUrl,
   topicsConfig,
 }: HandleScopeCandidateCallbackOptions): Promise<void> {
@@ -269,19 +271,29 @@ export async function handleScopeCandidateCallback({
           suggestions: [],
         };
 
-  const session = await createQuizSession({
-    matchedScope,
-    rawScopeInput: candidate.name,
-    telegramUser:
-      ctx.from === undefined
-        ? undefined
-        : {
-            id: ctx.from.id,
-            firstName: ctx.from.first_name,
-            lastName: ctx.from.last_name,
-            username: ctx.from.username,
-          },
-  });
+  let session: { token: string };
+
+  try {
+    session = await createQuizSession({
+      matchedScope,
+      rawScopeInput: candidate.name,
+      telegramUser:
+        ctx.from === undefined
+          ? undefined
+          : {
+              id: ctx.from.id,
+              firstName: ctx.from.first_name,
+              lastName: ctx.from.last_name,
+              username: ctx.from.username,
+            },
+    });
+  } catch (error) {
+    logger?.error({ error }, "Bot candidate callback handling failed");
+    await ctx.reply(
+      "演習の作成中にエラーが発生しました。別の候補を選ぶか、時間をおいて再度お試しください。"
+    );
+    return;
+  }
 
   if (publicBaseUrl !== undefined) {
     const quizUrl = `${publicBaseUrl.replace(/\/$/, "")}/quiz/${session.token}`;
