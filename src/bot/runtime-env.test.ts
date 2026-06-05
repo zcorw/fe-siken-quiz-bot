@@ -12,6 +12,7 @@ describe("readBotRuntimeEnv", () => {
         BOT_HOST: "127.0.0.1",
         BOT_LOG_FILE: "/app/logs/bot.log",
         BOT_PORT: "3901",
+        TELEGRAM_AUTO_SET_WEBHOOK: "true",
         APP_CONFIG_PATH: "/app/config/app.yaml",
         OPENAI_API_KEY: "test-openai-key",
         PUBLIC_BASE_URL: "https://example.test",
@@ -22,6 +23,7 @@ describe("readBotRuntimeEnv", () => {
       })
     ).toEqual({
       appConfigPath: "/app/config/app.yaml",
+      autoSetWebhook: true,
       botLogFile: "/app/logs/bot.log",
       botToken: "123:test-token",
       headerSecret: "header-secret",
@@ -45,10 +47,25 @@ describe("readBotRuntimeEnv", () => {
         TELEGRAM_WEBHOOK_PATH_SECRET: "path-secret",
       })
     ).toMatchObject({
+      autoSetWebhook: false,
       host: "0.0.0.0",
       pathPrefix: "/telegram/webhook",
       port: 3001,
     });
+  });
+
+  it("rejects invalid auto webhook flag values", () => {
+    expect(() =>
+      readBotRuntimeEnv({
+        APP_CONFIG_PATH: "/app/config/app.yaml",
+        OPENAI_API_KEY: "test-openai-key",
+        PUBLIC_BASE_URL: "https://example.test",
+        TELEGRAM_AUTO_SET_WEBHOOK: "sometimes",
+        TELEGRAM_BOT_TOKEN: "123:test-token",
+        TELEGRAM_WEBHOOK_HEADER_SECRET: "header-secret",
+        TELEGRAM_WEBHOOK_PATH_SECRET: "path-secret",
+      })
+    ).toThrow("TELEGRAM_AUTO_SET_WEBHOOK must be true or false.");
   });
 
   it("rejects missing required secrets", () => {

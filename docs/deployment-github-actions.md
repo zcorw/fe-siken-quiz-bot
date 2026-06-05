@@ -87,11 +87,16 @@ TELEGRAM_BOT_TOKEN=replace-me
 TELEGRAM_WEBHOOK_PATH_SECRET=replace-me
 TELEGRAM_WEBHOOK_SECRET_TOKEN=replace-me
 TELEGRAM_WEBHOOK_HEADER_SECRET=replace-me
+TELEGRAM_AUTO_SET_WEBHOOK=true
 EDGE_HOST=127.0.0.1
 EDGE_PORT=3100
 ```
 
 The Docker Compose file sets container paths for `APP_CONFIG_PATH`, `APP_DB_PATH`, and `QUESTION_DB_PATH`.
+
+When `TELEGRAM_AUTO_SET_WEBHOOK=true`, the bot registers Telegram webhook on
+startup with `message` and `callback_query` updates enabled. This keeps inline
+scope selection buttons functional after deployment.
 
 The deployment script normalizes `.env` line endings before loading it, so files uploaded from Windows with CRLF line endings are accepted.
 

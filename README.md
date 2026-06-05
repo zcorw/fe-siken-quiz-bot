@@ -104,6 +104,9 @@ https://<your-public-url>/telegram/webhook/<TELEGRAM_WEBHOOK_PATH_SECRET>
 
 The request must include Telegram's `X-Telegram-Bot-Api-Secret-Token`, configured by `TELEGRAM_WEBHOOK_SECRET_TOKEN`.
 
+Production can set `TELEGRAM_AUTO_SET_WEBHOOK=true` so the bot registers its
+webhook on startup with both `message` and `callback_query` updates enabled.
+
 See [deploy/TELEGRAM_WEBHOOK.md](deploy/TELEGRAM_WEBHOOK.md) for webhook commands.
 
 ## Environment Files

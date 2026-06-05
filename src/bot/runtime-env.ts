@@ -2,6 +2,7 @@ type BotRuntimeEnvSource = Readonly<Record<string, string | undefined>>;
 
 export interface BotRuntimeEnv {
   appConfigPath: string;
+  autoSetWebhook: boolean;
   botLogFile?: string;
   botToken: string;
   headerSecret: string;
@@ -18,6 +19,7 @@ export function readBotRuntimeEnv(
 ): BotRuntimeEnv {
   return {
     appConfigPath: requiredEnv(env, "APP_CONFIG_PATH"),
+    autoSetWebhook: parseBooleanFlag(env.TELEGRAM_AUTO_SET_WEBHOOK),
     botLogFile: optionalEnv(env, "BOT_LOG_FILE"),
     botToken: requiredEnv(env, "TELEGRAM_BOT_TOKEN"),
     headerSecret: requiredEnv(
@@ -32,6 +34,22 @@ export function readBotRuntimeEnv(
     port: parsePort(env.BOT_PORT),
     publicBaseUrl: requiredEnv(env, "PUBLIC_BASE_URL"),
   };
+}
+
+function parseBooleanFlag(value: string | undefined): boolean {
+  if (value === undefined || value.trim() === "") {
+    return false;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true") {
+    return true;
+  }
+  if (normalized === "false") {
+    return false;
+  }
+
+  throw new Error("TELEGRAM_AUTO_SET_WEBHOOK must be true or false.");
 }
 
 function optionalEnv(

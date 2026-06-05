@@ -15,6 +15,7 @@ import { createQuizSessionFromScopeMessage } from "./quiz-session-factory";
 import { createTelegramWebhookServer } from "./server";
 import { createTelegramBot, initializeTelegramBot } from "./telegram-bot";
 import { readBotRuntimeEnv } from "./runtime-env";
+import { registerTelegramWebhook } from "./webhook-registration";
 
 async function start(): Promise<void> {
   loadRuntimeEnvFile();
@@ -109,6 +110,25 @@ async function start(): Promise<void> {
       },
       "Telegram webhook server listening"
     );
+
+    if (env.autoSetWebhook) {
+      registerTelegramWebhook({
+        api: bot.api,
+        headerSecret: env.headerSecret,
+        pathPrefix: env.pathPrefix,
+        pathSecret: env.pathSecret,
+        publicBaseUrl: env.publicBaseUrl,
+      })
+        .then(() => {
+          botLogger.info(
+            { allowedUpdates: ["message", "callback_query"] },
+            "Telegram webhook registered"
+          );
+        })
+        .catch((error: unknown) => {
+          botLogger.error({ error }, "Telegram webhook registration failed");
+        });
+    }
   });
 }
 
