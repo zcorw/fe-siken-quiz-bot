@@ -23,6 +23,8 @@ Default path:
     app.sqlite              # created by deployment if missing
   assets/
     fe-siken/
+  logs/
+    bot.log               # created by the bot container
 ```
 
 `app.sqlite` is initialized by Drizzle migrations when it does not already exist.
@@ -100,6 +102,13 @@ HOST_ENV_FILE=/opt/fe-quiz-bot/.env
 HOST_CONFIG_DIR=/opt/fe-quiz-bot/config
 HOST_DATA_DIR=/opt/fe-quiz-bot/data
 HOST_ASSETS_DIR=/opt/fe-quiz-bot/assets
+HOST_LOG_DIR=/opt/fe-quiz-bot/logs
+```
+
+The bot container writes JSON logs to both Docker stdout and the host file:
+
+```sh
+tail -f /opt/fe-quiz-bot/logs/bot.log
 ```
 
 ## First Deployment

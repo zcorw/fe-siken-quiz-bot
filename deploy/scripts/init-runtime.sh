@@ -7,6 +7,7 @@ ENV_FILE="${ENV_FILE:-${DEPLOY_ROOT}/.env}"
 HOST_CONFIG_DIR="${HOST_CONFIG_DIR:-${DEPLOY_ROOT}/config}"
 HOST_DATA_DIR="${HOST_DATA_DIR:-${DEPLOY_ROOT}/data}"
 HOST_ASSETS_DIR="${HOST_ASSETS_DIR:-${DEPLOY_ROOT}/assets}"
+HOST_LOG_DIR="${HOST_LOG_DIR:-${DEPLOY_ROOT}/logs}"
 
 log() {
   printf '[init-runtime] %s\n' "$*"
@@ -17,11 +18,12 @@ log "env file=${ENV_FILE}"
 log "config dir=${HOST_CONFIG_DIR}"
 log "data dir=${HOST_DATA_DIR}"
 log "assets dir=${HOST_ASSETS_DIR}"
+log "log dir=${HOST_LOG_DIR}"
 
 cd "${PROJECT_DIR}"
 
 log "creating runtime directories if missing"
-mkdir -p "${HOST_DATA_DIR}" "${HOST_ASSETS_DIR}" "${DEPLOY_ROOT}/backups" "${HOST_CONFIG_DIR}"
+mkdir -p "${HOST_DATA_DIR}" "${HOST_ASSETS_DIR}" "${HOST_LOG_DIR}" "${DEPLOY_ROOT}/backups" "${HOST_CONFIG_DIR}"
 
 missing=""
 
@@ -51,7 +53,7 @@ if [ ! -f "${HOST_DATA_DIR}/app.sqlite" ]; then
 fi
 
 log "ensuring app sqlite path is writable by the deployment user"
-chmod u+rwx "${HOST_DATA_DIR}"
+chmod u+rwx "${HOST_DATA_DIR}" "${HOST_LOG_DIR}"
 for sqlite_file in \
   "${HOST_DATA_DIR}/app.sqlite" \
   "${HOST_DATA_DIR}/app.sqlite-wal" \
@@ -68,5 +70,12 @@ if ! touch "${write_test_file}" 2>/dev/null; then
   exit 1
 fi
 rm -f "${write_test_file}"
+
+log_write_test_file="${HOST_LOG_DIR}/.write-test"
+if ! touch "${log_write_test_file}" 2>/dev/null; then
+  echo "Log directory is not writable by the deployment user: ${HOST_LOG_DIR}" >&2
+  exit 1
+fi
+rm -f "${log_write_test_file}"
 
 log "runtime files are present"

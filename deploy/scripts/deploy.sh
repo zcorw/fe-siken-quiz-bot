@@ -7,6 +7,7 @@ ENV_FILE="${ENV_FILE:-${DEPLOY_ROOT}/.env}"
 HOST_CONFIG_DIR="${HOST_CONFIG_DIR:-${DEPLOY_ROOT}/config}"
 HOST_DATA_DIR="${HOST_DATA_DIR:-${DEPLOY_ROOT}/data}"
 HOST_ASSETS_DIR="${HOST_ASSETS_DIR:-${DEPLOY_ROOT}/assets}"
+HOST_LOG_DIR="${HOST_LOG_DIR:-${DEPLOY_ROOT}/logs}"
 HOST_DEPLOY_DIR="${HOST_DEPLOY_DIR:-${PROJECT_DIR}/deploy}"
 BRANCH="${BRANCH:-main}"
 REPO_URL="${REPO_URL:-}"
@@ -49,6 +50,7 @@ log "env file=${ENV_FILE}"
 log "config dir=${HOST_CONFIG_DIR}"
 log "data dir=${HOST_DATA_DIR}"
 log "assets dir=${HOST_ASSETS_DIR}"
+log "log dir=${HOST_LOG_DIR}"
 log "deploy dir=${HOST_DEPLOY_DIR}"
 log "app run uid/gid=${APP_RUN_UID}:${APP_RUN_GID}"
 log "web image=${WEB_IMAGE}"
@@ -89,6 +91,7 @@ export HOST_ENV_FILE="${NORMALIZED_ENV_FILE}"
 export HOST_CONFIG_DIR
 export HOST_DATA_DIR
 export HOST_ASSETS_DIR
+export HOST_LOG_DIR
 export HOST_DEPLOY_DIR
 export APP_RUN_UID
 export APP_RUN_GID

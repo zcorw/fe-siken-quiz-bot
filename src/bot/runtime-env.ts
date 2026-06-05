@@ -2,6 +2,7 @@ type BotRuntimeEnvSource = Readonly<Record<string, string | undefined>>;
 
 export interface BotRuntimeEnv {
   appConfigPath: string;
+  botLogFile?: string;
   botToken: string;
   headerSecret: string;
   host: string;
@@ -17,6 +18,7 @@ export function readBotRuntimeEnv(
 ): BotRuntimeEnv {
   return {
     appConfigPath: requiredEnv(env, "APP_CONFIG_PATH"),
+    botLogFile: optionalEnv(env, "BOT_LOG_FILE"),
     botToken: requiredEnv(env, "TELEGRAM_BOT_TOKEN"),
     headerSecret: requiredEnv(
       env,
@@ -30,6 +32,15 @@ export function readBotRuntimeEnv(
     port: parsePort(env.BOT_PORT),
     publicBaseUrl: requiredEnv(env, "PUBLIC_BASE_URL"),
   };
+}
+
+function optionalEnv(
+  env: BotRuntimeEnvSource,
+  name: string
+): string | undefined {
+  const value = env[name]?.trim();
+
+  return value === "" ? undefined : value;
 }
 
 function requiredEnv(

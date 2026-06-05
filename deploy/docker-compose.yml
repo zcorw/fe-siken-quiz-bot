@@ -35,6 +35,7 @@ services:
     environment:
       APP_CONFIG_PATH: /app/config/app.yaml
       APP_DB_PATH: /app/data/app.sqlite
+      BOT_LOG_FILE: /app/logs/bot.log
       BOT_HOST: 0.0.0.0
       BOT_PORT: 3001
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -50,6 +51,7 @@ services:
       - ${HOST_ASSETS_DIR:-../assets}:/app/assets:ro
       - ${HOST_CONFIG_DIR:-../config}:/app/config:ro
       - ${HOST_DATA_DIR:-../data}:/app/data
+      - ${HOST_LOG_DIR:-../logs}:/app/logs
 
   migrate:
     image: ${MIGRATE_IMAGE}

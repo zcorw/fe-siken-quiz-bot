@@ -4,6 +4,7 @@ import { getMajorCategories, getMinorToMajorCategoryMap } from "@/config/schema"
 import { openAppDb } from "@/db/app/client";
 import { openQuestionBank } from "@/db/question-bank/client";
 import { listQuestionBankKeywords } from "@/db/question-bank/queries";
+import { createRuntimeLogger } from "@/lib/logger";
 
 import {
   handleScopeCandidateCallback,
@@ -18,6 +19,10 @@ import { readBotRuntimeEnv } from "./runtime-env";
 async function start(): Promise<void> {
   loadRuntimeEnvFile();
   const env = readBotRuntimeEnv();
+  const botLogger = createRuntimeLogger({
+    bindings: { component: "telegram-bot" },
+    logFilePath: env.botLogFile,
+  });
   const appConfig = await loadAppConfig(env.appConfigPath);
   const appDb = openAppDb();
   const questionDb = openQuestionBank();
@@ -45,7 +50,7 @@ async function start(): Promise<void> {
             questionDb,
             topicsConfig: appConfig.topics,
           }),
-        logger: console,
+        logger: botLogger,
         publicBaseUrl: env.publicBaseUrl,
         topicsConfig: appConfig.topics,
       }),
@@ -61,15 +66,16 @@ async function start(): Promise<void> {
             topicsConfig: appConfig.topics,
           }),
         logScopeParse: async ({ rawScopeInput, result }) => {
-          console.log(
-            JSON.stringify({
+          botLogger.info(
+            {
               event: "telegram.scope_parse",
               rawScopeInput,
               result,
-            })
+            },
+            "Telegram scope parse completed"
           );
         },
-        logger: console,
+        logger: botLogger,
         parseScope: (input) =>
           parseScope({
             aiConfig: appConfig.ai,
@@ -87,7 +93,7 @@ async function start(): Promise<void> {
   const server = createTelegramWebhookServer({
     bot,
     headerSecret: env.headerSecret,
-    logger: console,
+    logger: botLogger,
     pathPrefix: env.pathPrefix,
     pathSecret: env.pathSecret,
   });
@@ -95,8 +101,13 @@ async function start(): Promise<void> {
   await initializeTelegramBot(bot);
 
   server.listen(env.port, env.host, () => {
-    console.log(
-      `Telegram webhook server listening on ${env.host}:${env.port}${env.pathPrefix}/${env.pathSecret}`
+    botLogger.info(
+      {
+        host: env.host,
+        pathPrefix: env.pathPrefix,
+        port: env.port,
+      },
+      "Telegram webhook server listening"
     );
   });
 }

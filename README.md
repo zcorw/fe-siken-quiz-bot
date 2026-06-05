@@ -148,10 +148,17 @@ Production VPS runtime layout:
   data/fe_siken_questions.sqlite
   data/app.sqlite
   assets/fe-siken/
+  logs/bot.log         Bot JSON log file mirrored from container stdout
   app/                 Git checkout
 ```
 
 Deployment details are in [docs/deployment-github-actions.md](docs/deployment-github-actions.md).
+
+Bot runtime logs are also written to the VPS host:
+
+```bash
+tail -f /opt/fe-quiz-bot/logs/bot.log
+```
 
 ## GitHub Actions Deployment
 

@@ -10,6 +10,7 @@ describe("readBotRuntimeEnv", () => {
     expect(
       readBotRuntimeEnv({
         BOT_HOST: "127.0.0.1",
+        BOT_LOG_FILE: "/app/logs/bot.log",
         BOT_PORT: "3901",
         APP_CONFIG_PATH: "/app/config/app.yaml",
         OPENAI_API_KEY: "test-openai-key",
@@ -21,6 +22,7 @@ describe("readBotRuntimeEnv", () => {
       })
     ).toEqual({
       appConfigPath: "/app/config/app.yaml",
+      botLogFile: "/app/logs/bot.log",
       botToken: "123:test-token",
       headerSecret: "header-secret",
       host: "127.0.0.1",
