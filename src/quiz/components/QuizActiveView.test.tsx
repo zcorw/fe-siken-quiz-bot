@@ -33,6 +33,19 @@ describe("QuizActiveView", () => {
     localStorage.clear();
   });
 
+  it("shows the current question source link while answering", () => {
+    render(<QuizActiveView quiz={quiz} />);
+
+    expect(
+      screen.getByRole("link", {
+        name: /https:\/\/www\.fe-siken\.com\/kakomon\/sample\/q1\.html/,
+      })
+    ).toHaveAttribute(
+      "href",
+      "https://www.fe-siken.com/kakomon/sample/q1.html"
+    );
+  });
+
   it("selects an answer, updates progress, and moves to the next question", () => {
     render(<QuizActiveView quiz={quiz} />);
 

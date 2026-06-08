@@ -4,6 +4,7 @@ import { QuestionContent } from "./QuestionContent";
 
 const labels = {
   category: "\u60c5\u5831\u30bb\u30ad\u30e5\u30ea\u30c6\u30a3",
+  source: "\u51fa\u5178",
   important: "\u96fb\u5b50\u7f72\u540d",
   imageAlt: "\u56f3\u8868",
   fallback:
@@ -33,6 +34,25 @@ describe("QuestionContent", () => {
     render(<QuestionContent category={null} questionText={null} />);
 
     expect(screen.getByText(labels.fallback)).toBeInTheDocument();
+  });
+
+  it("renders the source link when a question URL is provided", () => {
+    render(
+      <QuestionContent
+        category={labels.category}
+        questionText={labels.body}
+        sourceUrl="https://www.fe-siken.com/kakomon/sample/q1.html"
+      />
+    );
+
+    const link = screen.getByRole("link", {
+      name: `${labels.source}: https://www.fe-siken.com/kakomon/sample/q1.html`,
+    });
+
+    expect(link).toHaveAttribute(
+      "href",
+      "https://www.fe-siken.com/kakomon/sample/q1.html"
+    );
   });
 
   it("shows an alt and filename placeholder when an image fails to load", () => {

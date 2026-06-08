@@ -83,6 +83,7 @@ export function QuizActiveView({ onSubmitAnswers, quiz }: QuizActiveViewProps) {
         <QuestionContent
           category={null}
           questionText={currentQuestion?.questionText ?? null}
+          sourceUrl={currentQuestion?.questionUrl ?? null}
         />
         <div className="space-y-3">
           {currentQuestion?.choices.map((choice) => (

@@ -5,6 +5,7 @@ import { MarkdownContent } from "./MarkdownContent";
 type QuestionContentProps = {
   category: string | null;
   questionText: string | null;
+  sourceUrl?: string | null;
 };
 
 const fallbackText =
@@ -13,6 +14,7 @@ const fallbackText =
 export function QuestionContent({
   category,
   questionText,
+  sourceUrl,
 }: QuestionContentProps) {
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -29,6 +31,18 @@ export function QuestionContent({
       ) : (
         <p className="text-slate-600">{fallbackText}</p>
       )}
+      {sourceUrl ? (
+        <p className="mt-5 border-t border-slate-100 pt-4 text-sm text-slate-500">
+          <a
+            className="break-all text-blue-600 underline-offset-2 hover:underline"
+            href={sourceUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {"\u51fa\u5178"}: {sourceUrl}
+          </a>
+        </p>
+      ) : null}
     </article>
   );
 }
