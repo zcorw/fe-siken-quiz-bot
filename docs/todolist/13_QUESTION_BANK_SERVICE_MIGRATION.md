@@ -154,7 +154,7 @@ http://127.0.0.1:8124/health -> {"ok":true,"database":"ready","readOnly":true}
   Verify: Playwright or component test renders an image-backed question without
   broken image URLs.
 
-- [ ] T010 [P1] Run full regression and cutover checklist
+- [x] T010 [P1] Run full regression and cutover checklist
   Goal: HTTP mode is ready for staging or production.
   Notes: Run all standard checks and a manual health/cutover checklist.
   Likely files/modules: N/A.
