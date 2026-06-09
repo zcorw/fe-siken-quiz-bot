@@ -1,5 +1,5 @@
 import { openAppDb } from "@/db/app/client";
-import { openQuestionBank } from "@/db/question-bank/client";
+import { createQuestionBankProvider } from "@/db/question-bank/provider-factory";
 import { ApiError, jsonError, jsonSuccess } from "@/lib/api-response";
 import {
   consumeRateLimit,
@@ -29,7 +29,7 @@ export async function POST(
 ): Promise<Response> {
   const { token } = await context.params;
   const appDb = openAppDb();
-  const questionDb = openQuestionBank();
+  const questionBankProvider = createQuestionBankProvider();
 
   try {
     const clientIp = getClientIp(request);
@@ -39,7 +39,7 @@ export async function POST(
     return jsonSuccess(
       await submitQuizByToken({
         appDb: appDb.db,
-        questionDb,
+        questionBankProvider,
         token,
         request: await request.json(),
         submittedAt: new Date().toISOString(),
@@ -59,7 +59,7 @@ export async function POST(
     );
   } finally {
     appDb.close();
-    questionDb.close();
+    questionBankProvider.close?.();
   }
 }
 

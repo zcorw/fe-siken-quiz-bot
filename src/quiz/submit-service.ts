@@ -4,7 +4,8 @@ import { asc, eq } from "drizzle-orm";
 import type { AppDrizzleDb } from "@/db/app/client";
 import { submitQuizSession } from "@/db/app/repositories/quiz-sessions";
 import { quizSessionQuestions, quizSessions } from "@/db/app/schema";
-import { getQuestionDetail } from "@/db/question-bank/queries";
+import type { QuestionBankProvider } from "@/db/question-bank/provider";
+import { SqliteQuestionBankProvider } from "@/db/question-bank/sqlite-provider";
 import { ApiError } from "@/lib/api-response";
 import {
   submitQuizRequestSchema,
@@ -15,7 +16,8 @@ import { loadQuizByToken } from "./quiz-service";
 
 export interface ValidateSubmitQuizRequestInput {
   appDb: AppDrizzleDb;
-  questionDb: Database.Database;
+  questionBankProvider?: QuestionBankProvider;
+  questionDb?: Database.Database;
   token: string;
   request: unknown;
   nowIso: string;
@@ -23,7 +25,8 @@ export interface ValidateSubmitQuizRequestInput {
 
 export interface SubmitQuizByTokenInput {
   appDb: AppDrizzleDb;
-  questionDb: Database.Database;
+  questionBankProvider?: QuestionBankProvider;
+  questionDb?: Database.Database;
   token: string;
   request: unknown;
   submittedAt: string;
@@ -40,14 +43,17 @@ export interface ValidatedSubmitQuizRequest {
 
 export async function submitQuizByToken({
   appDb,
+  questionBankProvider,
   questionDb,
   token,
   request,
   submittedAt,
 }: SubmitQuizByTokenInput): Promise<SubmittedQuizResponseDto> {
+  const provider =
+    questionBankProvider ?? createSqliteProviderFromLegacyInput(questionDb);
   const existingResponse = await loadQuizByToken({
     appDb,
-    questionDb,
+    questionBankProvider: provider,
     token,
     nowIso: submittedAt,
   });
@@ -58,7 +64,7 @@ export async function submitQuizByToken({
 
   const validated = await validateSubmitQuizRequest({
     appDb,
-    questionDb,
+    questionBankProvider: provider,
     token,
     request,
     nowIso: submittedAt,
@@ -72,7 +78,7 @@ export async function submitQuizByToken({
 
   const response = await loadQuizByToken({
     appDb,
-    questionDb,
+    questionBankProvider: provider,
     token,
     nowIso: submittedAt,
   });
@@ -86,11 +92,14 @@ export async function submitQuizByToken({
 
 export async function validateSubmitQuizRequest({
   appDb,
+  questionBankProvider,
   questionDb,
   token,
   request,
   nowIso,
 }: ValidateSubmitQuizRequestInput): Promise<ValidatedSubmitQuizRequest> {
+  const provider =
+    questionBankProvider ?? createSqliteProviderFromLegacyInput(questionDb);
   const parsedRequest = parseSubmitRequest(request);
   const [session] = await appDb
     .select()
@@ -125,6 +134,7 @@ export async function validateSubmitQuizRequest({
   const sessionQuestionsByIndex = new Map(
     sessionQuestions.map((question) => [question.questionIndex, question])
   );
+  const detailsByUrl = await loadDetailsByUrl(provider, sessionQuestions);
 
   const submittedIndexes = new Set(
     parsedRequest.answers.map((answer) => answer.questionIndex)
@@ -153,7 +163,7 @@ export async function validateSubmitQuizRequest({
         );
       }
 
-      const detail = getQuestionDetail(questionDb, sessionQuestion.questionUrl);
+      const detail = detailsByUrl.get(sessionQuestion.questionUrl) ?? null;
 
       if (detail === null || detail.answer === null) {
         throw new ApiError(
@@ -180,6 +190,33 @@ export async function validateSubmitQuizRequest({
       };
     }),
   };
+}
+
+function createSqliteProviderFromLegacyInput(
+  questionDb: Database.Database | undefined
+): QuestionBankProvider {
+  if (questionDb === undefined) {
+    throw new ApiError(
+      "QUIZ_LOAD_FAILED",
+      500,
+      "Question bank provider is required."
+    );
+  }
+
+  return new SqliteQuestionBankProvider({ db: questionDb });
+}
+
+async function loadDetailsByUrl(
+  provider: QuestionBankProvider,
+  sessionQuestions: Array<{ questionUrl: string }>
+) {
+  const urls = sessionQuestions.map((sessionQuestion) => sessionQuestion.questionUrl);
+  const details = await provider.getDetailsByUrls(urls, {
+    includeAnswer: true,
+    includeExplanation: true,
+  });
+
+  return new Map(details.map((detail) => [detail.questionUrl, detail]));
 }
 
 function parseSubmitRequest(request: unknown): SubmitQuizRequestDto {

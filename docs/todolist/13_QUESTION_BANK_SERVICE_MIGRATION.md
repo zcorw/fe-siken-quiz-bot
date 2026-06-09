@@ -109,7 +109,7 @@ http://127.0.0.1:8124/health -> {"ok":true,"database":"ready","readOnly":true}
   Verify: Route unit/integration tests pass; add an assertion that active quiz
   details can come from an HTTP provider mock.
 
-- [ ] T006 [P0] Migrate quiz submission to provider batch details
+- [x] T006 [P0] Migrate quiz submission to provider batch details
   Goal: `POST /api/quiz/[token]/submit` grades answers using provider-loaded
   details.
   Notes: Use `provider.getDetailsByUrls(urls, { includeAnswer: true,
