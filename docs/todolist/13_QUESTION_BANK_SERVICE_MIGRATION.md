@@ -73,7 +73,7 @@ http://127.0.0.1:8124/health -> {"ok":true,"database":"ready","readOnly":true}
   Verify: Tests assert SQLite provider returns the same shapes as existing query
   tests.
 
-- [ ] T003 [P0] Migrate bot startup keyword loading to provider
+- [x] T003 [P0] Migrate bot startup keyword loading to provider
   Goal: Bot initialization no longer imports or opens the question SQLite file
   directly.
   Notes: Replace `openQuestionBank()` + `listQuestionBankKeywords(questionDb)`
