@@ -9,6 +9,7 @@ import {
   createQuestionBankFixture,
 } from "@/test/integration-fixtures";
 import { createQuizSessionFromScopeMessage } from "@/bot/quiz-session-factory";
+import { SqliteQuestionBankProvider } from "@/db/question-bank/sqlite-provider";
 import { GET } from "./route";
 
 const originalAppDbPath = process.env.APP_DB_PATH;
@@ -46,7 +47,7 @@ describe("GET /api/quiz/[token] integration", () => {
         suggestions: [],
       },
       nowIso: "2026-05-31T00:00:00.000Z",
-      questionDb,
+      questionBankProvider: new SqliteQuestionBankProvider({ db: questionDb }),
       rawScopeInput: "\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9",
       telegramUser: { id: 12345, username: "taro_db" },
       tokenFactory: () => "token-active",
@@ -101,7 +102,7 @@ describe("GET /api/quiz/[token] integration", () => {
         suggestions: [],
       },
       nowIso: "2000-01-01T00:00:00.000Z",
-      questionDb,
+      questionBankProvider: new SqliteQuestionBankProvider({ db: questionDb }),
       rawScopeInput: "\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9",
       telegramUser: { id: 12345, username: "taro_db" },
       tokenFactory: () => "token-expired",

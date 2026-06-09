@@ -50,7 +50,7 @@ export function readQuestionBankProviderConfig(
 }
 
 export function createQuestionBankProvider(
-  options: CreateQuestionBankProviderOptions
+  options: CreateQuestionBankProviderOptions = {}
 ): QuestionBankProvider {
   const config = readQuestionBankProviderConfig(options.env);
 

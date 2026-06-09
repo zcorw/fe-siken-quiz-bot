@@ -2,9 +2,7 @@ import { createOpenAIScopeClient, parseScope } from "@/ai/scope-parser";
 import { loadAppConfig } from "@/config/app-config";
 import { getMajorCategories, getMinorToMajorCategoryMap } from "@/config/schema";
 import { openAppDb } from "@/db/app/client";
-import { openQuestionBank } from "@/db/question-bank/client";
 import { createQuestionBankProvider } from "@/db/question-bank/provider-factory";
-import { SqliteQuestionBankProvider } from "@/db/question-bank/sqlite-provider";
 import { createRuntimeLogger } from "@/lib/logger";
 
 import {
@@ -27,10 +25,7 @@ async function start(): Promise<void> {
   });
   const appConfig = await loadAppConfig(env.appConfigPath);
   const appDb = openAppDb();
-  const questionDb = openQuestionBank();
-  const questionBankProvider = createQuestionBankProvider({
-    createSqliteProvider: () => new SqliteQuestionBankProvider({ db: questionDb }),
-  });
+  const questionBankProvider = createQuestionBankProvider();
   const questionBankKeywords = await questionBankProvider.listKeywords();
   const openAiClient = createOpenAIScopeClient(env.openAiApiKey);
   const availableScope = {
@@ -52,7 +47,7 @@ async function start(): Promise<void> {
             ...input,
             appDb: appDb.db,
             nowIso: new Date().toISOString(),
-            questionDb,
+            questionBankProvider,
             topicsConfig: appConfig.topics,
           }),
         logger: botLogger,
@@ -67,7 +62,7 @@ async function start(): Promise<void> {
             ...input,
             appDb: appDb.db,
             nowIso: new Date().toISOString(),
-            questionDb,
+            questionBankProvider,
             topicsConfig: appConfig.topics,
           }),
         logScopeParse: async ({ rawScopeInput, result }) => {

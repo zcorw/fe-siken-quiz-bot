@@ -85,7 +85,7 @@ http://127.0.0.1:8124/health -> {"ok":true,"database":"ready","readOnly":true}
   Verify: Bot startup tests pass in SQLite mode and HTTP mode with a mocked
   provider/service response.
 
-- [ ] T004 [P0] Migrate quiz session creation to provider candidates
+- [x] T004 [P0] Migrate quiz session creation to provider candidates
   Goal: Telegram-created quizzes select candidates through
   `QuestionBankProvider.findCandidates`.
   Notes: Refactor `quiz-session-factory` so selection logic consumes provider

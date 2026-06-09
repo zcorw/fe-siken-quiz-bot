@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import type Database from "better-sqlite3";
 
 import type { AppDrizzleDb } from "@/db/app/client";
 import {
@@ -7,10 +6,8 @@ import {
   findUserQuestionStatsByUrls,
 } from "@/db/app/repositories/quiz-sessions";
 import { upsertTelegramUser } from "@/db/app/repositories/users";
-import {
-  findQuestionCandidates,
-  type QuestionCandidateRow,
-} from "@/db/question-bank/queries";
+import type { QuestionBankProvider } from "@/db/question-bank/provider";
+import type { QuestionCandidateRow } from "@/db/question-bank/queries";
 import type { ScopeParseResult } from "@/quiz/scope-match";
 import { getMinorToMajorCategoryMap, type AppConfig } from "@/config/schema";
 import {
@@ -27,7 +24,7 @@ export interface TelegramUserInput {
 
 export interface CreateQuizSessionFromScopeMessageInput {
   appDb: AppDrizzleDb;
-  questionDb: Database.Database;
+  questionBankProvider: QuestionBankProvider;
   rawScopeInput: string;
   matchedScope: ScopeParseResult;
   telegramUser?: TelegramUserInput;
@@ -42,7 +39,7 @@ export async function createQuizSessionFromScopeMessage({
   appDb,
   matchedScope,
   nowIso,
-  questionDb,
+  questionBankProvider,
   rawScopeInput,
   selectionSeedFactory = randomUUID,
   sessionIdFactory = randomUUID,
@@ -69,7 +66,7 @@ export async function createQuizSessionFromScopeMessage({
   const matchedCategory =
     matchedScope.minorCategory ?? matchedScope.matchedCategories[0];
   const selectionSeed = selectionSeedFactory();
-  const selection = await resolveQuestionSelection(appDb, questionDb, {
+  const selection = await resolveQuestionSelection(appDb, questionBankProvider, {
     candidateMinorCategories: matchedScope.candidateMinorCategories,
     majorCategory: matchedScope.majorCategory,
     matchedCategory,
@@ -162,7 +159,7 @@ interface QuestionSelection {
 
 async function resolveQuestionSelection(
   appDb: AppDrizzleDb,
-  questionDb: Database.Database,
+  questionBankProvider: QuestionBankProvider,
   {
     matchedCategory,
     matchedTopic,
@@ -184,7 +181,7 @@ async function resolveQuestionSelection(
   }
 ): Promise<QuestionSelection> {
   if (minorCategory !== undefined) {
-    return resolveMinorCategorySelection(appDb, questionDb, {
+    return resolveMinorCategorySelection(appDb, questionBankProvider, {
       majorCategory,
       minorCategory,
       selectionSeed,
@@ -201,7 +198,7 @@ async function resolveQuestionSelection(
       candidates: await selectWeightedCandidates(
         appDb,
         userId,
-        findQuestionCandidates(questionDb, {
+        await questionBankProvider.findCandidates({
           categories: candidateMinorCategories,
         }),
         20,
@@ -211,7 +208,7 @@ async function resolveQuestionSelection(
     };
   }
 
-  const directCandidates = findQuestionCandidates(questionDb, {
+  const directCandidates = await questionBankProvider.findCandidates({
     category: matchedCategory,
     topic: matchedTopic,
   });
@@ -229,7 +226,7 @@ async function resolveQuestionSelection(
     };
   }
 
-  const mappedCandidates = findQuestionCandidates(questionDb).filter(
+  const mappedCandidates = (await questionBankProvider.findCandidates()).filter(
     (candidate) =>
       mapsToStandardTopic(candidate.category, matchedTopic, topicsConfig) ||
       mapsToStandardTopic(candidate.topic, matchedTopic, topicsConfig)
@@ -249,7 +246,7 @@ async function resolveQuestionSelection(
 
 async function resolveMinorCategorySelection(
   appDb: AppDrizzleDb,
-  questionDb: Database.Database,
+  questionBankProvider: QuestionBankProvider,
   {
     majorCategory,
     minorCategory,
@@ -264,7 +261,7 @@ async function resolveMinorCategorySelection(
     userId: string;
   }
 ): Promise<QuestionSelection> {
-  const primaryCandidates = findQuestionCandidates(questionDb, {
+  const primaryCandidates = await questionBankProvider.findCandidates({
     categories: [minorCategory],
   });
   const siblingMinorCategories =
@@ -288,9 +285,10 @@ async function resolveMinorCategorySelection(
     const remainingPrimaryCandidates = primaryCandidates.filter(
       (candidate) => !requestedUrls.has(candidate.url)
     );
-    const siblingReinforcementCandidates = findQuestionCandidates(questionDb, {
-      categories: siblingMinorCategories,
-    });
+    const siblingReinforcementCandidates =
+      await questionBankProvider.findCandidates({
+        categories: siblingMinorCategories,
+      });
     const reinforcementCandidates = await selectWeightedCandidates(
       appDb,
       userId,
@@ -305,7 +303,7 @@ async function resolveMinorCategorySelection(
     };
   }
 
-  const siblingCandidates = findQuestionCandidates(questionDb, {
+  const siblingCandidates = await questionBankProvider.findCandidates({
     categories: siblingMinorCategories,
   });
   const weightedPrimaryCandidates = await selectWeightedCandidates(
