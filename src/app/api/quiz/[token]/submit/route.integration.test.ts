@@ -1,7 +1,7 @@
 /**
  * @vitest-environment node
  */
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   answerRecords,
@@ -20,7 +20,13 @@ const originalAppDbPath = process.env.APP_DB_PATH;
 const originalQuestionDbPath = process.env.QUESTION_DB_PATH;
 
 describe("POST /api/quiz/[token]/submit integration", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-31T01:30:00.000Z"));
+  });
+
   afterEach(async () => {
+    vi.useRealTimers();
     process.env.APP_DB_PATH = originalAppDbPath;
     process.env.QUESTION_DB_PATH = originalQuestionDbPath;
     await cleanupIntegrationFixtures();
