@@ -38,8 +38,24 @@ interface RuntimeDetail {
   answer?: string | null;
   explanation?: string | null;
   hasImages: boolean;
-  images: QuestionDetail["images"];
+  images: RuntimeImageReference[];
   fetchedAt: string | null;
+}
+
+interface RuntimeImageReference {
+  section?: string | null;
+  choiceLabel?: string | null;
+  choice_label?: string | null;
+  url?: string | null;
+  localPath?: string | null;
+  local_path?: string | null;
+  publicPath?: string | null;
+  public_path?: string | null;
+  alt?: string | null;
+  width?: string | null;
+  height?: string | null;
+  orderIndex?: number | null;
+  order_index?: number | null;
 }
 
 export class HttpQuestionBankProvider implements QuestionBankProvider {
@@ -156,7 +172,23 @@ function mapDetail(detail: RuntimeDetail): QuestionDetail {
     answer: detail.answer ?? null,
     explanation: detail.explanation ?? null,
     hasImages: detail.hasImages,
-    images: detail.images,
+    images: detail.images.map(mapImageReference),
     fetchedAt: detail.fetchedAt,
+  };
+}
+
+function mapImageReference(
+  image: RuntimeImageReference
+): QuestionDetail["images"][number] {
+  return {
+    alt: image.alt,
+    choiceLabel: image.choiceLabel ?? image.choice_label,
+    height: image.height,
+    localPath: image.localPath ?? image.local_path,
+    orderIndex: image.orderIndex ?? image.order_index,
+    publicPath: image.publicPath ?? image.public_path,
+    section: image.section,
+    url: image.url,
+    width: image.width,
   };
 }

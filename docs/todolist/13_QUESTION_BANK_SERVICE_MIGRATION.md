@@ -142,7 +142,7 @@ http://127.0.0.1:8124/health -> {"ok":true,"database":"ready","readOnly":true}
   Depends on: T007.
   Verify: Docs include staging cutover, production cutover, and rollback steps.
 
-- [ ] T009 [P1] Verify asset path behavior in HTTP mode
+- [x] T009 [P1] Verify asset path behavior in HTTP mode
   Goal: Quiz pages still render question images after question details come from
   the service.
   Notes: Identify whether FE-Test will serve existing static assets, mount the

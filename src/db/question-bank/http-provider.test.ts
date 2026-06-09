@@ -90,6 +90,57 @@ describe("HttpQuestionBankProvider", () => {
       provider.getDetailsByUrls(["https://example.test/q2"], { includeAnswer: true })
     ).resolves.toMatchObject([{ questionUrl: "https://example.test/q2", answer: "ア" }]);
   });
+
+  it("maps runtime image metadata to frontend asset paths", async () => {
+    const fetchMock = vi.fn(async () =>
+      jsonResponse({
+        questionId: 1,
+        questionUrl: "https://example.test/q-image",
+        sourceUrl: "https://example.test/q-image",
+        questionText:
+          "Question with image\n\n![diagram](/assets/fe-siken/r7/q1/diagram.png)",
+        choices: [],
+        hasImages: true,
+        images: [
+          {
+            section: "question",
+            choice_label: null,
+            url: "https://example.test/diagram.png",
+            local_path: "docs/assets/fe-siken/r7/q1/diagram.png",
+            public_path: "/assets/fe-siken/r7/q1/diagram.png",
+            alt: "diagram",
+            width: "640",
+            height: "320",
+            order_index: 0,
+          },
+        ],
+        fetchedAt: "2026-01-02",
+      })
+    );
+    const provider = new HttpQuestionBankProvider({
+      baseUrl: "https://question-bank.test",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(
+      provider.getDetailByUrl("https://example.test/q-image")
+    ).resolves.toMatchObject({
+      hasImages: true,
+      images: [
+        {
+          alt: "diagram",
+          height: "320",
+          localPath: "docs/assets/fe-siken/r7/q1/diagram.png",
+          orderIndex: 0,
+          publicPath: "/assets/fe-siken/r7/q1/diagram.png",
+          section: "question",
+          width: "640",
+        },
+      ],
+      questionText:
+        "Question with image\n\n![diagram](/assets/fe-siken/r7/q1/diagram.png)",
+    });
+  });
 });
 
 function jsonResponse(body: unknown): Response {
