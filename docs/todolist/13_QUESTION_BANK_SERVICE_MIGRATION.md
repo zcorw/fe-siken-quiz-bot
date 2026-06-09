@@ -134,7 +134,7 @@ http://127.0.0.1:8124/health -> {"ok":true,"database":"ready","readOnly":true}
   submit flow work against `http://127.0.0.1:8124`.
   Command: `RUN_QUESTION_BANK_HTTP_SMOKE=1 QUESTION_BANK_SERVICE_URL=http://127.0.0.1:8124 pnpm vitest run src/quiz/http-mode-smoke.integration.test.ts`.
 
-- [ ] T008 [P1] Document runtime environment and rollback
+- [x] T008 [P1] Document runtime environment and rollback
   Goal: Operators know how to deploy HTTP mode and return to SQLite mode.
   Notes: Update env examples and deployment docs with `QUESTION_BANK_MODE=http`,
   `QUESTION_BANK_SERVICE_URL`, SQLite rollback values, and service health check.

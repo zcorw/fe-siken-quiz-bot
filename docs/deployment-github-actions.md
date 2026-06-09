@@ -90,9 +90,53 @@ TELEGRAM_WEBHOOK_HEADER_SECRET=replace-me
 TELEGRAM_AUTO_SET_WEBHOOK=true
 EDGE_HOST=127.0.0.1
 EDGE_PORT=3100
+QUESTION_BANK_MODE=sqlite
+# QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000
 ```
 
 The Docker Compose file sets container paths for `APP_CONFIG_PATH`, `APP_DB_PATH`, and `QUESTION_DB_PATH`.
+
+### Question Bank Runtime Cutover
+
+Default and rollback mode:
+
+```env
+QUESTION_BANK_MODE=sqlite
+QUESTION_DB_PATH=/app/data/fe_siken_questions.sqlite
+```
+
+Staging HTTP mode:
+
+```env
+QUESTION_BANK_MODE=http
+QUESTION_BANK_SERVICE_URL=http://127.0.0.1:8124
+```
+
+Production HTTP mode should point at the separately deployed FE Question Bank
+Service Runtime API from inside the Docker network or from the VPS host:
+
+```env
+QUESTION_BANK_MODE=http
+QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000
+```
+
+Before production cutover, verify the service health endpoint:
+
+```sh
+curl -fsS "$QUESTION_BANK_SERVICE_URL/health"
+```
+
+Then run the opt-in HTTP flow smoke test from the app checkout:
+
+```sh
+RUN_QUESTION_BANK_HTTP_SMOKE=1 \
+QUESTION_BANK_SERVICE_URL="$QUESTION_BANK_SERVICE_URL" \
+pnpm vitest run src/quiz/http-mode-smoke.integration.test.ts
+```
+
+Rollback does not require an app database migration. Set
+`QUESTION_BANK_MODE=sqlite`, ensure `data/fe_siken_questions.sqlite` is mounted,
+and redeploy or restart `web` and `bot`.
 
 When `TELEGRAM_AUTO_SET_WEBHOOK=true`, the bot registers Telegram webhook on
 startup with `message` and `callback_query` updates enabled. This keeps inline

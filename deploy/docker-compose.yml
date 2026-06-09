@@ -19,6 +19,8 @@ services:
     environment:
       APP_CONFIG_PATH: /app/config/app.yaml
       APP_DB_PATH: /app/data/app.sqlite
+      QUESTION_BANK_MODE: ${QUESTION_BANK_MODE:-sqlite}
+      QUESTION_BANK_SERVICE_URL: ${QUESTION_BANK_SERVICE_URL:-}
       QUESTION_DB_PATH: /app/data/fe_siken_questions.sqlite
     restart: unless-stopped
     volumes:
@@ -39,6 +41,8 @@ services:
       BOT_HOST: 0.0.0.0
       BOT_PORT: 3001
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      QUESTION_BANK_MODE: ${QUESTION_BANK_MODE:-sqlite}
+      QUESTION_BANK_SERVICE_URL: ${QUESTION_BANK_SERVICE_URL:-}
       QUESTION_DB_PATH: /app/data/fe_siken_questions.sqlite
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
@@ -63,6 +67,8 @@ services:
     environment:
       APP_CONFIG_PATH: /app/config/app.yaml
       APP_DB_PATH: /app/data/app.sqlite
+      QUESTION_BANK_MODE: ${QUESTION_BANK_MODE:-sqlite}
+      QUESTION_BANK_SERVICE_URL: ${QUESTION_BANK_SERVICE_URL:-}
       QUESTION_DB_PATH: /app/data/fe_siken_questions.sqlite
     profiles:
       - tools
