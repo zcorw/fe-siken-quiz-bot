@@ -61,7 +61,7 @@ http://127.0.0.1:8124/health -> {"ok":true,"database":"ready","readOnly":true}
   Verify: Unit tests cover sqlite default, http mode, missing service URL, and
   unsupported mode.
 
-- [ ] T002 [P0] Wrap current SQLite queries in a provider implementation
+- [x] T002 [P0] Wrap current SQLite queries in a provider implementation
   Goal: Existing SQLite behavior is available through the same provider
   interface as HTTP mode.
   Notes: Implement `SqliteQuestionBankProvider` by delegating to

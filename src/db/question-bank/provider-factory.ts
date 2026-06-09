@@ -1,6 +1,7 @@
-import { resolveQuestionBankPath } from "./client";
+import { openQuestionBank, resolveQuestionBankPath } from "./client";
 import { HttpQuestionBankProvider } from "./http-provider";
 import type { QuestionBankProvider } from "./provider";
+import { SqliteQuestionBankProvider } from "./sqlite-provider";
 
 type QuestionBankProviderEnv = Readonly<Record<string, string | undefined>>;
 
@@ -16,7 +17,7 @@ export type QuestionBankProviderConfig =
 
 export interface CreateQuestionBankProviderOptions {
   env?: QuestionBankProviderEnv;
-  createSqliteProvider: (options: { path: string }) => QuestionBankProvider;
+  createSqliteProvider?: (options: { path: string }) => QuestionBankProvider;
 }
 
 export function readQuestionBankProviderConfig(
@@ -57,5 +58,10 @@ export function createQuestionBankProvider(
     return new HttpQuestionBankProvider({ baseUrl: config.serviceUrl });
   }
 
-  return options.createSqliteProvider({ path: config.sqlitePath });
+  return (
+    options.createSqliteProvider?.({ path: config.sqlitePath }) ??
+    new SqliteQuestionBankProvider({
+      db: openQuestionBank({ path: config.sqlitePath }),
+    })
+  );
 }
