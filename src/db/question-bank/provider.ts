@@ -11,6 +11,7 @@ export interface DetailOptions {
 }
 
 export interface QuestionBankProvider {
+  close?(): void;
   listKeywords(): Promise<QuestionBankKeywords>;
   findCandidates(filters?: QuestionCandidateFilters): Promise<QuestionCandidateRow[]>;
   getDetailByUrl(url: string, options?: DetailOptions): Promise<QuestionDetail | null>;

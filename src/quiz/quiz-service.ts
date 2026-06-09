@@ -7,7 +7,8 @@ import {
   quizSessionQuestions,
   quizSessions,
 } from "@/db/app/schema";
-import { getQuestionDetail } from "@/db/question-bank/queries";
+import type { QuestionBankProvider } from "@/db/question-bank/provider";
+import { SqliteQuestionBankProvider } from "@/db/question-bank/sqlite-provider";
 import { ApiError } from "@/lib/api-response";
 import {
   selectionSummaryDtoSchema,
@@ -17,19 +18,23 @@ import {
 
 export interface LoadQuizByTokenInput {
   appDb: AppDrizzleDb;
-  questionDb: Database.Database;
+  questionBankProvider?: QuestionBankProvider;
+  questionDb?: Database.Database;
   token: string;
   nowIso: string;
 }
 
 export async function loadQuizByToken({
   appDb,
+  questionBankProvider,
   questionDb,
   token,
   nowIso,
 }: LoadQuizByTokenInput): Promise<
   ActiveQuizResponseDto | SubmittedQuizResponseDto
 > {
+  const provider =
+    questionBankProvider ?? createSqliteProviderFromLegacyInput(questionDb);
   const [session] = await appDb
     .select()
     .from(quizSessions)
@@ -54,6 +59,10 @@ export async function loadQuizByToken({
     .orderBy(asc(quizSessionQuestions.questionIndex));
 
   if (session.status === "submitted") {
+    const detailsByUrl = await loadDetailsByUrl(provider, sessionQuestions, {
+      includeAnswer: true,
+      includeExplanation: true,
+    });
     const answerRows = await appDb
       .select()
       .from(answerRecords)
@@ -79,10 +88,7 @@ export async function loadQuizByToken({
       },
       selectionSummary: parseSelectionSummary(session.selectionSummaryJson),
       questions: sessionQuestions.map((sessionQuestion) => {
-        const detail = getQuestionDetail(
-          questionDb,
-          sessionQuestion.questionUrl
-        );
+        const detail = detailsByUrl.get(sessionQuestion.questionUrl) ?? null;
         const answer = answersBySessionQuestionId.get(sessionQuestion.id);
 
         if (detail === null || answer === undefined) {
@@ -113,12 +119,17 @@ export async function loadQuizByToken({
     throw new ApiError("INVALID_TOKEN", 500, "Invalid quiz session status.");
   }
 
+  const detailsByUrl = await loadDetailsByUrl(provider, sessionQuestions, {
+    includeAnswer: false,
+    includeExplanation: false,
+  });
+
   return {
     status: "active",
     token: session.token,
     totalQuestions: session.totalQuestions,
     questions: sessionQuestions.map((sessionQuestion) => {
-      const detail = getQuestionDetail(questionDb, sessionQuestion.questionUrl);
+      const detail = detailsByUrl.get(sessionQuestion.questionUrl) ?? null;
 
       if (detail === null) {
         throw new ApiError(
@@ -137,6 +148,31 @@ export async function loadQuizByToken({
       };
     }),
   };
+}
+
+function createSqliteProviderFromLegacyInput(
+  questionDb: Database.Database | undefined
+): QuestionBankProvider {
+  if (questionDb === undefined) {
+    throw new ApiError(
+      "QUIZ_LOAD_FAILED",
+      500,
+      "Question bank provider is required."
+    );
+  }
+
+  return new SqliteQuestionBankProvider({ db: questionDb });
+}
+
+async function loadDetailsByUrl(
+  provider: QuestionBankProvider,
+  sessionQuestions: Array<{ questionUrl: string }>,
+  options: { includeAnswer: boolean; includeExplanation: boolean }
+): Promise<Map<string, Awaited<ReturnType<QuestionBankProvider["getDetailByUrl"]>>>> {
+  const urls = sessionQuestions.map((sessionQuestion) => sessionQuestion.questionUrl);
+  const details = await provider.getDetailsByUrls(urls, options);
+
+  return new Map(details.map((detail) => [detail.questionUrl, detail]));
 }
 
 function parseSelectionSummary(selectionSummaryJson: string | null) {

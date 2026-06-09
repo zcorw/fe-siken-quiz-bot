@@ -25,6 +25,10 @@ export class SqliteQuestionBankProvider implements QuestionBankProvider {
     this.db = options.db;
   }
 
+  close(): void {
+    this.db.close();
+  }
+
   async listKeywords(): Promise<QuestionBankKeywords> {
     return listQuestionBankKeywords(this.db);
   }

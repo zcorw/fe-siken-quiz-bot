@@ -97,7 +97,7 @@ http://127.0.0.1:8124/health -> {"ok":true,"database":"ready","readOnly":true}
   Verify: Existing quiz session factory tests pass; add HTTP/provider mock tests
   for category and topic selection.
 
-- [ ] T005 [P0] Migrate active quiz loading to provider batch details
+- [x] T005 [P0] Migrate active quiz loading to provider batch details
   Goal: `GET /api/quiz/[token]` loads question details through the provider and
   avoids N per-question single lookups.
   Notes: Use `provider.getDetailsByUrls(urls, { includeAnswer: false,
