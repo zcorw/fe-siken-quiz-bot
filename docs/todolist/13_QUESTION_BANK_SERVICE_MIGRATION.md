@@ -121,7 +121,7 @@ http://127.0.0.1:8124/health -> {"ok":true,"database":"ready","readOnly":true}
   Verify: Submit unit/integration tests pass in SQLite mode and provider mock
   mode.
 
-- [ ] T007 [P1] Add HTTP mode integration smoke test against local service
+- [x] T007 [P1] Add HTTP mode integration smoke test against local service
   Goal: FE-Test can create/load/submit at least one quiz while using
   `QUESTION_BANK_MODE=http`.
   Notes: Use the locally running FE Question Bank Service, for example
@@ -132,6 +132,7 @@ http://127.0.0.1:8124/health -> {"ok":true,"database":"ready","readOnly":true}
   Depends on: T004, T005, T006.
   Verify: Documented command proves bot selection, active quiz loading, and
   submit flow work against `http://127.0.0.1:8124`.
+  Command: `RUN_QUESTION_BANK_HTTP_SMOKE=1 QUESTION_BANK_SERVICE_URL=http://127.0.0.1:8124 pnpm vitest run src/quiz/http-mode-smoke.integration.test.ts`.
 
 - [ ] T008 [P1] Document runtime environment and rollback
   Goal: Operators know how to deploy HTTP mode and return to SQLite mode.
