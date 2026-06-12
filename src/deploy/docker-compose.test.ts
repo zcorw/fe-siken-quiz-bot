@@ -67,7 +67,11 @@ describe("deployment docker compose", () => {
     ) as ComposeFile;
 
     expect(compose.networks?.["fe-shared"]?.external).toBe(true);
+    expect(compose.services.edge?.networks).toContain("default");
+    expect(compose.services.edge?.networks).toContain("fe-shared");
+    expect(compose.services.web?.networks).toContain("default");
     expect(compose.services.web?.networks).toContain("fe-shared");
+    expect(compose.services.bot?.networks).toContain("default");
     expect(compose.services.bot?.networks).toContain("fe-shared");
   });
 
