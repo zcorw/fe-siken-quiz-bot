@@ -120,6 +120,15 @@ QUESTION_BANK_MODE=http
 QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000
 ```
 
+When FE-Test runs in Docker Compose, `web` and `bot` join the external
+`fe-shared` Docker network and should use
+`QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000`. Create that
+network once on each VPS before deploying either project:
+
+```sh
+docker network inspect fe-shared >/dev/null 2>&1 || docker network create fe-shared
+```
+
 Before production cutover, verify the service health endpoint:
 
 ```sh
