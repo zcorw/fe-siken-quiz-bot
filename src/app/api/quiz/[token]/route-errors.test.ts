@@ -16,6 +16,9 @@ async function setupRouteMocks(errorCode: ApiErrorCode, status: number) {
   vi.doMock("@/db/question-bank/client", () => ({
     openQuestionBank: () => ({ close }),
   }));
+  vi.doMock("@/db/question-bank/provider-factory", () => ({
+    createQuestionBankProvider: () => ({ close }),
+  }));
   vi.doMock("@/lib/rate-limit", () => ({
     consumeRateLimit: vi.fn(),
     createMemoryRateLimiter: () => ({}),
@@ -102,6 +105,9 @@ describe("quiz API route error responses", () => {
     }));
     vi.doMock("@/db/question-bank/client", () => ({
       openQuestionBank: () => ({ close }),
+    }));
+    vi.doMock("@/db/question-bank/provider-factory", () => ({
+      createQuestionBankProvider: () => ({ close }),
     }));
     vi.doMock("@/lib/rate-limit", () => ({
       consumeRateLimit: vi.fn(),

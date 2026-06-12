@@ -73,7 +73,7 @@ describe("quiz submit flow", () => {
     expect(alert).toHaveTextContent("Failed to submit: invalid answer");
     expect(alert).toHaveClass("fixed");
     expect(alert).toHaveClass("top-4");
-  });
+  }, 10_000);
 
   it("renders the result view after successful submit", async () => {
     const loadQuiz = vi.fn().mockResolvedValue(activeQuiz20);

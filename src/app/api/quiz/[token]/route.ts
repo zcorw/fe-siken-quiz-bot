@@ -1,5 +1,5 @@
 import { openAppDb } from "@/db/app/client";
-import { openQuestionBank } from "@/db/question-bank/client";
+import { createQuestionBankProvider } from "@/db/question-bank/provider-factory";
 import { ApiError, jsonError, jsonSuccess } from "@/lib/api-response";
 import {
   consumeRateLimit,
@@ -25,7 +25,7 @@ export async function GET(
 ): Promise<Response> {
   const { token } = await context.params;
   const appDb = openAppDb();
-  const questionDb = openQuestionBank();
+  const questionBankProvider = createQuestionBankProvider();
 
   try {
     await consumeRateLimit(getQuizIpLimiter, `get:ip:${getClientIp(request)}`);
@@ -33,7 +33,7 @@ export async function GET(
     return jsonSuccess(
       await loadQuizByToken({
         appDb: appDb.db,
-        questionDb,
+        questionBankProvider,
         token,
         nowIso: new Date().toISOString(),
       })
@@ -48,6 +48,6 @@ export async function GET(
     );
   } finally {
     appDb.close();
-    questionDb.close();
+    questionBankProvider.close?.();
   }
 }

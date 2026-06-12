@@ -13,7 +13,8 @@ Users enter one practice scope in Telegram, receive a `/quiz/{token}` link, answ
 - First submission only updates user history; repeated visits are read-only.
 - Scope selection from configured FE category tree, with OpenAI fallback suggestions when local matching fails.
 - SQLite app database managed by Drizzle migrations.
-- FE question bank read from `fe_siken_questions.sqlite`.
+- FE question bank read from `fe_siken_questions.sqlite` or the FE Question
+  Bank Service Runtime API.
 - Docker Compose deployment with `web`, `bot`, `edge`, and one-shot `migrate` services.
 - GitHub Actions builds Docker images in GHCR and deploys them to a VPS over SSH.
 
@@ -76,6 +77,20 @@ Prepare local files:
 ./data/app.sqlite
 ```
 
+SQLite remains the default question-bank mode:
+
+```env
+QUESTION_BANK_MODE=sqlite
+QUESTION_DB_PATH=./fe_siken_questions.sqlite
+```
+
+To test against the local FE Question Bank Service Runtime API:
+
+```env
+QUESTION_BANK_MODE=http
+QUESTION_BANK_SERVICE_URL=http://127.0.0.1:8124
+```
+
 Run migrations:
 
 ```bash
@@ -117,6 +132,13 @@ Use separate templates for development and production:
 - `.env.production.example`
 
 Production `.env` should be placed on the VPS under `/opt/fe-quiz-bot/.env`. Runtime database, config, and assets live outside the Git checkout so deployments can safely run `git reset --hard`.
+
+Question-bank runtime values:
+
+- `QUESTION_BANK_MODE=sqlite` reads `/app/data/fe_siken_questions.sqlite`.
+- `QUESTION_BANK_MODE=http` reads `QUESTION_BANK_SERVICE_URL`.
+- Roll back from HTTP mode by setting `QUESTION_BANK_MODE=sqlite` and keeping
+  `QUESTION_DB_PATH` mounted at `/app/data/fe_siken_questions.sqlite`.
 
 ## Testing
 

@@ -30,6 +30,36 @@ describe("QuestionContent", () => {
     expect(document.querySelector("script")).not.toBeInTheDocument();
   });
 
+  it("renders HTTP mode question image asset paths", () => {
+    render(
+      <QuestionContent
+        category={null}
+        questionText={
+          '"\u5546\u54c1"\u8868\u306b\u5bfe\u3059\u308bSQL\u6587\u3068\u540c\u3058\u7d50\u679c\u304c\u5f97\u3089\u308c\u308bSELECT\u6587\u306f\u3069\u308c\u304b\u3002\n\n![06.png/image-size:406\u00d7216](/assets/fe-siken/07_haru/a6/06.png)'
+        }
+      />
+    );
+
+    expect(
+      screen.getByRole("img", { name: "06.png/image-size:406\u00d7216" })
+    ).toHaveAttribute("src", "/assets/fe-siken/07_haru/a6/06.png");
+  });
+
+  it("preserves SQL question line breaks and renders standalone blanks", () => {
+    render(
+      <QuestionContent
+        category={null}
+        questionText={
+          '"中間テスト"表からクラスごと，教科ごとの平均点を求め，クラス名，教科名の昇順に表示するSQL文中のaに入れるべき字句はどれか。\n\n　中間テスト（クラス名，教科名，学生番号，名前，点数）\n\n〔SQL文〕\nSELECT クラス名，教科名，AVG(点数) AS 平均点\n　　FROM 中間テスト\n　　a'
+        }
+      />
+    );
+
+    expect(screen.getByText("SELECT クラス名，教科名，AVG(点数) AS 平均点")).toBeInTheDocument();
+    expect(screen.getByText("FROM 中間テスト")).toBeInTheDocument();
+    expect(screen.getByLabelText("blank a")).toHaveTextContent("a");
+  });
+
   it("renders an empty-state message when question text is missing", () => {
     render(<QuestionContent category={null} questionText={null} />);
 

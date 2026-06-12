@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { quizSessionQuestions, quizSessions, users } from "@/db/app/schema";
+import { SqliteQuestionBankProvider } from "@/db/question-bank/sqlite-provider";
 import {
   cleanupIntegrationFixtures,
   createMigratedAppDbFixture,
@@ -48,7 +49,7 @@ describe("scope message integration", () => {
           ...input,
           appDb: appDb.db,
           nowIso: "2026-05-31T00:00:00.000Z",
-          questionDb,
+          questionBankProvider: new SqliteQuestionBankProvider({ db: questionDb }),
           sessionIdFactory: () => "session-integration",
           tokenFactory: () => "token-integration",
         }),

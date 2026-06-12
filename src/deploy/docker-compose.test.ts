@@ -10,10 +10,12 @@ import { describe, expect, it } from "vitest";
 type ComposeService = {
   build?: unknown;
   image?: string;
+  networks?: string[];
   user?: string;
 };
 
 type ComposeFile = {
+  networks?: Record<string, { external?: boolean }>;
   services: Record<string, ComposeService>;
 };
 
@@ -52,6 +54,21 @@ describe("deployment docker compose", () => {
         "${APP_RUN_UID:-1000}:${APP_RUN_GID:-1000}"
       );
     }
+  });
+
+  it("connects runtime services to the shared question bank network", () => {
+    const composePath = path.join(
+      process.cwd(),
+      "deploy",
+      "docker-compose.yml"
+    );
+    const compose = YAML.parse(
+      readFileSync(composePath, "utf8")
+    ) as ComposeFile;
+
+    expect(compose.networks?.["fe-shared"]?.external).toBe(true);
+    expect(compose.services.web?.networks).toContain("fe-shared");
+    expect(compose.services.bot?.networks).toContain("fe-shared");
   });
 
   it("exports the deployment uid and gid for docker compose", () => {
