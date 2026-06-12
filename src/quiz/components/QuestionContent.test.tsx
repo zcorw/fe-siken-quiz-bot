@@ -45,6 +45,21 @@ describe("QuestionContent", () => {
     ).toHaveAttribute("src", "/assets/fe-siken/07_haru/a6/06.png");
   });
 
+  it("preserves SQL question line breaks and renders standalone blanks", () => {
+    render(
+      <QuestionContent
+        category={null}
+        questionText={
+          '"中間テスト"表からクラスごと，教科ごとの平均点を求め，クラス名，教科名の昇順に表示するSQL文中のaに入れるべき字句はどれか。\n\n　中間テスト（クラス名，教科名，学生番号，名前，点数）\n\n〔SQL文〕\nSELECT クラス名，教科名，AVG(点数) AS 平均点\n　　FROM 中間テスト\n　　a'
+        }
+      />
+    );
+
+    expect(screen.getByText("SELECT クラス名，教科名，AVG(点数) AS 平均点")).toBeInTheDocument();
+    expect(screen.getByText("FROM 中間テスト")).toBeInTheDocument();
+    expect(screen.getByLabelText("blank a")).toHaveTextContent("a");
+  });
+
   it("renders an empty-state message when question text is missing", () => {
     render(<QuestionContent category={null} questionText={null} />);
 
