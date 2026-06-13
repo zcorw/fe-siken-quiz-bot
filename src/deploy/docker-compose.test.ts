@@ -9,9 +9,11 @@ import { describe, expect, it } from "vitest";
 
 type ComposeService = {
   build?: unknown;
+  environment?: Record<string, string>;
   image?: string;
   networks?: string[];
   user?: string;
+  volumes?: string[];
 };
 
 type ComposeFile = {
@@ -73,6 +75,49 @@ describe("deployment docker compose", () => {
     expect(compose.services.web?.networks).toContain("fe-shared");
     expect(compose.services.bot?.networks).toContain("default");
     expect(compose.services.bot?.networks).toContain("fe-shared");
+  });
+
+  it("uses the question bank asset proxy without mounting question images", () => {
+    const composePath = path.join(
+      process.cwd(),
+      "deploy",
+      "docker-compose.yml"
+    );
+    const compose = YAML.parse(
+      readFileSync(composePath, "utf8")
+    ) as ComposeFile;
+
+    expect(compose.services.web?.environment?.QUESTION_BANK_SERVICE_URL).toBe(
+      "${QUESTION_BANK_SERVICE_URL:-http://question-bank-runtime:8000}"
+    );
+    expect(compose.services.bot?.environment?.QUESTION_BANK_SERVICE_URL).toBe(
+      "${QUESTION_BANK_SERVICE_URL:-http://question-bank-runtime:8000}"
+    );
+    for (const serviceName of ["web", "bot"]) {
+      const volumes = compose.services[serviceName]?.volumes ?? [];
+      expect(volumes.some((volume) => volume.includes("HOST_ASSETS_DIR"))).toBe(
+        false
+      );
+      expect(volumes.some((volume) => volume.includes(":/app/public/assets"))).toBe(
+        false
+      );
+      expect(volumes.some((volume) => volume.includes(":/app/assets"))).toBe(
+        false
+      );
+    }
+
+    const initRuntime = readFileSync(
+      path.join(process.cwd(), "deploy", "scripts", "init-runtime.sh"),
+      "utf8"
+    );
+    const deployScript = readFileSync(
+      path.join(process.cwd(), "deploy", "scripts", "deploy.sh"),
+      "utf8"
+    );
+    expect(initRuntime).not.toContain("HOST_ASSETS_DIR");
+    expect(initRuntime).not.toContain("fe-siken/");
+    expect(deployScript).not.toContain("HOST_ASSETS_DIR");
+    expect(deployScript).not.toContain("assets dir=");
   });
 
   it("exports the deployment uid and gid for docker compose", () => {

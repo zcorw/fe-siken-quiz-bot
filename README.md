@@ -131,7 +131,7 @@ Use separate templates for development and production:
 - `.env.development.example`
 - `.env.production.example`
 
-Production `.env` should be placed on the VPS under `/opt/fe-quiz-bot/.env`. Runtime database, config, and assets live outside the Git checkout so deployments can safely run `git reset --hard`.
+Production `.env` should be placed on the VPS under `/opt/fe-quiz-bot/.env`. Runtime database, config, and logs live outside the Git checkout so deployments can safely run `git reset --hard`.
 
 Question-bank runtime values:
 
@@ -172,7 +172,6 @@ Production VPS runtime layout:
   config/app.yaml
   data/fe_siken_questions.sqlite
   data/app.sqlite
-  assets/fe-siken/
   logs/bot.log         Bot JSON log file mirrored from container stdout
   app/                 Git checkout
 ```
@@ -214,14 +213,12 @@ Do not commit these files:
 - `data/app.sqlite`
 - `data/app.sqlite-*`
 
-Question images should be available under:
-
-```text
-assets/fe-siken/
-```
-
-and served as:
+Question images are owned by FE Question Bank Service. FE-Test serves browser
+requests through its asset proxy at:
 
 ```text
 /assets/fe-siken/...
 ```
+
+The web container proxies those requests to `QUESTION_BANK_SERVICE_URL`, usually
+`http://question-bank-runtime:8000` inside Docker Compose.
