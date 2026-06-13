@@ -45,6 +45,22 @@ describe("QuestionContent", () => {
     ).toHaveAttribute("src", "/assets/fe-siken/07_haru/a6/06.png");
   });
 
+  it("rewrites internal question bank image URLs to proxied relative paths", () => {
+    render(
+      <QuestionContent
+        category={null}
+        questionText={
+          "Question with image\n\n![diagram](http://question-bank-runtime:8000/assets/fe-siken/r7/q1/diagram.png)"
+        }
+      />
+    );
+
+    expect(screen.getByRole("img", { name: "diagram" })).toHaveAttribute(
+      "src",
+      "/assets/fe-siken/r7/q1/diagram.png"
+    );
+  });
+
   it("preserves SQL question line breaks and renders standalone blanks", () => {
     render(
       <QuestionContent
