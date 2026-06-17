@@ -109,7 +109,9 @@ function MarkdownImage({
   ...props
 }: ComponentProps<"img">) {
   const [failed, setFailed] = useState(false);
-  const filename = typeof src === "string" ? src.split("/").pop() : null;
+  const proxiedSrc = normalizeQuestionAssetSrc(src);
+  const filename =
+    typeof proxiedSrc === "string" ? proxiedSrc.split("/").pop() : null;
 
   if (failed) {
     return (
@@ -126,6 +128,20 @@ function MarkdownImage({
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img alt={alt} onError={() => setFailed(true)} src={src} {...props} />
+    <img alt={alt} onError={() => setFailed(true)} src={proxiedSrc} {...props} />
   );
+}
+
+function normalizeQuestionAssetSrc(src: ComponentProps<"img">["src"]) {
+  if (typeof src !== "string") {
+    return src;
+  }
+
+  const marker = "/assets/fe-siken/";
+  const markerIndex = src.indexOf(marker);
+  if (markerIndex === -1) {
+    return src;
+  }
+
+  return src.slice(markerIndex);
 }

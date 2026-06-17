@@ -21,15 +21,14 @@ Default path:
   data/
     fe_siken_questions.sqlite
     app.sqlite              # created by deployment if missing
-  assets/
-    fe-siken/
   logs/
     bot.log               # created by the bot container
 ```
 
 `app.sqlite` is initialized by Drizzle migrations when it does not already exist.
 
-The code checkout and runtime files are intentionally separate. Deployment runs `git reset --hard` inside `/opt/fe-quiz-bot/app`, so production `.env`, `config`, `data`, and `assets` must live outside that checkout.
+The code checkout and runtime files are intentionally separate. Deployment runs `git reset --hard` inside `/opt/fe-quiz-bot/app`, so production `.env`, `config`, `data`, and `logs` must live outside that checkout.
+Question image assets now live in FE Question Bank Service, not under the FE-Test deployment root.
 
 ## VPS Requirements
 
@@ -159,9 +158,14 @@ The deploy script exports these host paths for Docker Compose:
 HOST_ENV_FILE=/opt/fe-quiz-bot/.env
 HOST_CONFIG_DIR=/opt/fe-quiz-bot/config
 HOST_DATA_DIR=/opt/fe-quiz-bot/data
-HOST_ASSETS_DIR=/opt/fe-quiz-bot/assets
 HOST_LOG_DIR=/opt/fe-quiz-bot/logs
 ```
+
+Question images are no longer mounted into FE-Test. Browser requests to
+`/assets/fe-siken/...` are handled by the web container and proxied to
+`QUESTION_BANK_SERVICE_URL`, normally `http://question-bank-runtime:8000` on the
+shared Docker network. Store and back up question images in the question bank
+service deployment instead.
 
 The bot container writes JSON logs to both Docker stdout and the host file:
 
@@ -172,7 +176,7 @@ tail -f /opt/fe-quiz-bot/logs/bot.log
 ## First Deployment
 
 1. Create `/opt/fe-quiz-bot/`.
-2. Put `.env`, `config/app.yaml`, `data/fe_siken_questions.sqlite`, and `assets/fe-siken/` under `/opt/fe-quiz-bot/`.
+2. Put `.env`, `config/app.yaml`, and `data/fe_siken_questions.sqlite` under `/opt/fe-quiz-bot/`.
 3. Configure external VPS Nginx using `deploy/nginx/vps-external.example.conf`.
 4. Add the GitHub secrets.
 5. Push to `main`, or run the workflow manually.
