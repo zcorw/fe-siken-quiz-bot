@@ -43,6 +43,8 @@ bot-error.log
 # runtime data
 /data/app.sqlite
 /data/app.sqlite-*
+/data/fe_siken_questions.sqlite
+/logs/
 /fe_siken_questions.sqlite
 
 # vercel
