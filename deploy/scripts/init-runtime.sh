@@ -33,7 +33,6 @@ require_file() {
 
 require_file "${ENV_FILE}"
 require_file "${HOST_CONFIG_DIR}/app.yaml"
-require_file "${HOST_DATA_DIR}/fe_siken_questions.sqlite"
 
 if [ -n "${missing}" ]; then
   printf "Missing required runtime files:%b\n" "${missing}" >&2
