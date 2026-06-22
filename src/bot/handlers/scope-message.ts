@@ -91,7 +91,7 @@ export async function handleScopeMessage({
     result = await parseScope(text);
     await logScopeParse?.({ rawScopeInput: text, result });
   } catch (error) {
-    logger?.error({ error }, "Bot scope handling failed");
+    logger?.error({ error: serializeError(error) }, "Bot scope handling failed");
     await ctx.reply(
       "処理中にエラーが発生しました。少し時間をおいて再度お試しください。"
     );
@@ -288,7 +288,10 @@ export async function handleScopeCandidateCallback({
             },
     });
   } catch (error) {
-    logger?.error({ error }, "Bot candidate callback handling failed");
+    logger?.error(
+      { error: serializeError(error) },
+      "Bot candidate callback handling failed"
+    );
     await ctx.reply(
       "演習の作成中にエラーが発生しました。別の候補を選ぶか、時間をおいて再度お試しください。"
     );
@@ -302,6 +305,18 @@ export async function handleScopeCandidateCallback({
       reply_markup: new InlineKeyboard().url("問題を開く", quizUrl),
     });
   }
+}
+
+function serializeError(error: unknown): unknown {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+    };
+  }
+
+  return error;
 }
 
 function buildCandidateScopeKeyboard(
