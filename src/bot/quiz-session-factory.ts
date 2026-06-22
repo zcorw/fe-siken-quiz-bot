@@ -76,7 +76,7 @@ export async function createQuizSessionFromScopeMessage({
     topicsConfig,
     userId: user.id,
   });
-  let candidates = selection.candidates;
+  let candidates = dedupeCandidates(selection.candidates);
 
   if (candidates.length < 20) {
     candidates = await appendFallbackCandidates(appDb, questionBankProvider, {
@@ -86,6 +86,8 @@ export async function createQuizSessionFromScopeMessage({
       userId: user.id,
     });
   }
+
+  candidates = dedupeCandidates(candidates);
 
   if (candidates.length !== 20) {
     throw new Error(
@@ -405,7 +407,65 @@ async function appendFallbackCandidates(
     `${selectionSeed}:fallback-all-categories`
   );
 
-  return [...candidates, ...selectedFallbackCandidates];
+  const candidatesWithUnfilteredFallback = dedupeCandidates([
+    ...candidates,
+    ...selectedFallbackCandidates,
+  ]);
+
+  if (candidatesWithUnfilteredFallback.length >= count) {
+    return candidatesWithUnfilteredFallback;
+  }
+
+  const categoryFallbackCandidates = await findCategoryFallbackCandidates(
+    questionBankProvider,
+    new Set(
+      candidatesWithUnfilteredFallback.map((candidate) => candidate.url)
+    ),
+    count - candidatesWithUnfilteredFallback.length
+  );
+  const selectedCategoryFallbackCandidates = await selectWeightedCandidates(
+    appDb,
+    userId,
+    categoryFallbackCandidates,
+    count - candidatesWithUnfilteredFallback.length,
+    `${selectionSeed}:fallback-by-category`
+  );
+
+  return dedupeCandidates([
+    ...candidatesWithUnfilteredFallback,
+    ...selectedCategoryFallbackCandidates,
+  ]);
+}
+
+async function findCategoryFallbackCandidates(
+  questionBankProvider: QuestionBankProvider,
+  selectedUrls: Set<string>,
+  count: number
+): Promise<QuestionCandidateRow[]> {
+  const keywords = await questionBankProvider.listKeywords();
+  const fallbackCandidates: QuestionCandidateRow[] = [];
+  const fallbackUrls = new Set<string>();
+
+  for (const category of keywords.categories) {
+    const categoryCandidates = await questionBankProvider.findCandidates({
+      category,
+    });
+
+    for (const candidate of categoryCandidates) {
+      if (selectedUrls.has(candidate.url) || fallbackUrls.has(candidate.url)) {
+        continue;
+      }
+
+      fallbackCandidates.push(candidate);
+      fallbackUrls.add(candidate.url);
+
+      if (fallbackCandidates.length >= count) {
+        return fallbackCandidates;
+      }
+    }
+  }
+
+  return fallbackCandidates;
 }
 
 function listSelectedMinorCategories(
