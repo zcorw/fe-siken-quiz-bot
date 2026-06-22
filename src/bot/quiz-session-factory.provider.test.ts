@@ -84,4 +84,79 @@ describe("createQuizSessionFromScopeMessage provider integration", () => {
       candidates.map((candidate) => candidate.url).sort()
     );
   });
+
+  it("fills missing reinforcement questions from other categories", async () => {
+    const appDb = await createMigratedAppDbFixture({ seedUser: false });
+    const primaryCandidates = Array.from({ length: 15 }, (_, index) =>
+      makeCandidate(index + 1, "minor-a")
+    );
+    const fallbackCandidates = Array.from({ length: 10 }, (_, index) =>
+      makeCandidate(index + 101, "other-a")
+    );
+    const allCandidates = [...primaryCandidates, ...fallbackCandidates];
+    const provider: QuestionBankProvider = {
+      findCandidates: async (filters) => {
+        if (filters?.categories?.includes("minor-a") === true) {
+          return primaryCandidates;
+        }
+
+        if (filters?.categories?.includes("minor-b") === true) {
+          return [];
+        }
+
+        return allCandidates;
+      },
+      getDetailByUrl: async () => null,
+      getDetailsByUrls: async () => [],
+      listKeywords: async () => ({ categories: ["minor-a"], topics: ["topic-a"] }),
+    };
+
+    await createQuizSessionFromScopeMessage({
+      appDb: appDb.db,
+      matchedScope: {
+        candidateMinorCategories: ["minor-a"],
+        majorCategory: "major-a",
+        matchedCategories: ["minor-a"],
+        matchedTopics: [],
+        method: "local_exact",
+        minorCategory: "minor-a",
+        scopeType: "minor_category",
+        status: "matched",
+        suggestions: [],
+      },
+      nowIso: "2026-05-31T00:00:00.000Z",
+      questionBankProvider: provider,
+      rawScopeInput: "minor-a",
+      selectionSeedFactory: () => "provider-fallback-seed",
+      sessionIdFactory: () => "session-provider-fallback",
+      telegramUser: { id: 12345 },
+      tokenFactory: () => "token-provider-fallback",
+      topicsConfig: {
+        aliases: {},
+        category_tree: {
+          "major-a": ["minor-a", "minor-b"],
+        },
+        high_weight_topics: ["major-a"],
+      },
+    });
+
+    const rows = appDb.sqlite
+      .prepare(
+        "SELECT source_category, source_type FROM quiz_session_questions WHERE quiz_session_id = ? ORDER BY question_index"
+      )
+      .all("session-provider-fallback") as Array<{
+      source_category: string;
+      source_type: string;
+    }>;
+
+    expect(rows).toHaveLength(20);
+    expect(rows.filter((row) => row.source_type === "requested")).toHaveLength(
+      15
+    );
+    expect(
+      rows
+        .filter((row) => row.source_type === "reinforcement")
+        .every((row) => row.source_category === "other-a")
+    ).toBe(true);
+  });
 });

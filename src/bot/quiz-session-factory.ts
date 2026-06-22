@@ -76,7 +76,16 @@ export async function createQuizSessionFromScopeMessage({
     topicsConfig,
     userId: user.id,
   });
-  const candidates = selection.candidates;
+  let candidates = selection.candidates;
+
+  if (candidates.length < 20) {
+    candidates = await appendFallbackCandidates(appDb, questionBankProvider, {
+      candidates,
+      count: 20,
+      selectionSeed,
+      userId: user.id,
+    });
+  }
 
   if (candidates.length !== 20) {
     throw new Error(
@@ -363,6 +372,40 @@ async function selectWeightedCandidates(
     seed,
     statsByUrl,
   });
+}
+
+async function appendFallbackCandidates(
+  appDb: AppDrizzleDb,
+  questionBankProvider: QuestionBankProvider,
+  {
+    candidates,
+    count,
+    selectionSeed,
+    userId,
+  }: {
+    candidates: QuestionCandidateRow[];
+    count: number;
+    selectionSeed: string;
+    userId: string;
+  }
+): Promise<QuestionCandidateRow[]> {
+  if (candidates.length >= count) {
+    return candidates;
+  }
+
+  const selectedUrls = new Set(candidates.map((candidate) => candidate.url));
+  const fallbackCandidates = (await questionBankProvider.findCandidates()).filter(
+    (candidate) => !selectedUrls.has(candidate.url)
+  );
+  const selectedFallbackCandidates = await selectWeightedCandidates(
+    appDb,
+    userId,
+    fallbackCandidates,
+    count - candidates.length,
+    `${selectionSeed}:fallback-all-categories`
+  );
+
+  return [...candidates, ...selectedFallbackCandidates];
 }
 
 function listSelectedMinorCategories(
