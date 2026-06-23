@@ -8,6 +8,7 @@ export interface CandidateWithUrl {
 }
 
 export interface QuestionSelectionStats {
+  activeWrong?: number;
   attemptCount: number;
   correctCount: number;
   incorrectCount: number;
@@ -56,7 +57,12 @@ function scoreCandidate(stats: QuestionSelectionStats | undefined): number {
     return 2_000;
   }
 
-  if (stats.incorrectCount > 0) {
+  const isActiveWrong =
+    stats.activeWrong === undefined
+      ? stats.incorrectCount > 0
+      : stats.activeWrong === 1;
+
+  if (isActiveWrong) {
     return 3_000 + stats.incorrectCount * 10 - stats.correctCount;
   }
 

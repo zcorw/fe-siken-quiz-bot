@@ -112,6 +112,43 @@ describe("selectWeightedSeededCandidates", () => {
     expect(selected).toHaveLength(2);
   });
 
+  it("deprioritizes historical wrong candidates after the active wrong state is cleared", () => {
+    const candidates = createCandidates(4);
+
+    const selected = selectWeightedSeededCandidates(candidates, {
+      count: 2,
+      seed: "seed-a",
+      statsByUrl: new Map([
+        [
+          "https://example.test/q1.html",
+          {
+            activeWrong: 0,
+            attemptCount: 5,
+            correctCount: 4,
+            incorrectCount: 1,
+          },
+        ],
+        [
+          "https://example.test/q2.html",
+          {
+            activeWrong: 1,
+            attemptCount: 3,
+            correctCount: 1,
+            incorrectCount: 2,
+          },
+        ],
+      ]),
+    });
+
+    const selectedUrls = selected.map((candidate) => candidate.url);
+
+    expect(selectedUrls[0]).toBe("https://example.test/q2.html");
+    expect(selectedUrls).not.toContain("https://example.test/q1.html");
+    expect(selectedUrls.slice(1)).toEqual([
+      expect.stringMatching(/^https:\/\/example\.test\/q[34]\.html$/),
+    ]);
+  });
+
   it("randomizes candidates with the same weight by seed", () => {
     const candidates = createCandidates(20);
     const statsByUrl = new Map(
