@@ -8,7 +8,11 @@ import YAML from "yaml";
 import { describe, expect, it } from "vitest";
 
 type ComposeService = {
-  build?: unknown;
+  build?: {
+    context?: string;
+    dockerfile?: string;
+    target?: string;
+  };
   environment?: Record<string, string>;
   image?: string;
   networks?: string[];
@@ -22,7 +26,7 @@ type ComposeFile = {
 };
 
 describe("deployment docker compose", () => {
-  it("uses prebuilt GitHub Container Registry images for app services", () => {
+  it("builds app services locally on the deployment host", () => {
     const composePath = path.join(
       process.cwd(),
       "deploy",
@@ -32,12 +36,22 @@ describe("deployment docker compose", () => {
       readFileSync(composePath, "utf8")
     ) as ComposeFile;
 
-    expect(compose.services.web?.image).toBe("${WEB_IMAGE}");
-    expect(compose.services.bot?.image).toBe("${BOT_IMAGE}");
-    expect(compose.services.migrate?.image).toBe("${MIGRATE_IMAGE}");
+    expect(compose.services.web?.build).toEqual({
+      context: "..",
+      dockerfile: "Dockerfile.web",
+    });
+    expect(compose.services.bot?.build).toEqual({
+      context: "..",
+      dockerfile: "Dockerfile.bot",
+    });
+    expect(compose.services.migrate?.build).toEqual({
+      context: "..",
+      dockerfile: "Dockerfile.web",
+      target: "builder",
+    });
 
     for (const serviceName of ["web", "bot", "migrate"]) {
-      expect(compose.services[serviceName]?.build).toBeUndefined();
+      expect(compose.services[serviceName]?.image).toBeUndefined();
     }
   });
 
@@ -135,7 +149,7 @@ describe("deployment docker compose", () => {
     expect(deployScript).toContain("export APP_RUN_GID");
   });
 
-  it("pulls prebuilt images on the VPS instead of building there", () => {
+  it("builds app images on the VPS before starting services", () => {
     const deployScriptPath = path.join(
       process.cwd(),
       "deploy",
@@ -144,18 +158,19 @@ describe("deployment docker compose", () => {
     );
     const deployScript = readFileSync(deployScriptPath, "utf8");
 
-    expect(deployScript).toContain('WEB_IMAGE="${WEB_IMAGE:-');
-    expect(deployScript).toContain('BOT_IMAGE="${BOT_IMAGE:-');
-    expect(deployScript).toContain('MIGRATE_IMAGE="${MIGRATE_IMAGE:-');
-    expect(deployScript).toContain('run_step "pull app images"');
+    expect(deployScript).toContain('run_step "build app images"');
+    expect(deployScript).toContain("docker compose");
+    expect(deployScript).toContain("build web bot migrate");
     expect(deployScript).toContain(
       'run_step "start app services" docker compose'
     );
-    expect(deployScript).not.toContain("docker compose build");
-    expect(deployScript).not.toContain("up -d --build");
+    expect(deployScript).not.toContain("run_step \"pull app images\"");
+    expect(deployScript).not.toContain("WEB_IMAGE=");
+    expect(deployScript).not.toContain("BOT_IMAGE=");
+    expect(deployScript).not.toContain("MIGRATE_IMAGE=");
   });
 
-  it("builds and pushes deployment images in GitHub Actions", () => {
+  it("delegates image builds to the VPS in GitHub Actions", () => {
     const workflowPath = path.join(
       process.cwd(),
       ".github",
@@ -164,15 +179,13 @@ describe("deployment docker compose", () => {
     );
     const workflow = readFileSync(workflowPath, "utf8");
 
-    expect(workflow).toContain("packages: write");
-    expect(workflow).toContain("docker/login-action@v3");
-    expect(workflow).toContain("docker/build-push-action@v6");
-    expect(workflow).toContain("Dockerfile.web");
-    expect(workflow).toContain("Dockerfile.bot");
-    expect(workflow).toContain("target: builder");
-    expect(workflow).toContain("WEB_IMAGE");
-    expect(workflow).toContain("BOT_IMAGE");
-    expect(workflow).toContain("MIGRATE_IMAGE");
+    expect(workflow).not.toContain("packages: write");
+    expect(workflow).not.toContain("docker/login-action@v3");
+    expect(workflow).not.toContain("docker/build-push-action@v6");
+    expect(workflow).not.toContain("WEB_IMAGE");
+    expect(workflow).not.toContain("BOT_IMAGE");
+    expect(workflow).not.toContain("MIGRATE_IMAGE");
+    expect(workflow).toContain("sh ./deploy/scripts/deploy.sh");
   });
 
 

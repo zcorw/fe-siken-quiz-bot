@@ -2,7 +2,7 @@
 
 This project can deploy automatically after code is pushed to `main`.
 
-GitHub Actions builds the application Docker images on the GitHub runner, pushes them to GitHub Container Registry (GHCR), and then asks the VPS to pull and run those images. The VPS does not build the Next.js or Bot images during deployment.
+GitHub Actions SSHs into the VPS and runs the deployment script. The VPS fetches the latest code and builds the application Docker images locally with Docker Compose before running them.
 
 GitHub Actions does not upload runtime secrets, config, or database files. The VPS must already contain those files under the deployment root.
 
@@ -37,17 +37,10 @@ Install these on the VPS:
 - Git
 - Docker Engine
 - Docker Compose plugin
+- Enough CPU, memory, and disk space to build the Next.js, Bot, and migration images locally
 - External Nginx and Certbot, managed outside Docker
 
 The repository checkout must be writable by the SSH deploy user.
-
-If the GHCR images are private, log in once on the VPS as the SSH deploy user:
-
-```sh
-echo "YOUR_GHCR_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
-```
-
-The token needs package read permission for this repository's container packages. Public packages do not require this VPS login step.
 
 ## GitHub Secrets
 
@@ -70,8 +63,6 @@ Optional repository secrets:
 | `SMOKE_BASE_URL` | `http://127.0.0.1:3100` | URL used by deployment smoke test |
 
 If the repository is private, add a GitHub deploy key to the repository and install the matching private key for the VPS deploy user, or set `VPS_REPO_URL` to a URL that the VPS can access.
-
-No GitHub secret is required for pushing GHCR images from the workflow. The workflow uses GitHub's built-in `GITHUB_TOKEN` with `packages: write` permission.
 
 ## Runtime `.env`
 
@@ -192,7 +183,7 @@ That script:
 1. Clones the repository if needed.
 2. Fetches and resets to `origin/main`.
 3. Checks required runtime files.
-4. Pulls the `web`, `bot`, and `migrate` images built by GitHub Actions.
+4. Builds the `web`, `bot`, and `migrate` images locally on the VPS.
 5. Runs Drizzle migrations through the one-shot `migrate` Compose service.
 6. Restarts `edge`, `web`, and `bot`.
 7. Runs the deployment smoke test.
@@ -201,6 +192,6 @@ That script:
 
 Push to `main`.
 
-GitHub Actions will build and push images, then the VPS will pull those images, run migrations, restart services, and run smoke checks.
+GitHub Actions will SSH into the VPS. The VPS will fetch the latest code, build images locally, run migrations, restart services, and run smoke checks.
 
 Runtime files are preserved because they live outside the Git checkout and are mounted into Docker containers.

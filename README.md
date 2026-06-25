@@ -16,7 +16,7 @@ Users enter one practice scope in Telegram, receive a `/quiz/{token}` link, answ
 - FE question bank read from `fe_siken_questions.sqlite` or the FE Question
   Bank Service Runtime API.
 - Docker Compose deployment with `web`, `bot`, `edge`, and one-shot `migrate` services.
-- GitHub Actions builds Docker images in GHCR and deploys them to a VPS over SSH.
+- GitHub Actions deploys to a VPS over SSH, where Docker images are built locally.
 
 ## Tech Stack
 
@@ -218,7 +218,7 @@ Optional secrets:
 - `VPS_REPO_URL`
 - `SMOKE_BASE_URL`
 
-The workflow builds and pushes `web`, `bot`, and `migrate` images to GHCR, then SSHs into the VPS, pulls the latest `main`, checks runtime files, pulls those images, runs migrations, restarts services, and runs a smoke test.
+The workflow SSHs into the VPS, pulls the latest `main`, checks runtime files, builds the `web`, `bot`, and `migrate` images locally with Docker Compose, runs migrations, restarts services, and runs a smoke test.
 
 ## Important Runtime Data
 

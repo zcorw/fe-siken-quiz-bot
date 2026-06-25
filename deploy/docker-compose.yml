@@ -14,7 +14,9 @@ services:
       - fe-shared
 
   web:
-    image: ${WEB_IMAGE}
+    build:
+      context: ..
+      dockerfile: Dockerfile.web
     user: "${APP_RUN_UID:-1000}:${APP_RUN_GID:-1000}"
     env_file:
       - path: ${HOST_ENV_FILE:-.env}
@@ -34,7 +36,9 @@ services:
       - fe-shared
 
   bot:
-    image: ${BOT_IMAGE}
+    build:
+      context: ..
+      dockerfile: Dockerfile.bot
     user: "${APP_RUN_UID:-1000}:${APP_RUN_GID:-1000}"
     env_file:
       - path: ${HOST_ENV_FILE:-.env}
@@ -66,7 +70,10 @@ services:
       - fe-shared
 
   migrate:
-    image: ${MIGRATE_IMAGE}
+    build:
+      context: ..
+      dockerfile: Dockerfile.web
+      target: builder
     user: "${APP_RUN_UID:-1000}:${APP_RUN_GID:-1000}"
     env_file:
       - path: ${HOST_ENV_FILE:-.env}

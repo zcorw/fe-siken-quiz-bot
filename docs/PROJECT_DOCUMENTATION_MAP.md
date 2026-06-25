@@ -33,7 +33,7 @@ covers.
 
 | Document | Covers |
 |---|---|
-| [deployment-github-actions.md](./deployment-github-actions.md) | GitHub Actions image build, GHCR push, VPS pull-and-run deployment, runtime files, smoke tests, rollback. |
+| [deployment-github-actions.md](./deployment-github-actions.md) | GitHub Actions SSH deployment, VPS local Docker builds, runtime files, smoke tests, rollback. |
 | [../deploy/TELEGRAM_WEBHOOK.md](../deploy/TELEGRAM_WEBHOOK.md) | Telegram webhook registration and local/prod webhook checks. |
 | [../deploy/nginx/vps-external.example.conf](../deploy/nginx/vps-external.example.conf) | External VPS Nginx reverse proxy example. |
 | [../.env.development.example](../.env.development.example) | Local development environment variables. |
