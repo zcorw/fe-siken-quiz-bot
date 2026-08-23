@@ -1,8 +1,40 @@
-# fe-siken-quiz-bot
+# FE Siken Quiz Bot
 
-Telegram Bot + Web quiz app for learners preparing for Japan's Fundamental Information Technology Engineer Examination.
+An interactive FE exam practice application combining a Next.js web quiz with Telegram-based entry and learning history.
 
-Users enter one practice scope in Telegram, receive a `/quiz/{token}` link, answer 20 questions in the browser, and review their result with explanations. The first submitted result is recorded against the Telegram user and later used for weak-topic and wrong-question selection.
+> Part of **[FE Study System](https://github.com/zcorw/FE-System)** — the interactive quiz application that consumes the shared FE question-bank service.
+
+**FE Study System:**  
+[System Overview](https://github.com/zcorw/FE-System) ·
+[Question Bank](https://github.com/zcorw/fe-question-bank-service) ·
+**Quiz App** ·
+[Daily Runner](https://github.com/zcorw/FE-Daily-Runner-Python)
+
+## Role in the System
+
+This application provides the interactive practice experience of FE Study System.
+
+```text
+FE Question Bank Service
+          │
+          │ Questions / assets
+          ↓
+   FE Siken Quiz Bot
+          │
+          ├── Next.js Web Quiz
+          ├── Telegram Bot
+          ├── Results
+          └── Learning History
+```
+
+Users select a practice scope, answer questions in the browser, and review
+scores, explanations, weak topics, and previous mistakes.
+
+Question-bank data can be consumed through the shared
+[FE Question Bank Service](https://github.com/zcorw/fe-question-bank-service).
+
+For the complete platform architecture, see
+[FE-System](https://github.com/zcorw/FE-System).
 
 ## Features
 
