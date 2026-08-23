@@ -1,4 +1,4 @@
-# FE Siken Quiz Bot
+# FE Quiz App
 
 An interactive FE exam practice application combining a Next.js web quiz with Telegram-based entry and learning history.
 
